@@ -305,4 +305,36 @@ HexadecimalEscapeSequence::~HexadecimalEscapeSequence()
         delete hd;
 }
 
+PreprocessingToken::~PreprocessingToken()
+{
+    if(std::holds_alternative<std::nullptr_t>(var))
+        ;
+    else if(std::holds_alternative<Identifier*>(var))
+        delete std::get<Identifier*>(var);
+    else if(std::holds_alternative<PPNumber*>(var))
+        delete std::get<PPNumber*>(var);
+    else if(std::holds_alternative<CharacterConstant*>(var))
+        delete std::get<CharacterConstant*>(var);
+    else if(std::holds_alternative<StringLiteral*>(var))
+        delete std::get<StringLiteral*>(var);
+    else if(std::holds_alternative<Punctuator*>(var))
+        delete std::get<Punctuator*>(var);
+}
+
+PPNumber::~PPNumber()
+{
+    for(auto &&v : seq)
+    {
+        if(std::holds_alternative<std::nullptr_t>(v)
+            || std::holds_alternative<Tag>(v))
+            ;
+        else if(std::holds_alternative<Digit*>(v))
+            delete std::get<Digit*>(v);
+        else if(std::holds_alternative<IdentifierNondigit*>(v))
+            delete std::get<IdentifierNondigit*>(v);
+        else if(std::holds_alternative<Sign*>(v))
+            delete std::get<Sign*>(v);
+    }
+}
+
 }

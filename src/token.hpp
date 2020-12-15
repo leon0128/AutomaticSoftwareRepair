@@ -71,6 +71,9 @@ class SimpleEscapeSequence;
 class OctalEscapeSequence;
 class HexadecimalEscapeSequence;
 
+class PreprocessingToken;
+class PPNumber;
+
 struct Token
 {
     using Variant = std::variant<std::nullptr_t
@@ -743,6 +746,48 @@ struct HexadecimalEscapeSequence
     HexadecimalEscapeSequence(Args&&... args)
         : seq(std::forward(args)...){}
     ~HexadecimalEscapeSequence();
+};
+
+struct PreprocessingToken
+{
+    using Variant = std::variant<std::nullptr_t
+        , Identifier*
+        , PPNumber*
+        , CharacterConstant*
+        , StringLiteral*
+        , Punctuator*>;
+    
+    Variant var;
+
+    template<class... Args>
+    PreprocessingToken(Args&&... args)
+        : var(std::forward<Args>(args)...){}
+    ~PreprocessingToken();
+};
+
+struct PPNumber
+{
+    enum class Tag : signed char
+    {
+        NONE
+        , PERIOD
+        , e
+        , E
+        , p
+        , P
+    };
+    using Variant = std::variant<std::nullptr_t
+        , Digit*
+        , Tag
+        , IdentifierNondigit*
+        , Sign*>;
+    
+    std::vector<Variant> seq;
+
+    template<class... Args>
+    PPNumber(Args&&... args)
+        : seq(std::forward<Args>(args)...){}
+    ~PPNumber();
 };
 
 }
