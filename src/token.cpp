@@ -337,4 +337,34 @@ PPNumber::~PPNumber()
     }
 }
 
+IntegerSuffix::~IntegerSuffix()
+{
+    if(std::holds_alternative<std::nullptr_t>(var))
+        ;
+    else if(std::holds_alternative<Sus_ls>(var))
+    {
+        auto &&s = std::get<Sus_ls>(var);
+        delete s.us;
+        delete s.ls;
+    }
+    else if(std::holds_alternative<Sus_lls>(var))
+    {
+        auto &&s = std::get<Sus_lls>(var);
+        delete s.us;
+        delete s.lls;
+    }
+    else if(std::holds_alternative<Sls_us>(var))
+    {
+        auto &&s = std::get<Sls_us>(var);
+        delete s.ls;
+        delete s.us;
+    }
+    else if(std::holds_alternative<Slls_us>(var))
+    {
+        auto &&s = std::get<Slls_us>(var);
+        delete s.lls;
+        delete s.us;
+    }
+}
+
 }

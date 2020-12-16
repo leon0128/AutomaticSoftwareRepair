@@ -74,6 +74,10 @@ class HexadecimalEscapeSequence;
 class PreprocessingToken;
 class PPNumber;
 
+class UnsignedSuffix;
+class LongSuffix;
+class LongLongSuffix;
+
 struct Token
 {
     using Variant = std::variant<std::nullptr_t
@@ -788,6 +792,107 @@ struct PPNumber
     PPNumber(Args&&... args)
         : seq(std::forward<Args>(args)...){}
     ~PPNumber();
+};
+
+struct IntegerSuffix
+{
+    struct Sus_ls
+    {
+        UnsignedSuffix *us;
+        LongSuffix *ls;
+        constexpr Sus_ls(UnsignedSuffix *inus = nullptr
+            , LongSuffix *inls = nullptr) noexcept
+            : us(inus)
+            , ls(inls){}
+    };
+    struct Sus_lls
+    {
+        UnsignedSuffix *us;
+        LongLongSuffix *lls;
+        constexpr Sus_lls(UnsignedSuffix *inus = nullptr
+            , LongLongSuffix *inlls = nullptr) noexcept
+            : us(inus)
+            , lls(inlls){}
+    };
+    struct Sls_us
+    {
+        LongSuffix *ls;
+        UnsignedSuffix *us;
+        constexpr Sls_us(LongSuffix *inls = nullptr
+            , UnsignedSuffix *inus = nullptr) noexcept
+            : ls(inls)
+            , us(inus){}
+    };
+    struct Slls_us
+    {
+        LongLongSuffix *lls;
+        UnsignedSuffix *us;
+        constexpr Slls_us(LongLongSuffix *inlls = nullptr
+            , UnsignedSuffix *inus = nullptr) noexcept
+            : lls(inlls)
+            , us(inus){}
+    };
+
+    using Variant = std::variant<std::nullptr_t
+        , Sus_ls
+        , Sus_lls
+        , Sls_us
+        , Slls_us>;
+
+    Variant var;
+
+    template<class... Args>
+    IntegerSuffix(Args&&... args)
+        : var(std::forward<Args>(args)...){}
+    ~IntegerSuffix();
+};
+
+struct UnsignedSuffix
+{
+    enum class Tag : signed char
+    {
+        NONE
+        , u
+        , U
+    };
+
+    Tag tag;
+
+    constexpr UnsignedSuffix(Tag intag = Tag::NONE) noexcept
+        : tag(intag){}
+    ~UnsignedSuffix() = default;
+};
+
+struct LongSuffix
+{
+    enum class Tag : signed char
+    {
+        NONE
+        , l
+        , L
+    };
+
+    Tag tag;
+
+    constexpr LongSuffix(Tag intag = Tag::NONE) noexcept
+        : tag(intag){}
+    ~LongSuffix() = default;
+};
+
+struct LongLongSuffix
+{
+    enum class Tag : signed char
+    {
+        NONE
+        , ll
+        , LL
+    };
+
+    Tag tag;
+
+    constexpr LongLongSuffix(Tag intag = Tag::NONE) noexcept
+        : tag(intag){}
+    ~LongLongSuffix() = default;
 };
 
 }
