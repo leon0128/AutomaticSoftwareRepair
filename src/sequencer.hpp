@@ -13,6 +13,7 @@ class Sequencer
 {
 public:
     Sequencer(const std::string &filename);
+    ~Sequencer();
 
     bool execute();
 

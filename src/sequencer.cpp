@@ -12,6 +12,12 @@ Sequencer::Sequencer(const std::string &filename)
 {
 }
 
+Sequencer::~Sequencer()
+{
+    for(auto &&pt : mSeq)
+        delete pt;
+}
+
 bool Sequencer::execute()
 {
     std::string src;
