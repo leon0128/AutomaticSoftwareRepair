@@ -738,7 +738,7 @@ struct OctalEscapeSequence
 
     template<class... Args>
     OctalEscapeSequence(Args&&... args)
-        : seq(std::forward<args>...){}
+        : seq(std::forward<Args>(args)...){}
     ~OctalEscapeSequence();
 };
 
@@ -748,7 +748,7 @@ struct HexadecimalEscapeSequence
     
     template<class... Args>
     HexadecimalEscapeSequence(Args&&... args)
-        : seq(std::forward(args)...){}
+        : seq(std::forward<Args>(args)...){}
     ~HexadecimalEscapeSequence();
 };
 
