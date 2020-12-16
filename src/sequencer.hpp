@@ -23,6 +23,9 @@ private:
     bool openFile(std::string &src);
     bool sequencenize(const std::string &src);
 
+    void omitWS(const std::string &src
+        , std::size_t &idx) const;
+
     std::string mFile;
     std::vector<TOKEN::PreprocessingToken*> mSeq;
 };

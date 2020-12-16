@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <variant>
 #include <filesystem>
 
 #include "path.hpp"
@@ -43,11 +42,16 @@ bool Sequencer::openFile(std::string &src)
 
 bool Sequencer::sequencenize(const std::string &src)
 {
-    std::size_t idx;
-    for(TOKEN::PreprocessingToken *ppt = TOKENIZER::decPreprocessingToken(src, idx);
-        ppt != nullptr;
-        ppt = TOKENIZER::decPreprocessingToken(src, idx))
-        mSeq.push_back(ppt);
+    std::size_t idx = 0;
+    while(true)
+    {
+        omitWS(src, idx);
+        if(TOKEN::PreprocessingToken *pt = TOKENIZER::decPreprocessingToken(src, idx);
+            pt != nullptr)
+            mSeq.push_back(pt);
+        else
+            break;
+    }
     
     if(idx != src.size())
     {
@@ -59,4 +63,16 @@ bool Sequencer::sequencenize(const std::string &src)
     }
 
     return true;
+}
+
+void Sequencer::omitWS(const std::string &src
+    , std::size_t &idx) const
+{
+    while(idx < src.size()
+        && (src[idx] == ' '
+            || src[idx] == '\t'
+            || src[idx] == '\n'
+            || src[idx] == '\v'
+            || src[idx] == '\f'))
+        idx++;
 }
