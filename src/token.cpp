@@ -5,7 +5,7 @@ namespace TOKEN
 
 Token::~Token()
 {
-    if(std::holds_alternative<std::nullptr_t>(var))
+    if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Keyword*>(var))
         delete std::get<Keyword*>(var);
@@ -23,7 +23,7 @@ Identifier::~Identifier()
 {
     for(auto &&v : seq)
     {
-        if(std::holds_alternative<std::nullptr_t>(v))
+        if(std::holds_alternative<std::monostate>(v))
             ;
         else if(std::holds_alternative<IdentifierNondigit*>(v))
             delete std::get<IdentifierNondigit*>(v);
@@ -34,7 +34,7 @@ Identifier::~Identifier()
 
 Constant::~Constant()
 {
-    if(std::holds_alternative<std::nullptr_t>(var))
+    if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<IntegerConstant*>(var))
         delete std::get<IntegerConstant*>(var);
@@ -54,7 +54,7 @@ StringLiteral::~StringLiteral()
 
 IdentifierNondigit::~IdentifierNondigit()
 {
-    if(std::holds_alternative<std::nullptr_t>(var))
+    if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Nondigit*>(var))
         delete std::get<Nondigit*>(var);
@@ -64,7 +64,7 @@ IdentifierNondigit::~IdentifierNondigit()
 
 IntegerConstant::~IntegerConstant()
 {
-    if(std::holds_alternative<std::nullptr_t>(var))
+    if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Sdc_is>(var))
     {
@@ -88,7 +88,7 @@ IntegerConstant::~IntegerConstant()
 
 FloatingConstant::~FloatingConstant()
 {
-    if(std::holds_alternative<std::nullptr_t>(var))
+    if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<DecimalFloatingConstant*>(var))
         delete std::get<DecimalFloatingConstant*>(var);
@@ -114,7 +114,7 @@ SCharSequence::~SCharSequence()
 
 UniversalCharacterName::~UniversalCharacterName()
 {
-    if(std::holds_alternative<std::nullptr_t>(var))
+    if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Su_hq>(var))
     {
@@ -151,7 +151,7 @@ HexadecimalConstant::~HexadecimalConstant()
 
 DecimalFloatingConstant::~DecimalFloatingConstant()
 {
-    if(std::holds_alternative<std::nullptr_t>(var))
+    if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Sfc_ep_fs>(var))
     {
@@ -171,7 +171,7 @@ DecimalFloatingConstant::~DecimalFloatingConstant()
 
 HexadecimalFloatingConstant::~HexadecimalFloatingConstant()
 {
-    if(std::holds_alternative<std::nullptr_t>(var))
+    if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Shp_hfc_bep_fs>(var))
     {
@@ -199,7 +199,7 @@ CCharSequence::~CCharSequence()
 
 SChar::~SChar()
 {
-    if(std::holds_alternative<std::nullptr_t>(var)
+    if(std::holds_alternative<std::monostate>(var)
         || std::holds_alternative<char>(var))
         ;
     else if(std::holds_alternative<EscapeSequence*>(var))
@@ -214,7 +214,7 @@ HexQuad::~HexQuad()
 
 FractionalConstant::~FractionalConstant()
 {
-    if(std::holds_alternative<std::nullptr_t>(var))
+    if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Sds_ds>(var))
     {
@@ -243,7 +243,7 @@ DigitSequence::~DigitSequence()
 
 HexadecimalFractionalConstant::~HexadecimalFractionalConstant()
 {
-    if(std::holds_alternative<std::nullptr_t>(var))
+    if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Shds_hds>(var))
     {
@@ -272,7 +272,7 @@ HexadecimalDigitSequence::~HexadecimalDigitSequence()
 
 CChar::~CChar()
 {
-    if(std::holds_alternative<std::nullptr_t>(var)
+    if(std::holds_alternative<std::monostate>(var)
         || std::holds_alternative<char>(var))
         ;
     else if(std::holds_alternative<EscapeSequence*>(var))
@@ -281,7 +281,7 @@ CChar::~CChar()
 
 EscapeSequence::~EscapeSequence()
 {
-    if(std::holds_alternative<std::nullptr_t>(var))
+    if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<SimpleEscapeSequence*>(var))
         delete std::get<SimpleEscapeSequence*>(var);
@@ -307,7 +307,7 @@ HexadecimalEscapeSequence::~HexadecimalEscapeSequence()
 
 PreprocessingToken::~PreprocessingToken()
 {
-    if(std::holds_alternative<std::nullptr_t>(var))
+    if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Identifier*>(var))
         delete std::get<Identifier*>(var);
@@ -325,7 +325,7 @@ PPNumber::~PPNumber()
 {
     for(auto &&v : seq)
     {
-        if(std::holds_alternative<std::nullptr_t>(v)
+        if(std::holds_alternative<std::monostate>(v)
             || std::holds_alternative<Tag>(v))
             ;
         else if(std::holds_alternative<Digit*>(v))
@@ -339,7 +339,7 @@ PPNumber::~PPNumber()
 
 IntegerSuffix::~IntegerSuffix()
 {
-    if(std::holds_alternative<std::nullptr_t>(var))
+    if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Sus_ls>(var))
     {

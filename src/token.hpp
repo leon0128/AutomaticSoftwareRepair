@@ -80,7 +80,7 @@ class LongLongSuffix;
 
 struct Token
 {
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , Keyword*
         , Identifier*
         , Constant*
@@ -122,7 +122,7 @@ struct Keyword
 
 struct Identifier
 {
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , IdentifierNondigit*
         , Digit*>;
     
@@ -136,7 +136,7 @@ struct Identifier
 
 struct Constant
 {
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , IntegerConstant*
         , FloatingConstant*
         , EnumerationConstant*
@@ -190,7 +190,7 @@ struct Punctuator
 
 struct IdentifierNondigit
 {
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , Nondigit*
         , UniversalCharacterName*>;
     
@@ -241,7 +241,7 @@ struct IntegerConstant
             , is(inis){}
     };
 
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , Sdc_is
         , Soc_is
         , Shc_is>;
@@ -256,7 +256,7 @@ struct IntegerConstant
 
 struct FloatingConstant
 {
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , DecimalFloatingConstant*
         , HexadecimalFloatingConstant*>;
     
@@ -352,7 +352,7 @@ struct UniversalCharacterName
             , hq1(inhq1){}
     };
 
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , Su_hq
         , SU_hq_hq>;
     
@@ -427,7 +427,7 @@ struct DecimalFloatingConstant
             , fs(infs){}
     };
 
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , Sfc_ep_fs
         , Sds_ep_fs>;
 
@@ -472,7 +472,7 @@ struct HexadecimalFloatingConstant
             , fs(infs){}
     };
 
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , Shp_hfc_bep_fs
         , Shp_hds_bep_fs>;
 
@@ -496,7 +496,7 @@ struct CCharSequence
 
 struct SChar
 {
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , char
         , EscapeSequence*>;
 
@@ -573,7 +573,7 @@ struct FractionalConstant
         DigitSequence *ds;
     };
 
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , Sds_ds
         , Sds>;
     
@@ -641,7 +641,7 @@ struct HexadecimalFractionalConstant
             : hds(inhds){}
     };
 
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , Shds_hds
         , Shds>;
 
@@ -695,7 +695,7 @@ struct FloatingSuffix
 
 struct CChar
 {
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , char
         , EscapeSequence*>;
 
@@ -709,7 +709,7 @@ struct CChar
 
 struct EscapeSequence
 {
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , SimpleEscapeSequence*
         , OctalEscapeSequence*
         , HexadecimalEscapeSequence*
@@ -754,7 +754,7 @@ struct HexadecimalEscapeSequence
 
 struct PreprocessingToken
 {
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , Identifier*
         , PPNumber*
         , CharacterConstant*
@@ -780,7 +780,7 @@ struct PPNumber
         , p
         , P
     };
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , Digit*
         , Tag
         , IdentifierNondigit*
@@ -833,7 +833,7 @@ struct IntegerSuffix
             , us(inus){}
     };
 
-    using Variant = std::variant<std::nullptr_t
+    using Variant = std::variant<std::monostate
         , Sus_ls
         , Sus_lls
         , Sls_us
