@@ -7,28 +7,37 @@
 namespace TOKEN
 {
     class PreprocessingToken;
+    class EscapeSequence;
 }
 
 class Sequencer
 {
 public:
+    using Sequence = std::vector<TOKEN::PreprocessingToken*>;
+
     Sequencer(const std::string &filename);
     ~Sequencer();
+    Sequencer(const Sequencer&) = delete;
+    Sequencer(Sequencer&&) = delete;
 
     bool execute();
 
-    std::vector<TOKEN::PreprocessingToken*> &sep() noexcept
+    const Sequence &seq() const noexcept
         {return mSeq;}
 
 private:
     bool openFile(std::string &src);
     bool sequencenize(const std::string &src);
+    bool convertCharacter();
+    bool concatenateStringLiteral();
 
     void omitWS(const std::string &src
         , std::size_t &idx) const;
+    bool convertEscapeSequence(TOKEN::EscapeSequence*
+        , char &res) const;
 
     std::string mFile;
-    std::vector<TOKEN::PreprocessingToken*> mSeq;
+    Sequence mSeq;
 };
 
 #endif
