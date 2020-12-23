@@ -10,73 +10,127 @@ namespace TOKEN
 {
 
 class Token;
-
 class Keyword;
 class Identifier;
 class Constant;
 class StringLiteral;
 class Punctuator;
-
 class IdentifierNondigit;
 class Digit;
-
 class IntegerConstant;
 class FloatingConstant;
 class EnumerationConstant;
 class CharacterConstant;
-
 class EncodingPrefix;
 class SCharSequence;
-
 class Nondigit;
 class UniversalCharacterName;
-
 class DecimalConstant;
 class IntegerSuffix;
 class OctalConstant;
 class HexadecimalConstant;
-
 class DecimalFloatingConstant;
 class HexadecimalFloatingConstant;
-
 class CCharSequence;
-
 class SChar;
-
 class HexQuad;
-
 class NonzeroDigit;
-
 class OctalDigit;
-
 class HexadecimalPrefix;
 class HexadecimalDigit;
-
 class FractionalConstant;
 class ExponentPart;
 class FloatingSuffix;
 class DigitSequence;
-
 class HexadecimalFractionalConstant;
 class BinaryExponentPart;
 class HexadecimalDigitSequence;
-
 class Sign;
-
 class CChar;
-
 class EscapeSequence;
-
 class SimpleEscapeSequence;
 class OctalEscapeSequence;
 class HexadecimalEscapeSequence;
-
 class PreprocessingToken;
 class PPNumber;
-
 class UnsignedSuffix;
 class LongSuffix;
 class LongLongSuffix;
+class TranslationUnit;
+class ExternalDeclaration;
+class FunctionDefinition;
+class Declaration;
+class DeclarationSpecifiers;
+class Declarator;
+class DeclarationList;
+class CompoundStatement;
+class InitDeclaratorList;
+class StaticAssertDeclaration;
+class StorageClassSpecifier;
+class TypeSpecifier;
+class TypeQualifier;
+class FunctionSpecifier;
+class AlignmentSpecifier;
+class Pointer;
+class DirectDeclarator;
+class BlockItemList;
+class InitDeclarator;
+class ConstantExpression;
+class AtomicTypeSpecifier;
+class StructOrUnionSpecifier;
+class EnumSpecifier;
+class TypedefName;
+class TypeName;
+class TypeQualifierList;
+class AssignmentExpression;
+class ParameterTypeList;
+class IdentifierList;
+class BlockItem;
+class Initializer;
+class ConditionalExpression;
+class StructOrUnion;
+class StructDeclarationList;
+class EnumeratorList;
+class SpecifierQualifierList;
+class AbstractDeclarator;
+class UnaryExpression;
+class AssignmentOperator;
+class ParameterList;
+class Statement;
+class InitializerList;
+class LogicalORExpression;
+class Expression;
+class StructDeclaration;
+class Enumerator;
+class DirectAbstractDeclarator;
+class PostfixExpression;
+class UnaryOperator;
+class CastExpression;
+class ParameterDeclaration;
+class LabeledStatement;
+class ExpressionStatement;
+class SelectionStatement;
+class IterationStatement;
+class JumpStatement;
+class Designation;
+class LogicalANDExpression;
+class StructDeclaratorList;
+class PrimaryExpression;
+class ArgumentExpressionList;
+class DesignatorList;
+class InclusiveORExpression;
+class StructDeclarator;
+class GenericSelection;
+class Designator;
+class ExclusiveORExpression;
+class GenericAssocList;
+class ANDExpression;
+class GenericAssociation;
+class EqualityExpression;
+class RelationalExpression;
+class ShiftExpression;
+class AdditiveExpression;
+class MultiplicativeExpression;
 
 struct Token
 {
@@ -893,6 +947,1685 @@ struct LongLongSuffix
     constexpr LongLongSuffix(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~LongLongSuffix() = default;
+};
+
+struct TranslationUnit
+{
+    std::vector<ExternalDeclaration*> seq;
+
+    template<class ...Args>
+    TranslationUnit(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~TranslationUnit();
+};
+
+struct ExternalDeclaration
+{
+    using Var = std::variant<std::monostate
+        , FunctionDefinition*
+        , Declaration*>;
+    
+    Var var;
+    
+    template<class ...Args>
+    ExternalDeclaration(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~ExternalDeclaration();
+};
+
+struct FunctionDefinition
+{
+    DeclarationSpecifiers *ds;
+    Declarator *d;
+    DeclarationList *dl;
+    CompoundStatement *cs;
+
+    constexpr FunctionDefinition(DeclarationSpecifiers *inds = nullptr
+        , Declarator *ind = nullptr
+        , DeclarationList *indl = nullptr
+        , CompoundStatement *incs = nullptr) noexcept
+        : ds(inds)
+        , d(ind)
+        , dl(indl)
+        , cs(incs){}
+    ~FunctionDefinition();
+};
+
+struct Declaration
+{
+    struct Sds_idl
+    {
+        DeclarationSpecifiers *ds;
+        InitDeclaratorList *idl;
+        constexpr Sds_idl(DeclarationSpecifiers *inds = nullptr
+            , InitDeclaratorList *inidl = nullptr) noexcept
+            : ds(inds)
+            , idl(inidl){}
+    };
+    struct Ssad
+    {
+        StaticAssertDeclaration *sad;
+        constexpr Ssad(StaticAssertDeclaration *insad = nullptr) noexcept
+            : sad(insad){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sds_idl
+        , Ssad>;
+
+    Var var;
+    
+    template<class ...Args>
+    Declaration(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~Declaration();
+};
+
+struct DeclarationSpecifiers
+{
+    using Var = std::variant<std::monostate
+        , StorageClassSpecifier*
+        , TypeSpecifier*
+        , TypeQualifier*
+        , FunctionSpecifier*
+        , AlignmentSpecifier*>;
+    
+    std::vector<Var> seq;
+
+    template<class ...Args>
+    DeclarationSpecifiers(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~DeclarationSpecifiers();
+};
+
+struct Declarator
+{
+    Pointer *p;
+    DirectDeclarator *dd;
+
+    constexpr Declarator(Pointer *inp = nullptr
+        , DirectDeclarator *indd = nullptr) noexcept
+        : p(inp)
+        , dd(indd){}
+    ~Declarator();
+};
+
+struct DeclarationList
+{
+    std::vector<Declaration*> seq;
+
+    template<class ...Args>
+    DeclarationList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~DeclarationList();
+};
+
+struct CompoundStatement
+{
+    BlockItemList *bil;
+
+    CompoundStatement(BlockItemList *inbil = nullptr) noexcept
+        : bil(inbil){}
+    ~CompoundStatement();
+};
+
+struct InitDeclaratorList
+{
+    std::vector<InitDeclarator*> seq;
+
+    template<class ...Args>
+    InitDeclaratorList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~InitDeclaratorList();
+};
+
+struct StaticAssertDeclaration
+{
+    ConstantExpression *ce;
+    StringLiteral *sl;
+
+    constexpr StaticAssertDeclaration(ConstantExpression *ince = nullptr
+        , StringLiteral *insl = nullptr) noexcept
+        : ce(ince)
+        , sl(insl){}
+    ~StaticAssertDeclaration();
+};
+
+struct StorageClassSpecifier
+{
+    enum class Tag : signed char
+    {
+        NONE
+        , TYPEDEF
+        , EXTERN
+        , STATIC
+        , THREAD_LOCAL
+        , AUTO
+        , REGISTER
+    };
+
+    Tag tag;
+
+    constexpr StorageClassSpecifier(Tag intag = Tag::NONE) noexcept
+        : tag(intag){}
+    ~StorageClassSpecifier() = default;
+};
+
+struct TypeSpecifier
+{
+    enum class Tag : signed char
+    {
+        NONE
+        , VOID
+        , CHAR
+        , SHORT
+        , INT
+        , LONG
+        , FLOAT
+        , DOUBLE
+        , SIGNED
+        , UNSIGNED
+        , BOOL
+        , COMPLEX
+    };
+
+    using Var = std::variant<std::monostate
+        , Tag
+        , AtomicTypeSpecifier*
+        , StructOrUnionSpecifier*
+        , EnumSpecifier*
+        , TypedefName*>;
+
+    Var var;
+
+    template<class ...Args>
+    TypeSpecifier(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~TypeSpecifier();
+};
+
+struct TypeQualifier
+{
+    enum class Tag : signed char
+    {
+        NONE
+        , CONST
+        , RESTRICT
+        , VOLATILE
+        , ATOMIC
+    };
+
+    Tag tag;
+
+    constexpr TypeQualifier(Tag intag = Tag::NONE) noexcept
+        : tag(intag){}
+    ~TypeQualifier() = default;
+};
+
+struct FunctionSpecifier
+{
+    enum class Tag : signed char
+    {
+        NONE
+        , INLINE
+        , NORETURN
+    };
+
+    Tag tag;
+
+    constexpr FunctionSpecifier(Tag intag = Tag::NONE) noexcept
+        : tag(intag){}
+    ~FunctionSpecifier() = default;
+};
+
+struct AlignmentSpecifier
+{
+    using Var = std::variant<std::monostate
+        , TypeName*
+        , ConstantExpression*>;
+
+    Var var;
+
+    template<class ...Args>
+    AlignmentSpecifier(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~AlignmentSpecifier();
+};
+
+struct Pointer
+{
+    struct Stql
+    {
+        TypeQualifierList *tql;
+        constexpr Stql(TypeQualifierList *intql = nullptr) noexcept
+            : tql(intql){}
+    };
+    struct Stql_p
+    {
+        TypeQualifierList *tql;
+        Pointer *p;
+        constexpr Stql_p(TypeQualifierList *intql = nullptr
+            , Pointer *inp = nullptr) noexcept
+            : tql(intql)
+            , p(inp){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Stql
+        , Stql_p>;
+
+    Var var;
+
+    template<class ...Args>
+    Pointer(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~Pointer();
+};
+
+struct DirectDeclarator
+{
+    struct Si
+    {
+        Identifier *i;
+        constexpr Si(Identifier *ini = nullptr) noexcept
+            : i(ini){}
+    };
+    struct Sd
+    {
+        Declarator *d;
+        constexpr Sd(Declarator *ind = nullptr) noexcept
+            : d(ind){}
+    };
+    struct Stql_ae
+    {
+        TypeQualifierList *tql;
+        AssignmentExpression *ae;
+        bool hasStatic;
+        constexpr Stql_ae(TypeQualifierList *intql = nullptr
+            , AssignmentExpression *inae = nullptr
+            , bool inHasStatic = false) noexcept
+            : tql(intql)
+            , ae(inae)
+            , hasStatic(inHasStatic){}
+    };
+    struct Stql
+    {
+        TypeQualifierList *tql;
+        constexpr Stql(TypeQualifierList *intql = nullptr) noexcept
+            : tql(intql){}
+    };
+    struct Sptl
+    {
+        ParameterTypeList *ptl;
+        constexpr Sptl(ParameterTypeList *inptl = nullptr) noexcept
+            : ptl(inptl){}
+    };
+    struct Sil
+    {
+        IdentifierList *il;
+        constexpr Sil(IdentifierList *inil = nullptr) noexcept
+            : il(inil){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Si
+        , Sd
+        , Stql_ae
+        , Stql
+        , Sptl
+        , Sil>;
+
+    std::vector<Var> seq;
+
+    template<class ...Args>
+    DirectDeclarator(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~DirectDeclarator();
+};
+
+struct BlockItemList
+{
+    std::vector<BlockItem*> seq;
+
+    template<class ...Args>
+    BlockItemList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~BlockItemList();
+};
+
+struct InitDeclarator
+{
+    struct Sd
+    {
+        Declarator *d;
+        constexpr Sd(Declarator *ind = nullptr) noexcept
+            : d(ind){}
+    };
+    struct Sd_i
+    {
+        Declarator *d;
+        Initializer *i;
+        constexpr Sd_i(Declarator *ind = nullptr
+            , Initializer *ini = nullptr) noexcept
+            : d(ind)
+            , i(ini){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sd
+        , Sd_i>;
+
+    Var var;
+
+    template<class ...Args>
+    InitDeclarator(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~InitDeclarator();
+};
+
+struct ConstantExpression
+{
+    ConditionalExpression *ce;
+
+    constexpr ConstantExpression(ConditionalExpression *ince = nullptr) noexcept
+        : ce(ince){}
+    ~ConstantExpression();
+};
+
+struct AtomicTypeSpecifier
+{
+    TypeName *tn;
+
+    constexpr AtomicTypeSpecifier(TypeName *intn = nullptr) noexcept
+        : tn(intn){}
+    ~AtomicTypeSpecifier();
+};
+
+struct StructOrUnionSpecifier
+{
+    struct Ssou_i_sdl
+    {
+        StructOrUnion *sou;
+        Identifier *i;
+        StructDeclarationList *sdl;
+        constexpr Ssou_i_sdl(StructOrUnion *insou = nullptr
+            , Identifier *ini = nullptr
+            , StructDeclarationList *insdl = nullptr) noexcept
+            : sou(insou)
+            , i(ini)
+            , sdl(insdl){}
+    };
+    struct Ssou_i
+    {
+        StructOrUnion *sou;
+        Identifier *i;
+        constexpr Ssou_i(StructOrUnion *insou = nullptr
+            , Identifier *ini = nullptr) noexcept
+            : sou(insou)
+            , i(ini){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Ssou_i_sdl
+        , Ssou_i>;
+
+    Var var;
+
+    template<class ...Args>
+    StructOrUnionSpecifier(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~StructOrUnionSpecifier();
+};
+
+struct EnumSpecifier
+{
+    struct Si_el
+    {
+        Identifier *i;
+        EnumeratorList *el;
+        constexpr Si_el(Identifier *ini = nullptr
+            , EnumeratorList *inel = nullptr) noexcept
+            : i(ini)
+            , el(inel){}
+    };
+    struct Si
+    {
+        Identifier *i;
+        constexpr Si(Identifier *ini = nullptr) noexcept
+            : i(ini){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Si_el
+        , Si>;
+    
+    Var var;
+
+    template<class ...Args>
+    EnumSpecifier(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~EnumSpecifier();
+};
+
+struct TypedefName
+{
+    Identifier *i;
+
+    constexpr TypedefName(Identifier *ini = nullptr) noexcept
+        : i(ini){}
+    ~TypedefName();
+};
+
+struct TypeName
+{
+    SpecifierQualifierList *sql;
+    AbstractDeclarator *ad;
+
+    constexpr TypeName(SpecifierQualifierList *insql = nullptr
+        , AbstractDeclarator *inad = nullptr) noexcept
+        : sql(insql)
+        , ad(inad){}
+    ~TypeName();
+};
+
+struct TypeQualifierList
+{
+    std::vector<TypeQualifier*> seq;
+
+    template<class ...Args>
+    TypeQualifierList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~TypeQualifierList();
+};
+
+struct AssignmentExpression
+{
+    struct Sce
+    {
+        ConditionalExpression *ce;
+        constexpr Sce(ConditionalExpression *ince = nullptr) noexcept
+            : ce(ince){}
+    };
+    struct Sue_ao_ae
+    {
+        UnaryExpression *ue;
+        AssignmentOperator *ao;
+        AssignmentExpression *ae;
+        constexpr Sue_ao_ae(UnaryExpression *inue = nullptr
+            , AssignmentOperator *inao = nullptr
+            , AssignmentExpression *inae = nullptr) noexcept
+            : ue(inue)
+            , ao(inao)
+            , ae(inae){}
+    };
+    
+    using Var = std::variant<std::monostate
+        , Sce
+        , Sue_ao_ae>;
+    
+    Var var;
+
+    template<class ...Args>
+    AssignmentExpression(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~AssignmentExpression();
+};
+
+struct ParameterTypeList
+{
+    ParameterList *pl;
+    bool isValiable;
+
+    constexpr ParameterTypeList(ParameterList *inpl = nullptr
+        , bool inIsValiable = false) noexcept
+        : pl(inpl)
+        , isValiable(inIsValiable){}
+    ~ParameterTypeList();
+};
+
+struct IdentifierList
+{
+    std::vector<Identifier*> seq;
+
+    template<class ...Args>
+    IdentifierList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~IdentifierList();
+};
+
+struct BlockItem
+{
+    using Var = std::variant<std::monostate
+        , Declaration*
+        , Statement*>;
+
+    Var var;
+
+    template<class ...Args>
+    BlockItem(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~BlockItem();
+};
+
+struct Initializer
+{
+    using Var = std::variant<std::monostate
+        , AssignmentExpression*
+        , InitializerList*>;
+    
+    Var var;
+
+    template<class ...Args>
+    Initializer(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~Initializer();
+};
+
+struct ConditionalExpression
+{
+    struct Slore
+    {
+        LogicalORExpression *lore;
+        constexpr Slore(LogicalORExpression *inlore = nullptr) noexcept
+            : lore(inlore){}
+    };
+    struct Slore_e_ce
+    {
+        LogicalORExpression *lore;
+        Expression *e;
+        ConditionalExpression *ce;
+        constexpr Slore_e_ce(LogicalORExpression *inlore = nullptr
+            , Expression *ine = nullptr
+            , ConditionalExpression *ince = nullptr) noexcept
+            : lore(inlore)
+            , e(ine)
+            , ce(ince){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Slore
+        , Slore_e_ce>;
+
+    Var var;
+
+    template<class ...Args>
+    ConditionalExpression(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~ConditionalExpression();
+};
+
+struct StructOrUnion
+{
+    enum class Tag : signed char
+    {
+        NONE
+        , STRUCT
+        , UNION
+    };
+
+    Tag tag;
+
+    constexpr StructOrUnion(Tag intag = Tag::NONE) noexcept
+        : tag(intag){}
+    ~StructOrUnion() = default;
+};
+
+struct StructDeclarationList
+{
+    std::vector<StructDeclaration*> seq;
+
+    template<class ...Args>
+    StructDeclarationList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~StructDeclarationList();
+};
+
+struct EnumeratorList
+{
+    std::vector<Enumerator*> seq;
+
+    template<class ...Args>
+    EnumeratorList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~EnumeratorList();
+};
+
+struct SpecifierQualifierList
+{
+    using Var = std::variant<std::monostate
+        , TypeSpecifier*
+        , TypeQualifier*>;
+
+    std::vector<Var> seq;
+
+    template<class ...Args>
+    SpecifierQualifierList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~SpecifierQualifierList();
+};
+
+struct AbstractDeclarator
+{
+    struct Sp
+    {
+        Pointer *p;
+        constexpr Sp(Pointer *inp = nullptr) noexcept
+            : p(inp){}
+    };
+    struct Sp_dad
+    {
+        Pointer *p;
+        DirectAbstractDeclarator *dad;
+        constexpr Sp_dad(Pointer *inp = nullptr
+            , DirectAbstractDeclarator *indad = nullptr) noexcept
+            : p(inp)
+            , dad(indad){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sp
+        , Sp_dad>;
+    
+    Var var;
+
+    template<class ...Args>
+    AbstractDeclarator(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~AbstractDeclarator();
+};
+
+struct UnaryExpression
+{
+    struct Spe
+    {
+        PostfixExpression *pe;
+        constexpr Spe(PostfixExpression *inpe = nullptr) noexcept
+            : pe(inpe){}
+    };
+    struct Si_ue
+    {
+        UnaryExpression *ue;
+        constexpr Si_ue(UnaryExpression *inue = nullptr) noexcept
+            : ue(inue){}
+    };
+    struct Sd_ue
+    {
+        UnaryExpression *ue;
+        constexpr Sd_ue(UnaryExpression *inue = nullptr) noexcept
+            : ue(inue){}
+    };
+    struct Suo_ce
+    {
+        UnaryOperator *uo;
+        CastExpression *ce;
+        constexpr Suo_ce(UnaryOperator *inuo = nullptr
+            , CastExpression *ince = nullptr) noexcept
+            : uo(inuo)
+            , ce(ince){}
+    };
+    struct Ss_ue
+    {
+        UnaryExpression *ue;
+        constexpr Ss_ue(UnaryExpression *inue = nullptr) noexcept
+            : ue(inue){}
+    };
+    struct Ss_tn
+    {
+        TypeName *tn;
+        constexpr Ss_tn(TypeName *intn = nullptr) noexcept
+            : tn(intn){}
+    };
+    struct Sa_tn
+    {
+        TypeName *tn;
+        constexpr Sa_tn(TypeName *intn = nullptr) noexcept
+            : tn(intn){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Spe
+        , Si_ue
+        , Sd_ue
+        , Suo_ce
+        , Ss_ue
+        , Ss_tn
+        , Sa_tn>;
+
+    Var var;
+
+    template<class ...Args>
+    UnaryExpression(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~UnaryExpression();
+};
+
+struct AssignmentOperator
+{
+    enum class Tag : signed char
+    {
+        NONE
+        , ASSIGNMENT
+        , MULTIPLICATION
+        , DIVISION
+        , REMAINDER
+        , ADDITION
+        , SUBSTRACTION
+        , LEFT_SHIFT
+        , RIGHT_SHIFT
+        , AND
+        , XOR
+        , OR
+    };
+
+    Tag tag;
+
+    constexpr AssignmentOperator(Tag intag = Tag::NONE) noexcept
+        : tag(intag){}
+    ~AssignmentOperator() = default;
+};
+
+struct ParameterList
+{
+    std::vector<ParameterDeclaration*> seq;
+
+    template<class ...Args>
+    ParameterList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~ParameterList();
+};
+
+struct Statement
+{
+    using Var = std::variant<std::monostate
+        , LabeledStatement*
+        , CompoundStatement*
+        , ExpressionStatement*
+        , SelectionStatement*
+        , IterationStatement*
+        , JumpStatement*>;
+
+    Var var;
+
+    template<class ...Args>
+    Statement(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~Statement();
+};
+
+struct InitializerList
+{
+    struct Sd_i
+    {
+        Designation *d;
+        Initializer *i;
+        constexpr Sd_i(Designation *ind = nullptr
+            , Initializer *ini = nullptr) noexcept
+            : d(ind)
+            , i(ini){}
+    };
+
+    std::vector<Sd_i> seq;
+
+    template<class ...Args>
+    InitializerList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~InitializerList();
+};
+
+struct LogicalORExpression
+{
+    std::vector<LogicalANDExpression*> seq;
+
+    template<class ...Args>
+    LogicalORExpression(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~LogicalORExpression();
+};
+
+struct Expression
+{
+    std::vector<AssignmentExpression*> seq;
+
+    template<class ...Args>
+    Expression(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~Expression();
+};
+
+struct StructDeclaration
+{
+    struct Ssql_sdl
+    {
+        SpecifierQualifierList *sql;
+        StructDeclaratorList *sdl;
+        constexpr Ssql_sdl(SpecifierQualifierList *insql = nullptr
+            , StructDeclaratorList *insdl = nullptr) noexcept
+            : sql(insql)
+            , sdl(insdl){}
+    };
+    struct Ssad
+    {
+        StaticAssertDeclaration *sad;
+        constexpr Ssad(StaticAssertDeclaration *insad) noexcept
+            : sad(insad){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Ssql_sdl
+        , Ssad>;
+
+    Var var;
+
+    template<class ...Args>
+    StructDeclaration(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~StructDeclaration();
+};
+
+struct Enumerator
+{
+    struct Sec
+    {
+        EnumerationConstant *ec;
+        constexpr Sec(EnumerationConstant *inec = nullptr) noexcept
+            : ec(inec){}
+    };
+    struct Sec_ce
+    {
+        EnumerationConstant *ec;
+        ConstantExpression *ce;
+        constexpr Sec_ce(EnumerationConstant *inec = nullptr
+            , ConstantExpression *ince = nullptr) noexcept
+            : ec(inec)
+            , ce(ince){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sec
+        , Sec_ce>;
+
+    Var var;
+
+    template<class ...Args>
+    Enumerator(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~Enumerator();
+};
+
+struct DirectAbstractDeclarator
+{
+    struct Sad
+    {
+        AbstractDeclarator *ad;
+        constexpr Sad(AbstractDeclarator *inad = nullptr) noexcept
+            : ad(inad){}
+    };
+    struct Stql_ae
+    {
+        TypeQualifierList *tql;
+        AssignmentExpression *ae;
+        bool hasStatic;
+        constexpr Stql_ae(TypeQualifierList *intql = nullptr
+            , AssignmentExpression *inae = nullptr
+            , bool inHasStatic = false) noexcept
+            : tql(intql)
+            , ae(inae)
+            ,hasStatic(inHasStatic){}
+    };
+    struct Sp
+    {
+        constexpr Sp() noexcept{}
+    };
+    struct Sptl
+    {
+        ParameterTypeList *ptl;
+        constexpr Sptl(ParameterTypeList *inptl = nullptr) noexcept
+            : ptl(inptl){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sad
+        , Stql_ae
+        , Sp
+        , Sptl>;
+
+    std::vector<Var> seq;
+
+    template<class ...Args>
+    DirectAbstractDeclarator(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~DirectAbstractDeclarator();
+};
+
+struct PostfixExpression
+{
+    struct Spe
+    {
+        PrimaryExpression *pe;
+        constexpr Spe(PrimaryExpression *inpe = nullptr) noexcept
+            : pe(inpe){}
+    };
+    struct Se
+    {
+        Expression *e;
+        constexpr Se(Expression *ine = nullptr) noexcept
+            : e(ine){}
+    };
+    struct Sael
+    {
+        ArgumentExpressionList *ael;
+        constexpr Sael(ArgumentExpressionList *inael = nullptr) noexcept
+            : ael(inael){}
+    };
+    struct Sp_i
+    {
+        Identifier *i;
+        constexpr Sp_i(Identifier *ini = nullptr) noexcept
+            : i(ini){}
+    };
+    struct Sa_i
+    {
+        Identifier *i;
+        constexpr Sa_i(Identifier *ini = nullptr) noexcept
+            : i(ini){}
+    };
+    struct Si
+    {
+        constexpr Si() noexcept{}
+    };
+    struct Sd
+    {
+        constexpr Sd() noexcept{}
+    };
+    struct Stn_il
+    {
+        TypeName *tn;
+        IdentifierList *il;
+        constexpr Stn_il(TypeName *intn = nullptr
+            , IdentifierList *inil = nullptr) noexcept
+            : tn(intn)
+            , il(inil){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Spe
+        , Se
+        , Sael
+        , Sp_i
+        , Sa_i
+        , Si
+        , Sd
+        , Stn_il>;
+    
+    std::vector<Var> seq;
+
+    template<class ...Args>
+    PostfixExpression(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~PostfixExpression();
+};
+
+struct UnaryOperator
+{
+    enum class Tag : signed char
+    {
+        NONE
+        , ADDRESS
+        , POINTER
+        , PLUS
+        , MINUS
+        , COMPLEMENT
+        , NOT
+    };
+
+    Tag tag;
+
+    constexpr UnaryOperator(Tag intag = Tag::NONE) noexcept
+        : tag(intag){}
+    ~UnaryOperator() = default;
+};
+
+struct CastExpression
+{
+    struct Sue
+    {
+        UnaryExpression *ue;
+        constexpr Sue(UnaryExpression *inue = nullptr) noexcept
+            : ue(inue){}
+    };
+    struct Stn_ce
+    {
+        TypeName *tn;
+        CastExpression *ce;
+        constexpr Stn_ce(TypeName *intn = nullptr
+            , CastExpression *ince = nullptr) noexcept
+            : tn(intn)
+            , ce(ince){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sue
+        , Stn_ce>;
+
+    Var var;
+
+    template<class ...Args>
+    CastExpression(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~CastExpression();
+};
+
+struct ParameterDeclaration
+{
+    struct Sds_d
+    {
+        DeclarationSpecifiers *ds;
+        Declarator *d;
+        constexpr Sds_d(DeclarationSpecifiers *inds = nullptr
+            , Declarator *ind = nullptr) noexcept
+            : ds(inds)
+            , d(ind){}
+    };
+    struct Sds_ad
+    {
+        DeclarationSpecifiers *ds;
+        AbstractDeclarator *ad;
+        constexpr Sds_ad(DeclarationSpecifiers *inds = nullptr
+            , AbstractDeclarator *inad = nullptr) noexcept
+            : ds(inds)
+            , ad(inad){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sds_d
+        , Sds_ad>;
+
+    Var var;
+
+    template<class ...Args>
+    ParameterDeclaration(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~ParameterDeclaration();
+};
+
+struct LabeledStatement
+{
+    struct Si_s
+    {
+        Identifier *i;
+        Statement *s;
+        constexpr Si_s(Identifier *ini = nullptr
+            , Statement *ins = nullptr) noexcept
+            : i(ini)
+            , s(ins){}
+    };
+    struct Sce_s
+    {
+        ConstantExpression *ce;
+        Statement *s;
+        constexpr Sce_s(ConstantExpression *ince = nullptr
+            , Statement *ins = nullptr) noexcept
+            : ce(ince)
+            , s(ins){}
+    };
+    struct Ss
+    {
+        Statement *s;
+        constexpr Ss(Statement *ins = nullptr) noexcept
+            : s(ins){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Si_s
+        , Sce_s
+        , Ss>;
+
+    Var var;
+
+    template<class ...Args>
+    LabeledStatement(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~LabeledStatement();
+};
+
+struct ExpressionStatement
+{
+    Expression *e;
+    
+    constexpr ExpressionStatement(Expression *ine = nullptr) noexcept
+        : e(ine){}
+    ~ExpressionStatement();
+};
+
+struct SelectionStatement
+{
+    struct Si_e_s
+    {
+        Expression *e;
+        Statement *s;
+        constexpr Si_e_s(Expression *ine = nullptr
+            , Statement *ins = nullptr) noexcept
+            : e(ine)
+            , s(ins){}
+    };
+    struct Si_e_s_s
+    {
+        Expression *e;
+        Statement *s0;
+        Statement *s1;
+        constexpr Si_e_s_s(Expression *ine = nullptr
+            , Statement *ins0 = nullptr
+            , Statement *ins1 = nullptr) noexcept
+            : e(ine)
+            , s0(ins0)
+            , s1(ins1){}
+    };
+    struct Ss_e_s
+    {
+        Expression *e;
+        Statement *s;
+        constexpr Ss_e_s(Expression *ine = nullptr
+            , Statement *ins = nullptr) noexcept
+            : e(ine)
+            , s(ins){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Si_e_s
+        , Si_e_s_s
+        , Ss_e_s>;
+    
+    Var var;
+
+    template<class ...Args>
+    SelectionStatement(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~SelectionStatement();
+};
+
+struct IterationStatement
+{
+    struct Sw_e_s
+    {
+        Expression *e;
+        Statement *s;
+        constexpr Sw_e_s(Expression *ine = nullptr
+            , Statement *ins = nullptr) noexcept
+            : e(ine)
+            , s(ins){}
+    };
+    struct Sd_s_e
+    {
+        Statement *s;
+        Expression *e;
+        constexpr Sd_s_e(Statement *ins = nullptr
+            , Expression *ine = nullptr) noexcept
+            : s(ins)
+            , e(ine){}
+    };
+    struct Sf_e_e_e_s
+    {
+        Expression *e0;
+        Expression *e1;
+        Expression *e2;
+        Statement *s;
+        constexpr Sf_e_e_e_s(Expression *ine0 = nullptr
+            , Expression *ine1 = nullptr
+            , Expression *ine2 = nullptr
+            , Statement *ins = nullptr) noexcept
+            : e0(ine0)
+            , e1(ine1)
+            , e2(ine2)
+            , s(ins){}
+    };
+    struct Sf_d_e_e_s
+    {
+        Declaration *d;
+        Expression *e0;
+        Expression *e1;
+        Statement *s;
+        constexpr Sf_d_e_e_s(Declaration *ind = nullptr
+            , Expression *ine0 = nullptr
+            , Expression *ine1 = nullptr
+            , Statement *ins = nullptr) noexcept
+            : d(ind)
+            , e0(ine0)
+            , e1(ine1)
+            , s(ins){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sw_e_s
+        , Sd_s_e
+        , Sf_e_e_e_s
+        , Sf_d_e_e_s>;
+
+    Var var;
+
+    template<class ...Args>
+    IterationStatement(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~IterationStatement();
+};
+
+struct JumpStatement
+{
+    struct Sg_i
+    {
+        Identifier *i;
+        constexpr Sg_i(Identifier *ini = nullptr) noexcept
+            : i(ini){}
+    };
+    struct Sc
+    {
+        constexpr Sc() noexcept{}
+    };
+    struct Sb
+    {
+        constexpr Sb() noexcept{}
+    };
+    struct Sr_e
+    {
+        Expression *e;
+        constexpr Sr_e(Expression *ine = nullptr) noexcept
+            : e(ine){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sg_i
+        , Sc
+        , Sb
+        , Sr_e>;
+
+    Var var;
+
+    template<class ...Args>
+    JumpStatement(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~JumpStatement();
+};
+
+struct Designation
+{
+    DesignatorList *dl;
+
+    constexpr Designation(DesignatorList *indl = nullptr) noexcept
+        : dl(indl){}
+    ~Designation();
+};
+
+struct LogicalANDExpression
+{
+    std::vector<InclusiveORExpression*> seq;
+
+    template<class ...Args>
+    LogicalANDExpression(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~LogicalANDExpression();
+};
+
+struct StructDeclaratorList
+{
+    std::vector<StructDeclarator*> seq;
+
+    template<class ...Args>
+    StructDeclaratorList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~StructDeclaratorList();
+};
+
+struct PrimaryExpression
+{
+    using Var = std::variant<std::monostate
+        , Identifier*
+        , Constant*
+        , StringLiteral*
+        , Expression*
+        , GenericSelection*>;
+    
+    Var var;
+
+    template<class ...Args>
+    PrimaryExpression(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~PrimaryExpression();
+};
+
+struct ArgumentExpressionList
+{
+    std::vector<AssignmentExpression*> seq;
+
+    template<class ...Args>
+    ArgumentExpressionList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~ArgumentExpressionList();
+};
+
+struct DesignatorList
+{
+    std::vector<Designator*> seq;
+
+    template<class ...Args>
+    DesignatorList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~DesignatorList();
+};
+
+struct InclusiveORExpression
+{
+    std::vector<ExclusiveORExpression*> seq;
+
+    template<class ...Args>
+    InclusiveORExpression(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~InclusiveORExpression();
+};
+
+struct StructDeclarator
+{
+    struct Sd
+    {
+        Declarator *d;
+        constexpr Sd(Declarator *ind = nullptr) noexcept
+            : d(ind){}
+    };
+    struct Sd_ce
+    {
+        Declarator *d;
+        ConstantExpression *ce;
+        constexpr Sd_ce(Declarator *ind = nullptr
+            , ConstantExpression *ince = nullptr) noexcept
+            : d(ind)
+            , ce(ince){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sd
+        , Sd_ce>;
+
+    Var var;
+
+    template<class ...Args>
+    StructDeclarator(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~StructDeclarator();
+};
+
+struct GenericSelection
+{
+    AssignmentExpression *ae;
+    GenericAssocList *gal;
+
+    constexpr GenericSelection(AssignmentExpression *inae = nullptr
+        , GenericAssocList *ingal = nullptr) noexcept
+        : ae(inae)
+        , gal(ingal){}
+    ~GenericSelection();
+};
+
+struct Designator
+{
+    using Var = std::variant<std::monostate
+        , ConstantExpression*
+        , Identifier*>;
+
+    Var var;
+
+    template<class ...Args>
+    Designator(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~Designator();
+};
+
+struct ExclusiveORExpression
+{
+    std::vector<ANDExpression*> seq;
+
+    template<class ...Args>
+    ExclusiveORExpression(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~ExclusiveORExpression();
+};
+
+struct GenericAssocList
+{
+    std::vector<GenericAssociation*> seq;
+
+    template<class ...Args>
+    GenericAssocList(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~GenericAssocList();
+};
+
+struct ANDExpression
+{
+    std::vector<EqualityExpression*> seq;
+
+    template<class ...Args>
+    ANDExpression(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~ANDExpression();
+};
+
+struct GenericAssociation
+{
+    struct Stn_ae
+    {
+        TypeName *tn;
+        AssignmentExpression *ae;
+        constexpr Stn_ae(TypeName *intn = nullptr
+            , AssignmentExpression *inae = nullptr) noexcept
+            : tn(intn)
+            , ae(inae){}
+    };
+    struct Sae
+    {
+        AssignmentExpression *ae;
+        constexpr Sae(AssignmentExpression *inae = nullptr) noexcept
+            : ae(inae){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Stn_ae
+        , Sae>;
+
+    Var var;
+
+    template<class ...Args>
+    GenericAssociation(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~GenericAssociation();
+};
+
+struct EqualityExpression
+{
+    struct Sre
+    {
+        RelationalExpression *re;
+        constexpr Sre(RelationalExpression *inre = nullptr) noexcept
+            : re(inre){}
+    };
+    struct Se_re
+    {
+        RelationalExpression *re;
+        constexpr Se_re(RelationalExpression *inre = nullptr) noexcept
+            : re(inre){}
+    };
+    struct Sne_re
+    {
+        RelationalExpression *re;
+        constexpr Sne_re(RelationalExpression *inre = nullptr) noexcept
+            : re(inre){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sre
+        , Se_re
+        , Sne_re>;
+
+    std::vector<Var> seq;
+
+    template<class ...Args>
+    EqualityExpression(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~EqualityExpression();
+};
+
+struct RelationalExpression
+{
+    struct Sse
+    {
+        ShiftExpression *se;
+        constexpr Sse(ShiftExpression *inse = nullptr) noexcept
+            : se(inse){}
+    };
+    struct Sl_se
+    {
+        ShiftExpression *se;
+        constexpr Sl_se(ShiftExpression *inse = nullptr) noexcept
+            : se(inse){}
+    };
+    struct Sg_se
+    {
+        ShiftExpression *se;
+        constexpr Sg_se(ShiftExpression *inse = nullptr) noexcept
+            : se(inse){}
+    };
+    struct Sle_se
+    {
+        ShiftExpression *se;
+        constexpr Sle_se(ShiftExpression *inse = nullptr) noexcept
+            : se(inse){}
+    };
+    struct Sge_se
+    {
+        ShiftExpression *se;
+        constexpr Sge_se(ShiftExpression *inse = nullptr) noexcept
+            : se(inse){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sse
+        , Sl_se
+        , Sg_se
+        , Sle_se
+        , Sge_se>;
+
+    std::vector<Var> seq;
+
+    template<class ...Args>
+    RelationalExpression(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~RelationalExpression();
+};
+
+struct ShiftExpression
+{
+    struct Sae
+    {
+        AdditiveExpression *ae;
+        constexpr Sae(AdditiveExpression *inae) noexcept
+            : ae(inae){}
+    };
+    struct Sl_ae
+    {
+        AdditiveExpression *ae;
+        constexpr Sl_ae(AdditiveExpression *inae) noexcept
+            : ae(inae){}
+    };
+    struct Sr_ae
+    {
+        AdditiveExpression *ae;
+        constexpr Sr_ae(AdditiveExpression *inae) noexcept
+            : ae(inae){}
+    };
+
+    using Var =  std::variant<std::monostate
+        , Sae
+        , Sl_ae
+        , Sr_ae>;
+
+    std::vector<Var> seq;
+
+    template<class ...Args>
+    ShiftExpression(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~ShiftExpression();
+};
+
+struct AdditiveExpression
+{
+    struct Sme
+    {
+        MultiplicativeExpression *me;
+        constexpr Sme(MultiplicativeExpression *inme = nullptr)
+            : me(inme){}
+    };
+    struct Sa_me
+    {
+        MultiplicativeExpression *me;
+        constexpr Sa_me(MultiplicativeExpression *inme = nullptr)
+            : me(inme){}
+    };
+    struct Ss_me
+    {
+        MultiplicativeExpression *me;
+        constexpr Ss_me(MultiplicativeExpression *inme = nullptr)
+            : me(inme){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sme
+        , Sa_me
+        , Ss_me>;
+    
+    std::vector<Var> seq;
+
+    template<class ...Args>
+    AdditiveExpression(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~AdditiveExpression();
+};
+
+struct MultiplicativeExpression
+{
+    struct Sce
+    {
+        CastExpression *ce;
+        constexpr Sce(CastExpression *ince = nullptr) noexcept
+            : ce(ince){}
+    };
+    struct Sm_ce
+    {
+        CastExpression *ce;
+        constexpr Sm_ce(CastExpression *ince = nullptr) noexcept
+            : ce(ince){}
+    };
+    struct Sd_ce
+    {
+        CastExpression *ce;
+        constexpr Sd_ce(CastExpression *ince = nullptr) noexcept
+            : ce(ince){}
+    };
+    struct Sr_ce
+    {
+        CastExpression *ce;
+        constexpr Sr_ce(CastExpression *ince = nullptr) noexcept
+            : ce(ince){}
+    };
+
+    using Var = std::variant<std::monostate
+        , Sce
+        , Sm_ce
+        , Sd_ce
+        , Sr_ce>;
+    
+    std::vector<Var> seq;
+
+    template<class ...Args>
+    MultiplicativeExpression(Args &&...args)
+        : seq(std::forward<Args>(args)...){}
+    ~MultiplicativeExpression();
 };
 
 }
