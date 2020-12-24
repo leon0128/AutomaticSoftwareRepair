@@ -19,6 +19,30 @@ Token::~Token()
         delete std::get<Punctuator*>(var);
 }
 
+Token *Token::copy() const
+{   
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Keyword*>(var))
+        cvar.emplace<Keyword*>(std::get<Keyword*>(var)->copy());
+    else if(std::holds_alternative<Identifier*>(var))
+        cvar.emplace<Identifier*>(std::get<Identifier*>(var)->copy());
+    else if(std::holds_alternative<Constant*>(var))
+        cvar.emplace<Constant*>(std::get<Constant*>(var)->copy());
+    else if(std::holds_alternative<StringLiteral*>(var))
+        cvar.emplace<StringLiteral*>(std::get<StringLiteral*>(var)->copy());
+    else if(std::holds_alternative<Punctuator*>(var))
+        cvar.emplace<Punctuator*>(std::get<Punctuator*>(var)->copy());
+    
+    return new Token(cvar);
+}
+
+Keyword *Keyword::copy() const
+{
+    return new Keyword(tag);
+}
+
 Identifier::~Identifier()
 {
     for(auto &&v : seq)
@@ -30,6 +54,26 @@ Identifier::~Identifier()
         else if(std::holds_alternative<Digit*>(v))
             delete std::get<Digit*>(v);
     }
+}
+
+Identifier *Identifier::copy() const
+{
+    std::vector<Variant> cseq;
+
+    for(auto &&v : seq)
+    {
+        Variant cv;
+        if(std::holds_alternative<std::monostate>(v))
+            ;
+        else if(std::holds_alternative<IdentifierNondigit*>(v))
+            cv.emplace<IdentifierNondigit*>(std::get<IdentifierNondigit*>(v)->copy());
+        else if(std::holds_alternative<Digit*>(v))
+            cv.emplace<Digit*>(std::get<Digit*>(v)->copy());
+
+        cseq.push_back(cv);
+    }
+
+    return new Identifier(std::move(cseq));
 }
 
 Constant::~Constant()
@@ -46,10 +90,38 @@ Constant::~Constant()
         delete std::get<CharacterConstant*>(var);
 }
 
+Constant *Constant::copy() const
+{
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<IntegerConstant*>(var))
+        cvar.emplace<IntegerConstant*>(std::get<IntegerConstant*>(var)->copy());
+    else if(std::holds_alternative<FloatingConstant*>(var))
+        cvar.emplace<FloatingConstant*>(std::get<FloatingConstant*>(var)->copy());
+    else if(std::holds_alternative<EnumerationConstant*>(var))
+        cvar.emplace<EnumerationConstant*>(std::get<EnumerationConstant*>(var)->copy());
+    else if(std::holds_alternative<CharacterConstant*>(var))
+        cvar.emplace<CharacterConstant*>(std::get<CharacterConstant*>(var)->copy());
+    
+    return new Constant(cvar);
+}
+
 StringLiteral::~StringLiteral()
 {
     delete ep;
     delete scs;
+}
+
+StringLiteral *StringLiteral::copy() const
+{
+    return new StringLiteral(ep != nullptr ? ep->copy() : nullptr
+        , scs != nullptr ? scs->copy() : nullptr);
+}
+
+Punctuator *Punctuator::copy() const
+{
+    return new Punctuator(tag);
 }
 
 IdentifierNondigit::~IdentifierNondigit()
@@ -60,6 +132,24 @@ IdentifierNondigit::~IdentifierNondigit()
         delete std::get<Nondigit*>(var);
     else if(std::holds_alternative<UniversalCharacterName*>(var))
         delete std::get<UniversalCharacterName*>(var);
+}
+
+IdentifierNondigit *IdentifierNondigit::copy() const
+{
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Nondigit*>(var))
+        cvar.emplace<Nondigit*>(std::get<Nondigit*>(var)->copy());
+    else if(std::holds_alternative<UniversalCharacterName*>(var))
+        cvar.emplace<UniversalCharacterName*>(std::get<UniversalCharacterName*>(var)->copy());
+    
+    return new IdentifierNondigit(cvar);
+}
+
+Digit *Digit::copy() const
+{
+    return new Digit(c);
 }
 
 IntegerConstant::~IntegerConstant()
@@ -86,6 +176,34 @@ IntegerConstant::~IntegerConstant()
     }
 }
 
+IntegerConstant *IntegerConstant::copy() const
+{
+    Variant cvar;
+
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Sdc_is>(var))
+    {
+        auto &&s = std::get<Sdc_is>(var);
+        cvar.emplace<Sdc_is>(s.dc->copy()
+            , s.is != nullptr ? s.is->copy() : nullptr);
+    }
+    else if(std::holds_alternative<Soc_is>(var))
+    {
+        auto &&s = std::get<Soc_is>(var);
+        cvar.emplace<Soc_is>(s.oc->copy()
+            , s.is != nullptr ? s.is->copy() : nullptr);
+    }
+    else if(std::holds_alternative<Shc_is>(var))
+    {
+        auto &&s = std::get<Shc_is>(var);
+        cvar.emplace<Shc_is>(s.hc->copy()
+            , s.is != nullptr ? s.is->copy() : nullptr);
+    }
+
+    return new IntegerConstant(cvar);
+}
+
 FloatingConstant::~FloatingConstant()
 {
     if(std::holds_alternative<std::monostate>(var))
@@ -96,9 +214,27 @@ FloatingConstant::~FloatingConstant()
         delete std::get<HexadecimalFloatingConstant*>(var);
 }
 
+FloatingConstant *FloatingConstant::copy() const
+{
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<DecimalFloatingConstant*>(var))
+        cvar.emplace<DecimalFloatingConstant*>(std::get<DecimalFloatingConstant*>(var)->copy());
+    else if(std::holds_alternative<HexadecimalFloatingConstant*>(var))
+        cvar.emplace<HexadecimalFloatingConstant*>(std::get<HexadecimalFloatingConstant*>(var)->copy());
+    
+    return new FloatingConstant(cvar);
+}
+
 EnumerationConstant::~EnumerationConstant()
 {
     delete i;
+}
+
+EnumerationConstant *EnumerationConstant::copy() const
+{
+    return new EnumerationConstant(i->copy());
 }
 
 CharacterConstant::~CharacterConstant()
@@ -106,10 +242,34 @@ CharacterConstant::~CharacterConstant()
     delete ccs;
 }
 
+CharacterConstant *CharacterConstant::copy() const
+{
+    return new CharacterConstant(tag, ccs->copy());
+}
+
+EncodingPrefix *EncodingPrefix::copy() const
+{
+    return new EncodingPrefix(tag);
+}
+
 SCharSequence::~SCharSequence()
 {
     for(auto &&sc : seq)
         delete sc;
+}
+
+SCharSequence *SCharSequence::copy() const
+{
+    std::vector<SChar*> cseq;
+    for(auto &&sc : seq)
+        cseq.push_back(sc->copy());
+
+    return new SCharSequence(std::move(cseq));
+}
+
+Nondigit *Nondigit::copy() const
+{
+    return new Nondigit(c);
 }
 
 UniversalCharacterName::~UniversalCharacterName()
@@ -129,11 +289,39 @@ UniversalCharacterName::~UniversalCharacterName()
     }
 }
 
+UniversalCharacterName *UniversalCharacterName::copy() const
+{
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Su_hq>(var))
+    {
+        auto &&s = std::get<Su_hq>(var);
+        cvar.emplace<Su_hq>(s.hq->copy());
+    }
+    else if(std::holds_alternative<SU_hq_hq>(var))
+    {
+        auto &&s = std::get<SU_hq_hq>(var);
+        cvar.emplace<SU_hq_hq>(s.hq0->copy(), s.hq1->copy());
+    }
+    
+    return new UniversalCharacterName(cvar);
+}
+
 DecimalConstant::~DecimalConstant()
 {
     delete nd;
     for(auto &&d : seq)
         delete d;
+}
+
+DecimalConstant *DecimalConstant::copy() const
+{
+    std::vector<Digit*> cseq;
+    for(auto &&d : seq)
+        cseq.push_back(d->copy());
+
+    return new DecimalConstant(nd->copy(), std::move(cseq));
 }
 
 OctalConstant::~OctalConstant()
@@ -142,11 +330,29 @@ OctalConstant::~OctalConstant()
         delete od;
 }
 
+OctalConstant *OctalConstant::copy() const
+{
+    std::vector<OctalDigit*> cseq;
+    for(auto &&od : seq)
+        cseq.push_back(od->copy());
+    
+    return new OctalConstant(std::move(cseq));
+}
+
 HexadecimalConstant::~HexadecimalConstant()
 {
     delete hp;
     for(auto &&hd : seq)
         delete hd;
+}
+
+HexadecimalConstant *HexadecimalConstant::copy() const
+{
+    std::vector<HexadecimalDigit*> cseq;
+    for(auto &&hd : seq)
+        cseq.push_back(hd->copy());
+    
+    return new HexadecimalConstant(hp->copy(), std::move(cseq));
 }
 
 DecimalFloatingConstant::~DecimalFloatingConstant()
@@ -167,6 +373,29 @@ DecimalFloatingConstant::~DecimalFloatingConstant()
         delete s.ep;
         delete s.fs;
     }
+}
+
+DecimalFloatingConstant *DecimalFloatingConstant::copy() const
+{
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Sfc_ep_fs>(var))
+    {
+        auto &&s = std::get<Sfc_ep_fs>(var);
+        cvar.emplace<Sfc_ep_fs>(s.fc->copy()
+            , s.ep != nullptr ? s.ep->copy() : nullptr
+            , s.fs != nullptr ? s.fs->copy() : nullptr);
+    }
+    else if(std::holds_alternative<Sds_ep_fs>(var))
+    {
+        auto &&s = std::get<Sds_ep_fs>(var);
+        cvar.emplace<Sds_ep_fs>(s.ds->copy()
+            , s.ep->copy()
+            , s.fs != nullptr ? s.fs->copy() : nullptr);
+    }
+
+    return new DecimalFloatingConstant(cvar);
 }
 
 HexadecimalFloatingConstant::~HexadecimalFloatingConstant()
@@ -191,10 +420,44 @@ HexadecimalFloatingConstant::~HexadecimalFloatingConstant()
     }
 }
 
+HexadecimalFloatingConstant *HexadecimalFloatingConstant::copy() const
+{
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Shp_hfc_bep_fs>(var))
+    {
+        auto &&s = std::get<Shp_hfc_bep_fs>(var);
+        cvar.emplace<Shp_hfc_bep_fs>(s.hp->copy()
+            , s.hfc->copy()
+            , s.bep->copy()
+            , s.fs != nullptr ? s.fs->copy() : nullptr);
+    }
+    else if(std::holds_alternative<Shp_hds_bep_fs>(var))
+    {
+        auto &&s = std::get<Shp_hds_bep_fs>(var);
+        cvar.emplace<Shp_hds_bep_fs>(s.hp->copy()
+            , s.hds->copy()
+            , s.bep->copy()
+            , s.fs != nullptr ? s.fs->copy() : nullptr);
+    }
+
+    return new HexadecimalFloatingConstant(cvar);
+}
+
 CCharSequence::~CCharSequence()
 {
     for(auto &&cc : seq)
         delete cc;
+}
+
+CCharSequence *CCharSequence::copy() const
+{
+    std::vector<CChar*> cseq;
+    for(auto &&cc : seq)
+        cseq.push_back(cc->copy());
+    
+    return new CCharSequence(std::move(cseq));
 }
 
 SChar::~SChar()
@@ -206,10 +469,52 @@ SChar::~SChar()
         delete std::get<EscapeSequence*>(var);
 }
 
+SChar *SChar::copy() const
+{
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<char>(var))
+        cvar.emplace<char>(std::get<char>(var));
+    else if(std::holds_alternative<EscapeSequence*>(var))
+        cvar.emplace<EscapeSequence*>(std::get<EscapeSequence*>(var)->copy());
+
+    return new SChar(cvar);
+}
+
 HexQuad::~HexQuad()
 {
     for(auto &&hd : arr)
         delete hd;
+}
+
+HexQuad *HexQuad::copy() const
+{
+    std::array<HexadecimalDigit*, 4> carr;
+    for(std::size_t i = 0; i < arr.size(); i++)
+        carr[i] = arr[i]->copy();
+    
+    return new HexQuad(std::move(carr));
+}
+
+NonzeroDigit *NonzeroDigit::copy() const
+{
+    return new NonzeroDigit(c);
+}
+
+OctalDigit *OctalDigit::copy() const
+{
+    return new OctalDigit(c);
+}
+
+HexadecimalPrefix *HexadecimalPrefix::copy() const
+{
+    return new HexadecimalPrefix(tag);
+}
+
+HexadecimalDigit *HexadecimalDigit::copy() const
+{
+    return new HexadecimalDigit(c);
 }
 
 FractionalConstant::~FractionalConstant()
@@ -229,16 +534,56 @@ FractionalConstant::~FractionalConstant()
     }
 }
 
+FractionalConstant *FractionalConstant::copy() const
+{
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Sds_ds>(var))
+    {
+        auto &&s = std::get<Sds_ds>(var);
+        cvar.emplace<Sds_ds>(s.ds0 ? s.ds0->copy() : nullptr
+            , s.ds1->copy());
+    }
+    else if(std::holds_alternative<Sds>(var))
+    {
+        auto &&s = std::get<Sds>(var);
+        cvar.emplace<Sds>(s.ds->copy());
+    }
+
+    return new FractionalConstant(cvar);
+}
+
 ExponentPart::~ExponentPart()
 {
     delete s;
     delete ds;
 }
 
+ExponentPart *ExponentPart::copy() const
+{
+    return new ExponentPart(s != nullptr ? s->copy() : nullptr
+        , ds->copy());
+}
+
+Sign *Sign::copy() const
+{
+    return new Sign(tag);
+}
+
 DigitSequence::~DigitSequence()
 {
     for(auto &&d : seq)
         delete d;
+}
+
+DigitSequence *DigitSequence::copy() const
+{
+    std::vector<Digit*> cseq;
+    for(auto &&d : seq)
+        cseq.push_back(d->copy());
+    
+    return new DigitSequence(std::move(cseq));
 }
 
 HexadecimalFractionalConstant::~HexadecimalFractionalConstant()
@@ -258,16 +603,56 @@ HexadecimalFractionalConstant::~HexadecimalFractionalConstant()
     }
 }
 
+HexadecimalFractionalConstant *HexadecimalFractionalConstant::copy() const
+{
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Shds_hds>(var))
+    {
+        auto &&s = std::get<Shds_hds>(var);
+        cvar.emplace<Shds_hds>(s.hds0 != nullptr ? s.hds0->copy() : nullptr
+            , s.hds1->copy());
+    }
+    else if(std::holds_alternative<Shds>(var))
+    {
+        auto &&s = std::get<Shds>(var);
+        cvar.emplace<Shds>(s.hds->copy());
+    }
+
+    return new HexadecimalFractionalConstant(cvar);
+}
+
 BinaryExponentPart::~BinaryExponentPart()
 {
     delete s;
     delete ds;
 }
 
+BinaryExponentPart *BinaryExponentPart::copy() const
+{
+    return new BinaryExponentPart(s != nullptr ? s->copy() : nullptr
+        , ds->copy());
+};
+
 HexadecimalDigitSequence::~HexadecimalDigitSequence()
 {
     for(auto &&hd : seq)
         delete hd;
+}
+
+HexadecimalDigitSequence *HexadecimalDigitSequence::copy() const
+{
+    std::vector<HexadecimalDigit*> cseq;
+    for(auto &&hd : seq)
+        cseq.push_back(hd->copy());
+    
+    return new HexadecimalDigitSequence(std::move(cseq));
+}
+
+FloatingSuffix *FloatingSuffix::copy() const
+{
+    return new FloatingSuffix(tag);
 }
 
 CChar::~CChar()
@@ -277,6 +662,19 @@ CChar::~CChar()
         ;
     else if(std::holds_alternative<EscapeSequence*>(var))
         delete std::get<EscapeSequence*>(var);
+}
+
+CChar *CChar::copy() const
+{
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<char>(var))
+        cvar.emplace<char>(std::get<char>(var));
+    else if(std::holds_alternative<EscapeSequence*>(var))
+        cvar.emplace<EscapeSequence*>(std::get<EscapeSequence*>(var)->copy());
+    
+    return new CChar(cvar);
 }
 
 EscapeSequence::~EscapeSequence()
@@ -293,16 +691,56 @@ EscapeSequence::~EscapeSequence()
         delete std::get<UniversalCharacterName*>(var);
 }
 
+EscapeSequence *EscapeSequence::copy() const
+{
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<SimpleEscapeSequence*>(var))
+        cvar.emplace<SimpleEscapeSequence*>(std::get<SimpleEscapeSequence*>(var)->copy());
+    else if(std::holds_alternative<OctalEscapeSequence*>(var))
+        cvar.emplace<OctalEscapeSequence*>(std::get<OctalEscapeSequence*>(var)->copy());
+    else if(std::holds_alternative<HexadecimalEscapeSequence*>(var))
+        cvar.emplace<HexadecimalEscapeSequence*>(std::get<HexadecimalEscapeSequence*>(var)->copy());
+    else if(std::holds_alternative<UniversalCharacterName*>(var))
+        cvar.emplace<UniversalCharacterName*>(std::get<UniversalCharacterName*>(var)->copy());
+    
+    return new EscapeSequence(cvar);
+}
+
+SimpleEscapeSequence *SimpleEscapeSequence::copy() const
+{
+    return new SimpleEscapeSequence(c);
+}
+
 OctalEscapeSequence::~OctalEscapeSequence()
 {
     for(auto &&od : seq)
         delete od;
 }
 
+OctalEscapeSequence *OctalEscapeSequence::copy() const
+{
+    std::vector<OctalDigit*> cseq;
+    for(auto &&od : seq)
+        cseq.push_back(od->copy());
+    
+    return new OctalEscapeSequence(std::move(cseq));
+}
+
 HexadecimalEscapeSequence::~HexadecimalEscapeSequence()
 {
     for(auto &&hd : seq)
         delete hd;
+}
+
+HexadecimalEscapeSequence *HexadecimalEscapeSequence::copy() const
+{
+    std::vector<HexadecimalDigit*> cseq;
+    for(auto &&hd : seq)
+        cseq.push_back(hd->copy());
+    
+    return new HexadecimalEscapeSequence(std::move(cseq));
 }
 
 PreprocessingToken::~PreprocessingToken()
@@ -321,6 +759,25 @@ PreprocessingToken::~PreprocessingToken()
         delete std::get<Punctuator*>(var);
 }
 
+PreprocessingToken *PreprocessingToken::copy() const
+{
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Identifier*>(var))
+        cvar.emplace<Identifier*>(std::get<Identifier*>(var)->copy());
+    else if(std::holds_alternative<PPNumber*>(var))
+        cvar.emplace<PPNumber*>(std::get<PPNumber*>(var)->copy());
+    else if(std::holds_alternative<CharacterConstant*>(var))
+        cvar.emplace<CharacterConstant*>(std::get<CharacterConstant*>(var)->copy());
+    else if(std::holds_alternative<StringLiteral*>(var))
+        cvar.emplace<StringLiteral*>(std::get<StringLiteral*>(var)->copy());
+    else if(std::holds_alternative<Punctuator*>(var))
+        cvar.emplace<Punctuator*>(std::get<Punctuator*>(var)->copy());
+
+    return new PreprocessingToken(cvar);
+}
+
 PPNumber::~PPNumber()
 {
     for(auto &&v : seq)
@@ -335,6 +792,29 @@ PPNumber::~PPNumber()
         else if(std::holds_alternative<Sign*>(v))
             delete std::get<Sign*>(v);
     }
+}
+
+PPNumber *PPNumber::copy() const
+{
+    std::vector<Variant> cseq;
+    for(auto &&v : seq)
+    {
+        Variant cv;
+        if(std::holds_alternative<std::monostate>(v))
+            ;
+        else if(std::holds_alternative<Digit*>(v))
+            cv.emplace<Digit*>(std::get<Digit*>(v)->copy());
+        else if(std::holds_alternative<Tag>(v))
+            cv.emplace<Tag>(std::get<Tag>(v));
+        else if(std::holds_alternative<IdentifierNondigit*>(v))
+            cv.emplace<IdentifierNondigit*>(std::get<IdentifierNondigit*>(v)->copy());
+        else if(std::holds_alternative<Sign*>(v))
+            cv.emplace<Sign*>(std::get<Sign*>(v)->copy());
+        
+        cseq.push_back(cv);
+    }
+
+    return new PPNumber(std::move(cseq));
 }
 
 IntegerSuffix::~IntegerSuffix()
@@ -365,6 +845,54 @@ IntegerSuffix::~IntegerSuffix()
         delete s.lls;
         delete s.us;
     }
+}
+
+IntegerSuffix *IntegerSuffix::copy() const
+{
+    Variant cvar;
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Sus_ls>(var))
+    {
+        auto &&s = std::get<Sus_ls>(var);
+        cvar.emplace<Sus_ls>(s.us->copy()
+            , s.ls != nullptr ? s.ls->copy() : nullptr);
+    }
+    else if(std::holds_alternative<Sus_lls>(var))
+    {
+        auto &&s = std::get<Sus_lls>(var);
+        cvar.emplace<Sus_lls>(s.us->copy()
+            , s.lls->copy());
+    }
+    else if(std::holds_alternative<Sls_us>(var))
+    {
+        auto &&s = std::get<Sls_us>(var);
+        cvar.emplace<Sls_us>(s.ls->copy()
+            , s.us != nullptr ? s.us->copy() : nullptr);
+    }
+    else if(std::holds_alternative<Slls_us>(var))
+    {
+        auto &&s = std::get<Slls_us>(var);
+        cvar.emplace<Slls_us>(s.lls->copy()
+            , s.us != nullptr ? s.us->copy() : nullptr);
+    }
+
+    return new IntegerSuffix(var);
+}
+
+UnsignedSuffix *UnsignedSuffix::copy() const
+{
+    return new UnsignedSuffix(tag);
+}
+
+LongSuffix *LongSuffix::copy() const
+{
+    return new LongSuffix(tag);
+}
+
+LongLongSuffix *LongLongSuffix::copy() const
+{
+    return new LongLongSuffix(tag);
 }
 
 TranslationUnit::~TranslationUnit()

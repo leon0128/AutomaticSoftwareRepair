@@ -147,6 +147,8 @@ struct Token
     Token(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~Token();
+
+    Token *copy() const;
 };
 
 struct Keyword
@@ -172,6 +174,8 @@ struct Keyword
     constexpr Keyword(Tag inTag = Tag::NONE) noexcept
         : tag(inTag){}
     ~Keyword() = default;
+
+    Keyword *copy() const;
 };
 
 struct Identifier
@@ -186,6 +190,8 @@ struct Identifier
     Identifier(Args&&... args)
         : seq(std::forward<Args>(args)...){}
     ~Identifier();
+
+    Identifier *copy() const;
 };
 
 struct Constant
@@ -202,6 +208,8 @@ struct Constant
     Constant(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~Constant();
+
+    Constant *copy() const;
 };
 
 struct StringLiteral
@@ -214,11 +222,13 @@ struct StringLiteral
         : ep(inep)
         , scs(inscs){}
     ~StringLiteral();
+
+    StringLiteral *copy() const;
 };
 
 struct Punctuator
 {
-    enum Tag : signed char
+    enum class Tag : signed char
     {
         NONE
         , L_SQUARE_BRACKET, R_SQUARE_BRACKET, L_PARENTHESIS, R_PARENTHESIS
@@ -240,6 +250,8 @@ struct Punctuator
     constexpr Punctuator(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~Punctuator() = default;
+
+    Punctuator *copy() const;
 };
 
 struct IdentifierNondigit
@@ -254,6 +266,8 @@ struct IdentifierNondigit
     IdentifierNondigit(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~IdentifierNondigit();
+
+    IdentifierNondigit *copy() const;
 };
 
 struct Digit
@@ -263,6 +277,8 @@ struct Digit
     constexpr Digit(char inc = static_cast<char>(0)) noexcept
         : c(inc){}
     ~Digit() = default;
+
+    Digit *copy() const;
 };
 
 struct IntegerConstant
@@ -306,6 +322,8 @@ struct IntegerConstant
     IntegerConstant(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~IntegerConstant();
+
+    IntegerConstant *copy() const;
 };
 
 struct FloatingConstant
@@ -320,6 +338,8 @@ struct FloatingConstant
     FloatingConstant(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~FloatingConstant();
+
+    FloatingConstant *copy() const;
 };
 
 struct EnumerationConstant
@@ -329,6 +349,8 @@ struct EnumerationConstant
     constexpr EnumerationConstant(Identifier *ini = nullptr) noexcept
         : i(ini){}
     ~EnumerationConstant();
+
+    EnumerationConstant *copy() const;
 };
 
 struct CharacterConstant
@@ -349,6 +371,8 @@ struct CharacterConstant
         : tag(intag)
         , ccs(inccs){}
     ~CharacterConstant();
+
+    CharacterConstant *copy() const;
 };
 
 struct EncodingPrefix
@@ -367,6 +391,8 @@ struct EncodingPrefix
     constexpr EncodingPrefix(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~EncodingPrefix() = default;
+
+    EncodingPrefix *copy() const;
 };
 
 struct SCharSequence
@@ -377,6 +403,8 @@ struct SCharSequence
     SCharSequence(Args&&... args)
         : seq(std::forward<Args>(args)...){}
     ~SCharSequence();
+
+    SCharSequence *copy() const;
 };
 
 struct Nondigit
@@ -386,6 +414,8 @@ struct Nondigit
     constexpr Nondigit(char inc = static_cast<char>(0)) noexcept
         : c(inc){}
     ~Nondigit() = default;
+
+    Nondigit *copy() const;
 };
 
 struct UniversalCharacterName
@@ -416,6 +446,8 @@ struct UniversalCharacterName
     UniversalCharacterName(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~UniversalCharacterName();
+
+    UniversalCharacterName *copy() const;
 };
 
 struct DecimalConstant
@@ -429,6 +461,8 @@ struct DecimalConstant
         : nd(innd)
         , seq(std::forward<Seq>(inseq)){}
     ~DecimalConstant();
+
+    DecimalConstant *copy() const;
 };
 
 struct OctalConstant
@@ -439,6 +473,8 @@ struct OctalConstant
     OctalConstant(Seq &&inseq)
         : seq(std::forward<Seq>(inseq)){}
     ~OctalConstant();
+
+    OctalConstant *copy() const;
 };
 
 struct HexadecimalConstant
@@ -452,6 +488,8 @@ struct HexadecimalConstant
         : hp(inhp)
         , seq(std::forward<Seq>(inseq)){}
     ~HexadecimalConstant();
+
+    HexadecimalConstant *copy() const;
 };
 
 struct DecimalFloatingConstant
@@ -491,6 +529,8 @@ struct DecimalFloatingConstant
     DecimalFloatingConstant(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~DecimalFloatingConstant();
+
+    DecimalFloatingConstant *copy() const;
 };
 
 struct HexadecimalFloatingConstant
@@ -536,6 +576,8 @@ struct HexadecimalFloatingConstant
     HexadecimalFloatingConstant(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~HexadecimalFloatingConstant();
+
+    HexadecimalFloatingConstant *copy() const;
 };
 
 struct CCharSequence
@@ -546,6 +588,8 @@ struct CCharSequence
     CCharSequence(Args&&... args)
         : seq(std::forward<Args>(args)...){}
     ~CCharSequence();
+
+    CCharSequence *copy() const;
 };
 
 struct SChar
@@ -560,6 +604,8 @@ struct SChar
     SChar(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~SChar();
+
+    SChar *copy() const;
 };
 
 struct HexQuad
@@ -570,6 +616,8 @@ struct HexQuad
     HexQuad(Args&&... args)
         : arr(std::forward<Args>(args)...){}
     ~HexQuad();
+
+    HexQuad *copy() const;
 };
 
 struct NonzeroDigit
@@ -579,6 +627,8 @@ struct NonzeroDigit
     constexpr NonzeroDigit(char inc = static_cast<char>(0)) noexcept
         : c(inc){}
     ~NonzeroDigit() = default;
+
+    NonzeroDigit *copy() const;
 };
 
 struct OctalDigit
@@ -588,6 +638,8 @@ struct OctalDigit
     constexpr OctalDigit(char inc = static_cast<char>(0)) noexcept
         : c(inc){}
     ~OctalDigit() = default;
+
+    OctalDigit *copy() const;
 };
 
 struct HexadecimalPrefix
@@ -604,6 +656,8 @@ struct HexadecimalPrefix
     constexpr HexadecimalPrefix(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~HexadecimalPrefix() = default;
+
+    HexadecimalPrefix *copy() const;
 };
 
 struct HexadecimalDigit
@@ -613,6 +667,8 @@ struct HexadecimalDigit
     constexpr HexadecimalDigit(char inc = static_cast<char>(0)) noexcept
         : c(inc){}
     ~HexadecimalDigit() = default;
+
+    HexadecimalDigit *copy() const;
 };
 
 struct FractionalConstant
@@ -621,10 +677,16 @@ struct FractionalConstant
     {
         DigitSequence *ds0;
         DigitSequence *ds1;
+        constexpr Sds_ds(DigitSequence *inds0 = nullptr
+            , DigitSequence *inds1 = nullptr) noexcept
+            : ds0(inds0)
+            , ds1(inds1){}
     };
     struct Sds
     {
         DigitSequence *ds;
+        constexpr Sds(DigitSequence *inds = nullptr) noexcept
+            : ds(inds){}
     };
 
     using Variant = std::variant<std::monostate
@@ -637,6 +699,8 @@ struct FractionalConstant
     FractionalConstant(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~FractionalConstant();
+
+    FractionalConstant *copy() const;
 };
 
 struct ExponentPart
@@ -649,6 +713,8 @@ struct ExponentPart
         : s(ins)
         , ds(inds){}
     ~ExponentPart();
+
+    ExponentPart *copy() const;
 };
 
 struct Sign
@@ -665,6 +731,8 @@ struct Sign
     constexpr Sign(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~Sign() = default;
+
+    Sign *copy() const;
 };
 
 struct DigitSequence
@@ -675,6 +743,8 @@ struct DigitSequence
     DigitSequence(Args&&... args)
         : seq(std::forward<Args>(args)...){}
     ~DigitSequence();
+
+    DigitSequence *copy() const;
 };
 
 struct HexadecimalFractionalConstant
@@ -705,6 +775,8 @@ struct HexadecimalFractionalConstant
     HexadecimalFractionalConstant(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~HexadecimalFractionalConstant();
+
+    HexadecimalFractionalConstant *copy() const;
 };
 
 struct BinaryExponentPart
@@ -717,6 +789,8 @@ struct BinaryExponentPart
         : s(ins)
         , ds(inds){}
     ~BinaryExponentPart();
+
+    BinaryExponentPart *copy() const;
 };
 
 struct HexadecimalDigitSequence
@@ -727,6 +801,8 @@ struct HexadecimalDigitSequence
     HexadecimalDigitSequence(Args&&... args)
         : seq(std::forward<Args>(args)...){}
     ~HexadecimalDigitSequence();
+
+    HexadecimalDigitSequence *copy() const;
 };
 
 struct FloatingSuffix
@@ -745,6 +821,8 @@ struct FloatingSuffix
     constexpr FloatingSuffix(Tag intag = Tag::NONE)
         : tag(intag){}
     ~FloatingSuffix() = default;
+
+    FloatingSuffix *copy() const;
 };
 
 struct CChar
@@ -759,6 +837,8 @@ struct CChar
     CChar(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~CChar();
+
+    CChar *copy() const;
 };
 
 struct EscapeSequence
@@ -775,6 +855,8 @@ struct EscapeSequence
     EscapeSequence(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~EscapeSequence();
+
+    EscapeSequence *copy() const;
 };
 
 struct SimpleEscapeSequence
@@ -784,6 +866,8 @@ struct SimpleEscapeSequence
     constexpr SimpleEscapeSequence(char inc = static_cast<char>(0)) noexcept
         : c(inc){}
     ~SimpleEscapeSequence() = default;
+
+    SimpleEscapeSequence *copy() const;
 };
 
 struct OctalEscapeSequence
@@ -794,6 +878,8 @@ struct OctalEscapeSequence
     OctalEscapeSequence(Args&&... args)
         : seq(std::forward<Args>(args)...){}
     ~OctalEscapeSequence();
+
+    OctalEscapeSequence *copy() const;
 };
 
 struct HexadecimalEscapeSequence
@@ -804,6 +890,8 @@ struct HexadecimalEscapeSequence
     HexadecimalEscapeSequence(Args&&... args)
         : seq(std::forward<Args>(args)...){}
     ~HexadecimalEscapeSequence();
+
+    HexadecimalEscapeSequence *copy() const;
 };
 
 struct PreprocessingToken
@@ -821,6 +909,8 @@ struct PreprocessingToken
     PreprocessingToken(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~PreprocessingToken();
+
+    PreprocessingToken *copy() const;
 };
 
 struct PPNumber
@@ -846,6 +936,8 @@ struct PPNumber
     PPNumber(Args&&... args)
         : seq(std::forward<Args>(args)...){}
     ~PPNumber();
+
+    PPNumber *copy() const;
 };
 
 struct IntegerSuffix
@@ -899,6 +991,8 @@ struct IntegerSuffix
     IntegerSuffix(Args&&... args)
         : var(std::forward<Args>(args)...){}
     ~IntegerSuffix();
+
+    IntegerSuffix *copy() const;
 };
 
 struct UnsignedSuffix
@@ -915,6 +1009,8 @@ struct UnsignedSuffix
     constexpr UnsignedSuffix(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~UnsignedSuffix() = default;
+
+    UnsignedSuffix *copy() const;
 };
 
 struct LongSuffix
@@ -931,6 +1027,8 @@ struct LongSuffix
     constexpr LongSuffix(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~LongSuffix() = default;
+
+    LongSuffix *copy() const;
 };
 
 struct LongLongSuffix
@@ -947,6 +1045,8 @@ struct LongLongSuffix
     constexpr LongLongSuffix(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~LongLongSuffix() = default;
+
+    LongLongSuffix *copy() const;
 };
 
 struct TranslationUnit
