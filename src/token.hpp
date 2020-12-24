@@ -1,9 +1,11 @@
 #ifndef TOKEN_HPP
 #define TOKEN_HPP
 
+#include <unordered_map>
 #include <variant>
 #include <vector>
 #include <utility>
+#include <string>
 #include <array>
 
 namespace TOKEN
@@ -149,6 +151,7 @@ struct Token
     ~Token();
 
     Token *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Keyword
@@ -176,6 +179,9 @@ struct Keyword
     ~Keyword() = default;
 
     Keyword *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
+
+    static const std::unordered_map<Tag, std::string> KEYWORD_MAP;
 };
 
 struct Identifier
@@ -192,6 +198,7 @@ struct Identifier
     ~Identifier();
 
     Identifier *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Constant
@@ -210,6 +217,7 @@ struct Constant
     ~Constant();
 
     Constant *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct StringLiteral
@@ -224,6 +232,7 @@ struct StringLiteral
     ~StringLiteral();
 
     StringLiteral *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Punctuator
@@ -252,6 +261,9 @@ struct Punctuator
     ~Punctuator() = default;
 
     Punctuator *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
+
+    static const std::unordered_map<Tag, std::string> PUNCTUATOR_MAP;
 };
 
 struct IdentifierNondigit
@@ -268,6 +280,7 @@ struct IdentifierNondigit
     ~IdentifierNondigit();
 
     IdentifierNondigit *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Digit
@@ -279,6 +292,7 @@ struct Digit
     ~Digit() = default;
 
     Digit *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct IntegerConstant
@@ -324,6 +338,7 @@ struct IntegerConstant
     ~IntegerConstant();
 
     IntegerConstant *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct FloatingConstant
@@ -340,6 +355,7 @@ struct FloatingConstant
     ~FloatingConstant();
 
     FloatingConstant *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct EnumerationConstant
@@ -351,6 +367,7 @@ struct EnumerationConstant
     ~EnumerationConstant();
 
     EnumerationConstant *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct CharacterConstant
@@ -373,6 +390,7 @@ struct CharacterConstant
     ~CharacterConstant();
 
     CharacterConstant *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct EncodingPrefix
@@ -393,6 +411,7 @@ struct EncodingPrefix
     ~EncodingPrefix() = default;
 
     EncodingPrefix *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct SCharSequence
@@ -405,6 +424,7 @@ struct SCharSequence
     ~SCharSequence();
 
     SCharSequence *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Nondigit
@@ -416,6 +436,7 @@ struct Nondigit
     ~Nondigit() = default;
 
     Nondigit *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct UniversalCharacterName
@@ -448,6 +469,7 @@ struct UniversalCharacterName
     ~UniversalCharacterName();
 
     UniversalCharacterName *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct DecimalConstant
@@ -463,6 +485,7 @@ struct DecimalConstant
     ~DecimalConstant();
 
     DecimalConstant *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct OctalConstant
@@ -475,6 +498,7 @@ struct OctalConstant
     ~OctalConstant();
 
     OctalConstant *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct HexadecimalConstant
@@ -490,6 +514,7 @@ struct HexadecimalConstant
     ~HexadecimalConstant();
 
     HexadecimalConstant *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct DecimalFloatingConstant
@@ -531,6 +556,7 @@ struct DecimalFloatingConstant
     ~DecimalFloatingConstant();
 
     DecimalFloatingConstant *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct HexadecimalFloatingConstant
@@ -578,6 +604,7 @@ struct HexadecimalFloatingConstant
     ~HexadecimalFloatingConstant();
 
     HexadecimalFloatingConstant *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct CCharSequence
@@ -590,6 +617,7 @@ struct CCharSequence
     ~CCharSequence();
 
     CCharSequence *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct SChar
@@ -606,6 +634,7 @@ struct SChar
     ~SChar();
 
     SChar *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct HexQuad
@@ -618,6 +647,7 @@ struct HexQuad
     ~HexQuad();
 
     HexQuad *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct NonzeroDigit
@@ -629,6 +659,7 @@ struct NonzeroDigit
     ~NonzeroDigit() = default;
 
     NonzeroDigit *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct OctalDigit
@@ -640,6 +671,7 @@ struct OctalDigit
     ~OctalDigit() = default;
 
     OctalDigit *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct HexadecimalPrefix
@@ -658,6 +690,7 @@ struct HexadecimalPrefix
     ~HexadecimalPrefix() = default;
 
     HexadecimalPrefix *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct HexadecimalDigit
@@ -669,6 +702,7 @@ struct HexadecimalDigit
     ~HexadecimalDigit() = default;
 
     HexadecimalDigit *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct FractionalConstant
@@ -701,6 +735,7 @@ struct FractionalConstant
     ~FractionalConstant();
 
     FractionalConstant *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct ExponentPart
@@ -715,6 +750,7 @@ struct ExponentPart
     ~ExponentPart();
 
     ExponentPart *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Sign
@@ -733,6 +769,7 @@ struct Sign
     ~Sign() = default;
 
     Sign *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct DigitSequence
@@ -745,6 +782,7 @@ struct DigitSequence
     ~DigitSequence();
 
     DigitSequence *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct HexadecimalFractionalConstant
@@ -777,6 +815,7 @@ struct HexadecimalFractionalConstant
     ~HexadecimalFractionalConstant();
 
     HexadecimalFractionalConstant *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct BinaryExponentPart
@@ -791,6 +830,7 @@ struct BinaryExponentPart
     ~BinaryExponentPart();
 
     BinaryExponentPart *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct HexadecimalDigitSequence
@@ -803,6 +843,7 @@ struct HexadecimalDigitSequence
     ~HexadecimalDigitSequence();
 
     HexadecimalDigitSequence *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct FloatingSuffix
@@ -823,6 +864,7 @@ struct FloatingSuffix
     ~FloatingSuffix() = default;
 
     FloatingSuffix *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct CChar
@@ -839,6 +881,7 @@ struct CChar
     ~CChar();
 
     CChar *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct EscapeSequence
@@ -857,6 +900,7 @@ struct EscapeSequence
     ~EscapeSequence();
 
     EscapeSequence *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct SimpleEscapeSequence
@@ -868,6 +912,7 @@ struct SimpleEscapeSequence
     ~SimpleEscapeSequence() = default;
 
     SimpleEscapeSequence *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct OctalEscapeSequence
@@ -880,6 +925,7 @@ struct OctalEscapeSequence
     ~OctalEscapeSequence();
 
     OctalEscapeSequence *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct HexadecimalEscapeSequence
@@ -892,6 +938,7 @@ struct HexadecimalEscapeSequence
     ~HexadecimalEscapeSequence();
 
     HexadecimalEscapeSequence *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct PreprocessingToken
@@ -911,6 +958,7 @@ struct PreprocessingToken
     ~PreprocessingToken();
 
     PreprocessingToken *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct PPNumber
@@ -938,6 +986,7 @@ struct PPNumber
     ~PPNumber();
 
     PPNumber *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct IntegerSuffix
@@ -993,6 +1042,7 @@ struct IntegerSuffix
     ~IntegerSuffix();
 
     IntegerSuffix *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct UnsignedSuffix
@@ -1011,6 +1061,7 @@ struct UnsignedSuffix
     ~UnsignedSuffix() = default;
 
     UnsignedSuffix *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct LongSuffix
@@ -1029,6 +1080,7 @@ struct LongSuffix
     ~LongSuffix() = default;
 
     LongSuffix *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct LongLongSuffix
@@ -1047,6 +1099,7 @@ struct LongLongSuffix
     ~LongLongSuffix() = default;
 
     LongLongSuffix *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct TranslationUnit

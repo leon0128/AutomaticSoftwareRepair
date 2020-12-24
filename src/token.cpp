@@ -3,6 +3,102 @@
 namespace TOKEN
 {
 
+const std::unordered_map<Keyword::Tag, std::string> Keyword::KEYWORD_MAP
+    = {{Tag::AUTO, "auto"}
+        , {Tag::BREAK, "break"}
+        , {Tag::CASE, "case"}
+        , {Tag::CHAR, "char"}
+        , {Tag::CONST, "const"}
+        , {Tag::CONTINUE, "continue"}
+        , {Tag::DEFAULT, "default"}
+        , {Tag::DO, "do"}
+        , {Tag::DOUBLE, "double"}
+        , {Tag::ELSE, "else"}
+        , {Tag::ENUM, "enum"}
+        , {Tag::EXTERN, "extern"}
+        , {Tag::FLOAT, "float"}
+        , {Tag::FOR, "for"}
+        , {Tag::GOTO, "goto"}
+        , {Tag::IF, "if"}
+        , {Tag::INLINE, "inline"}
+        , {Tag::INT, "int"}
+        , {Tag::LONG, "long"}
+        , {Tag::REGISTER, "register"}
+        , {Tag::RESTRICT, "restrict"}
+        , {Tag::RETURN, "return"}
+        , {Tag::SHORT, "short"}
+        , {Tag::SIGNED, "signed"}
+        , {Tag::SIZEOF, "sizeof"}
+        , {Tag::STATIC, "static"}
+        , {Tag::STRUCT, "struct"}
+        , {Tag::SWITCH, "switch"}
+        , {Tag::TYPEDEF, "typedef"}
+        , {Tag::UNION, "union"}
+        , {Tag::UNSIGNED, "unsigned"}
+        , {Tag::VOID, "void"}
+        , {Tag::VOLATILE, "volatile"}
+        , {Tag::WHILE, "while"}
+        , {Tag::ALIGNAS, "_Alignas"}
+        , {Tag::ALIGNOF, "_Alignof"}
+        , {Tag::ATOMIC, "_Atomic"}
+        , {Tag::BOOL, "_Bool"}
+        , {Tag::COMPLEX, "_Complex"}
+        , {Tag::GENERIC, "_Generic"}
+        , {Tag::IMAGINARY, "_Imaginary"}
+        , {Tag::NORETURN, "_Noreturn"}
+        , {Tag::STATIC_ASSERT, "_Static_assert"}
+        , {Tag::THREAD_LOCAL, "_Thread_local"}};
+
+const std::unordered_map<Punctuator::Tag, std::string> Punctuator::PUNCTUATOR_MAP
+    = {{Tag::L_SQUARE_BRACKET, "["}
+        , {Tag::R_SQUARE_BRACKET, "]"}
+        , {Tag::L_PARENTHESIS, "("}
+        , {Tag::R_PARENTHESIS, ")"}
+        , {Tag::L_CURLY_BRACKET, "{"}
+        , {Tag::R_CURLY_BRACKET, "}"}
+        , {Tag::PERIOD, "."}
+        , {Tag::ARROW, "->"}
+        , {Tag::INCREMENT, "++"}
+        , {Tag::DECREMENT, "--"}
+        , {Tag::BITAND, "&"}
+        , {Tag::ASTERISK, "*"}
+        , {Tag::PLUS, "+"}
+        , {Tag::MINUS, "-"}
+        , {Tag::COMPL, "~"}
+        , {Tag::NOT, "!"}
+        , {Tag::SLASH, "/"}
+        , {Tag::PERCENT, "%"}
+        , {Tag::L_SHIFT, "<<"}
+        , {Tag::R_SHIFT, ">>"}
+        , {Tag::LESS, "<"}
+        , {Tag::GREATER, ">"}
+        , {Tag::LESS_EQUAL, "<="}
+        , {Tag::GREATER_EQUAL, ">="}
+        , {Tag::EQUAL, "=="}
+        , {Tag::NOT_EQUAL, "!="}
+        , {Tag::XOR, "^"}
+        , {Tag::BITOR, "|"}
+        , {Tag::AND, "&&"}
+        , {Tag::OR, "||"}
+        , {Tag::QUESTION, "?"}
+        , {Tag::COLON, ":"}
+        , {Tag::SEMICOLON, ";"}
+        , {Tag::TRIPLE_PERIOD, "..."}
+        , {Tag::ASSIGNMENT, "="}
+        , {Tag::ASTERISK_ASSIGNMENT, "*="}
+        , {Tag::SLASH_ASSIGNMENT, "/="}
+        , {Tag::PERCENT_ASSIGNMENT, "%="}
+        , {Tag::PLUS_ASSIGNMENT, "+="}
+        , {Tag::MINUS_ASSIGNMENT, "-="}
+        , {Tag::L_SHIFT_ASSIGNMENT, "<<="}
+        , {Tag::R_SHIFT_ASSIGNMENT, ">>="}
+        , {Tag::AND_ASSIGNMENT, "&="}
+        , {Tag::XOR_ASSIGNMENT, "^="}
+        , {Tag::BITOR_ASSIGNMENT, "|="}
+        , {Tag::COMMA, ","}
+        , {Tag::HASH, "#"}
+        , {Tag::DOUBLE_HASH, "##"}};
+
 Token::~Token()
 {
     if(std::holds_alternative<std::monostate>(var))
@@ -38,9 +134,36 @@ Token *Token::copy() const
     return new Token(cvar);
 }
 
+std::string &Token::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Keyword*>(var))
+        std::get<Keyword*>(var)->str(res, indent);
+    else if(std::holds_alternative<Identifier*>(var))
+        std::get<Identifier*>(var)->str(res, indent);
+    else if(std::holds_alternative<Constant*>(var))
+        std::get<Constant*>(var)->str(res, indent);
+    else if(std::holds_alternative<StringLiteral*>(var))
+        std::get<Punctuator*>(var)->str(res, indent);
+    else if(std::holds_alternative<Punctuator*>(var))
+        std::get<Punctuator*>(var)->str(res, indent);
+    
+    return res;
+}
+
 Keyword *Keyword::copy() const
 {
     return new Keyword(tag);
+}
+
+std::string &Keyword::str(std::string &res, std::size_t &indent) const
+{
+    if(auto iter = KEYWORD_MAP.find(tag);
+        iter != KEYWORD_MAP.end())
+        res += iter->second;
+
+    return res;
 }
 
 Identifier::~Identifier()
@@ -76,6 +199,21 @@ Identifier *Identifier::copy() const
     return new Identifier(std::move(cseq));
 }
 
+std::string &Identifier::str(std::string &res, std::size_t &indent) const
+{
+    for(auto &&v : seq)
+    {
+        if(std::holds_alternative<std::monostate>(v))
+            ;
+        else if(std::holds_alternative<IdentifierNondigit*>(v))
+            std::get<IdentifierNondigit*>(v)->str(res, indent);
+        else if(std::holds_alternative<Digit*>(v))
+            std::get<Digit*>(v)->str(res, indent);
+    }
+
+    return res;
+}
+
 Constant::~Constant()
 {
     if(std::holds_alternative<std::monostate>(var))
@@ -107,6 +245,22 @@ Constant *Constant::copy() const
     return new Constant(cvar);
 }
 
+std::string &Constant::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<IntegerConstant*>(var))
+        std::get<IntegerConstant*>(var)->str(res, indent);
+    else if(std::holds_alternative<FloatingConstant*>(var))
+        std::get<FloatingConstant*>(var)->str(res, indent);
+    else if(std::holds_alternative<EnumerationConstant*>(var))
+        std::get<EnumerationConstant*>(var)->str(res, indent);
+    else if(std::holds_alternative<CharacterConstant*>(var))
+        std::get<CharacterConstant*>(var)->str(res, indent);
+    
+    return res;
+}
+
 StringLiteral::~StringLiteral()
 {
     delete ep;
@@ -119,9 +273,30 @@ StringLiteral *StringLiteral::copy() const
         , scs != nullptr ? scs->copy() : nullptr);
 }
 
+std::string &StringLiteral::str(std::string &res, std::size_t &indent) const
+{
+    if(ep != nullptr)
+        ep->str(res, indent);
+    res.push_back('\"');
+    if(scs != nullptr)
+        scs->str(res, indent);
+    res.push_back('\"');
+
+    return res;
+}
+
 Punctuator *Punctuator::copy() const
 {
     return new Punctuator(tag);
+}
+
+std::string &Punctuator::str(std::string &res, std::size_t &indent) const
+{
+    if(auto i = PUNCTUATOR_MAP.find(tag);
+        i != PUNCTUATOR_MAP.end())
+        res += i->second;
+    
+    return res;
 }
 
 IdentifierNondigit::~IdentifierNondigit()
@@ -147,9 +322,27 @@ IdentifierNondigit *IdentifierNondigit::copy() const
     return new IdentifierNondigit(cvar);
 }
 
+std::string &IdentifierNondigit::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Nondigit*>(var))
+        std::get<Nondigit*>(var)->str(res, indent);
+    else if(std::holds_alternative<UniversalCharacterName*>(var))
+        std::get<UniversalCharacterName*>(var)->str(res, indent);
+    
+    return res;
+}
+
 Digit *Digit::copy() const
 {
     return new Digit(c);
+}
+
+std::string &Digit::str(std::string &res, std::size_t &indent) const
+{
+    res.push_back(c);
+    return res;
 }
 
 IntegerConstant::~IntegerConstant()
@@ -204,6 +397,35 @@ IntegerConstant *IntegerConstant::copy() const
     return new IntegerConstant(cvar);
 }
 
+std::string &IntegerConstant::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Sdc_is>(var))
+    {
+        auto &&s = std::get<Sdc_is>(var);
+        s.dc->str(res, indent);
+        if(s.is != nullptr)
+            s.is->str(res, indent);
+    }
+    else if(std::holds_alternative<Soc_is>(var))
+    {
+        auto &&s = std::get<Soc_is>(var);
+        s.oc->str(res, indent);
+        if(s.is != nullptr)
+            s.is->str(res, indent);
+    }
+    else if(std::holds_alternative<Shc_is>(var))
+    {
+        auto &&s = std::get<Shc_is>(var);
+        s.hc->str(res, indent);
+        if(s.is != nullptr)
+            s.is->str(res, indent);
+    }
+
+    return res;
+}
+
 FloatingConstant::~FloatingConstant()
 {
     if(std::holds_alternative<std::monostate>(var))
@@ -227,6 +449,18 @@ FloatingConstant *FloatingConstant::copy() const
     return new FloatingConstant(cvar);
 }
 
+std::string &FloatingConstant::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<DecimalFloatingConstant*>(var))
+        std::get<DecimalFloatingConstant*>(var)->str(res, indent);
+    else if(std::holds_alternative<HexadecimalFloatingConstant*>(var))
+        std::get<HexadecimalFloatingConstant*>(var)->str(res, indent);
+    
+    return res;
+}
+
 EnumerationConstant::~EnumerationConstant()
 {
     delete i;
@@ -235,6 +469,11 @@ EnumerationConstant::~EnumerationConstant()
 EnumerationConstant *EnumerationConstant::copy() const
 {
     return new EnumerationConstant(i->copy());
+}
+
+std::string &EnumerationConstant::str(std::string &res, std::size_t &indent) const
+{
+    return i->str(res, indent);
 }
 
 CharacterConstant::~CharacterConstant()
@@ -247,9 +486,56 @@ CharacterConstant *CharacterConstant::copy() const
     return new CharacterConstant(tag, ccs->copy());
 }
 
+std::string &CharacterConstant::str(std::string &res, std::size_t &indent) const
+{
+    switch(tag)
+    {
+        case(Tag::L):
+            res.push_back('L');
+            break;
+        case(Tag::u):
+            res.push_back('u');
+            break;
+        case(Tag::U):
+            res.push_back('U');
+            break;
+        
+        default:;
+    }
+
+    res.push_back('\'');
+    ccs->str(res, indent);
+    res.push_back('\'');
+
+    return res;
+}
+
 EncodingPrefix *EncodingPrefix::copy() const
 {
     return new EncodingPrefix(tag);
+}
+
+std::string &EncodingPrefix::str(std::string &res, std::size_t &indent) const
+{
+    switch(tag)
+    {
+        case(Tag::u8):
+            res += "u8";
+            break;
+        case(Tag::u):
+            res.push_back('u');
+            break;
+        case(Tag::U):
+            res.push_back('U');
+            break;
+        case(Tag::L):
+            res.push_back('L');
+            break;
+        
+        default:;
+    }
+
+    return res;
 }
 
 SCharSequence::~SCharSequence()
@@ -267,9 +553,23 @@ SCharSequence *SCharSequence::copy() const
     return new SCharSequence(std::move(cseq));
 }
 
+std::string &SCharSequence::str(std::string &res, std::size_t &indent) const
+{
+    for(auto &&sc : seq)
+        sc->str(res, indent);
+    
+    return res;
+}
+
 Nondigit *Nondigit::copy() const
 {
     return new Nondigit(c);
+}
+
+std::string &Nondigit::str(std::string &res, std::size_t &indent) const
+{
+    res.push_back(c);
+    return res;
 }
 
 UniversalCharacterName::~UniversalCharacterName()
@@ -308,6 +608,27 @@ UniversalCharacterName *UniversalCharacterName::copy() const
     return new UniversalCharacterName(cvar);
 }
 
+std::string &UniversalCharacterName::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Su_hq>(var))
+    {
+        res += "\\u";
+        auto &&s = std::get<Su_hq>(var);
+        s.hq->str(res, indent);
+    }
+    else if(std::holds_alternative<SU_hq_hq>(var))
+    {
+        res += "\\U";
+        auto &&s = std::get<SU_hq_hq>(var);
+        s.hq0->str(res, indent);
+        s.hq1->str(res, indent);
+    }
+
+    return res;
+}
+
 DecimalConstant::~DecimalConstant()
 {
     delete nd;
@@ -322,6 +643,15 @@ DecimalConstant *DecimalConstant::copy() const
         cseq.push_back(d->copy());
 
     return new DecimalConstant(nd->copy(), std::move(cseq));
+}
+
+std::string &DecimalConstant::str(std::string &res, std::size_t &indent) const
+{
+    nd->str(res, indent);
+    for(auto &&d : seq)
+        d->str(res, indent);
+    
+    return res;
 }
 
 OctalConstant::~OctalConstant()
@@ -339,6 +669,15 @@ OctalConstant *OctalConstant::copy() const
     return new OctalConstant(std::move(cseq));
 }
 
+std::string &OctalConstant::str(std::string &res, std::size_t &indent) const
+{
+    res.push_back('0');
+    for(auto &&od : seq)
+        od->str(res, indent);
+
+    return res;
+}
+
 HexadecimalConstant::~HexadecimalConstant()
 {
     delete hp;
@@ -353,6 +692,15 @@ HexadecimalConstant *HexadecimalConstant::copy() const
         cseq.push_back(hd->copy());
     
     return new HexadecimalConstant(hp->copy(), std::move(cseq));
+}
+
+std::string &HexadecimalConstant::str(std::string &res, std::size_t &indent) const
+{
+    hp->str(res, indent);
+    for(auto &&hd : seq)
+        hd->str(res, indent);
+    
+    return res;
 }
 
 DecimalFloatingConstant::~DecimalFloatingConstant()
@@ -396,6 +744,31 @@ DecimalFloatingConstant *DecimalFloatingConstant::copy() const
     }
 
     return new DecimalFloatingConstant(cvar);
+}
+
+std::string &DecimalFloatingConstant::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Sfc_ep_fs>(var))
+    {
+        auto &&s = std::get<Sfc_ep_fs>(var);
+        s.fc->str(res, indent);
+        if(s.ep != nullptr)
+            s.ep->str(res, indent);
+        if(s.fs != nullptr)
+            s.fs->str(res, indent);
+    }
+    else if(std::holds_alternative<Sds_ep_fs>(var))
+    {
+        auto &&s = std::get<Sds_ep_fs>(var);
+        s.ds->str(res, indent);
+        s.ep->str(res, indent);
+        if(s.fs != nullptr)
+            s.fs->str(res, indent);
+    }
+
+    return res;
 }
 
 HexadecimalFloatingConstant::~HexadecimalFloatingConstant()
@@ -445,6 +818,32 @@ HexadecimalFloatingConstant *HexadecimalFloatingConstant::copy() const
     return new HexadecimalFloatingConstant(cvar);
 }
 
+std::string &HexadecimalFloatingConstant::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Shp_hfc_bep_fs>(var))
+    {
+        auto &&s = std::get<Shp_hfc_bep_fs>(var);
+        s.hp->str(res, indent);
+        s.hfc->str(res, indent);
+        s.bep->str(res, indent);
+        if(s.fs != nullptr)
+            s.fs->str(res, indent);
+    }
+    else if(std::holds_alternative<Shp_hds_bep_fs>(var))
+    {
+        auto &&s = std::get<Shp_hds_bep_fs>(var);
+        s.hp->str(res, indent);
+        s.hds->str(res, indent);
+        s.bep->str(res, indent);
+        if(s.fs != nullptr)
+            s.fs->str(res, indent);
+    }
+
+    return res;
+}
+
 CCharSequence::~CCharSequence()
 {
     for(auto &&cc : seq)
@@ -458,6 +857,14 @@ CCharSequence *CCharSequence::copy() const
         cseq.push_back(cc->copy());
     
     return new CCharSequence(std::move(cseq));
+}
+
+std::string &CCharSequence::str(std::string &res, std::size_t &indent) const
+{
+    for(auto &&cc : seq)
+        cc->str(res, indent);
+    
+    return res;
 }
 
 SChar::~SChar()
@@ -482,6 +889,18 @@ SChar *SChar::copy() const
     return new SChar(cvar);
 }
 
+std::string &SChar::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<char>(var))
+        res.push_back(std::get<char>(var));
+    else if(std::holds_alternative<EscapeSequence*>(var))
+        std::get<EscapeSequence*>(var)->str(res, indent);
+    
+    return res;
+}
+
 HexQuad::~HexQuad()
 {
     for(auto &&hd : arr)
@@ -497,9 +916,23 @@ HexQuad *HexQuad::copy() const
     return new HexQuad(std::move(carr));
 }
 
+std::string &HexQuad::str(std::string &res, std::size_t &indent) const
+{
+    for(auto&& hd : arr)
+        hd->str(res, indent);
+    
+    return res;
+}
+
 NonzeroDigit *NonzeroDigit::copy() const
 {
     return new NonzeroDigit(c);
+}
+
+std::string &NonzeroDigit::str(std::string &res, std::size_t &indent) const
+{
+    res.push_back(c);
+    return res;
 }
 
 OctalDigit *OctalDigit::copy() const
@@ -507,14 +940,43 @@ OctalDigit *OctalDigit::copy() const
     return new OctalDigit(c);
 }
 
+std::string &OctalDigit::str(std::string &res, std::size_t &indent) const
+{
+    res.push_back(c);
+    return res;
+}
+
 HexadecimalPrefix *HexadecimalPrefix::copy() const
 {
     return new HexadecimalPrefix(tag);
 }
 
+std::string &HexadecimalPrefix::str(std::string &res, std::size_t &indent) const
+{
+    switch(tag)
+    {
+        case(Tag::x):
+            res += "0x";
+            break;
+        case(Tag::X):
+            res += "0X";
+            break;
+        
+        default:;
+    }
+
+    return res;
+}
+
 HexadecimalDigit *HexadecimalDigit::copy() const
 {
     return new HexadecimalDigit(c);
+}
+
+std::string &HexadecimalDigit::str(std::string &res, std::size_t &indent) const
+{
+    res.push_back(c);
+    return res;
 }
 
 FractionalConstant::~FractionalConstant()
@@ -554,6 +1016,28 @@ FractionalConstant *FractionalConstant::copy() const
     return new FractionalConstant(cvar);
 }
 
+std::string &FractionalConstant::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Sds_ds>(var))
+    {
+        auto &&s = std::get<Sds_ds>(var);
+        if(s.ds0 != nullptr)
+            s.ds0->str(res, indent);
+        res.push_back('.');
+        s.ds1->str(res, indent);
+    }
+    else if(std::holds_alternative<Sds>(var))
+    {
+        auto &&s = std::get<Sds>(var);
+        s.ds->str(res, indent);
+        res.push_back('.');
+    }
+
+    return res;
+}
+
 ExponentPart::~ExponentPart()
 {
     delete s;
@@ -566,9 +1050,36 @@ ExponentPart *ExponentPart::copy() const
         , ds->copy());
 }
 
+std::string &ExponentPart::str(std::string &res, std::size_t &indent) const
+{
+    res.push_back('e');
+    if(s != nullptr)
+        s->str(res, indent);
+    ds->str(res, indent);
+
+    return res;
+}
+
 Sign *Sign::copy() const
 {
     return new Sign(tag);
+}
+
+std::string &Sign::str(std::string &res, std::size_t &indent) const
+{
+    switch(tag)
+    {
+        case(Tag::PLUS):
+            res.push_back('+');
+            break;
+        case(Tag::MINUS):
+            res.push_back('-');
+            break;
+        
+        default:;
+    }
+
+    return res;
 }
 
 DigitSequence::~DigitSequence()
@@ -585,6 +1096,14 @@ DigitSequence *DigitSequence::copy() const
     
     return new DigitSequence(std::move(cseq));
 }
+
+std::string &DigitSequence::str(std::string &res, std::size_t &indent) const
+{
+    for(auto &&d : seq)
+        d->str(res, indent);
+
+    return res;
+} 
 
 HexadecimalFractionalConstant::~HexadecimalFractionalConstant()
 {
@@ -623,6 +1142,28 @@ HexadecimalFractionalConstant *HexadecimalFractionalConstant::copy() const
     return new HexadecimalFractionalConstant(cvar);
 }
 
+std::string &HexadecimalFractionalConstant::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Shds_hds>(var))
+    {
+        auto &&s = std::get<Shds_hds>(var);
+        if(s.hds0 != nullptr)
+            s.hds0->str(res, indent);
+        res.push_back('.');
+        s.hds1->str(res, indent);
+    }
+    else if(std::holds_alternative<Shds>(var))
+    {
+        auto &&s = std::get<Shds>(var);
+        s.hds->str(res, indent);
+        res.push_back('.');
+    }
+
+    return res;
+}
+
 BinaryExponentPart::~BinaryExponentPart()
 {
     delete s;
@@ -634,6 +1175,16 @@ BinaryExponentPart *BinaryExponentPart::copy() const
     return new BinaryExponentPart(s != nullptr ? s->copy() : nullptr
         , ds->copy());
 };
+
+std::string &BinaryExponentPart::str(std::string &res, std::size_t &indent) const
+{
+    res.push_back('p');
+    if(s != nullptr)
+        s->str(res, indent);
+    ds->str(res, indent);
+
+    return res;
+}
 
 HexadecimalDigitSequence::~HexadecimalDigitSequence()
 {
@@ -650,9 +1201,40 @@ HexadecimalDigitSequence *HexadecimalDigitSequence::copy() const
     return new HexadecimalDigitSequence(std::move(cseq));
 }
 
+std::string &HexadecimalDigitSequence::str(std::string &res, std::size_t &indent) const
+{
+    for(auto &&hd : seq)
+        hd->str(res, indent);
+    
+    return res;
+}
+
 FloatingSuffix *FloatingSuffix::copy() const
 {
     return new FloatingSuffix(tag);
+}
+
+std::string &FloatingSuffix::str(std::string &res, std::size_t &indent) const
+{
+    switch(tag)
+    {
+        case(Tag::f):
+            res.push_back('f');
+            break;
+        case(Tag::l):
+            res.push_back('L');
+            break;
+        case(Tag::F):
+            res.push_back('F');
+            break;
+        case(Tag::L):
+            res.push_back('L');
+            break;
+        
+        default:;
+    }
+
+    return res;
 }
 
 CChar::~CChar()
@@ -675,6 +1257,18 @@ CChar *CChar::copy() const
         cvar.emplace<EscapeSequence*>(std::get<EscapeSequence*>(var)->copy());
     
     return new CChar(cvar);
+}
+
+std::string &CChar::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<char>(var))
+        res.push_back(std::get<char>(var));
+    else if(std::holds_alternative<EscapeSequence*>(var))
+        std::get<EscapeSequence*>(var)->str(res, indent);
+
+    return res;
 }
 
 EscapeSequence::~EscapeSequence()
@@ -708,9 +1302,32 @@ EscapeSequence *EscapeSequence::copy() const
     return new EscapeSequence(cvar);
 }
 
+std::string &EscapeSequence::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<SimpleEscapeSequence*>(var))
+        std::get<SimpleEscapeSequence*>(var)->str(res, indent);
+    else if(std::holds_alternative<OctalEscapeSequence*>(var))
+        std::get<OctalEscapeSequence*>(var)->str(res, indent);
+    else if(std::holds_alternative<HexadecimalEscapeSequence*>(var))
+        std::get<HexadecimalEscapeSequence*>(var)->str(res, indent);
+    else if(std::holds_alternative<UniversalCharacterName*>(var))
+        std::get<UniversalCharacterName*>(var)->str(res, indent);
+    
+    return res;
+}
+
 SimpleEscapeSequence *SimpleEscapeSequence::copy() const
 {
     return new SimpleEscapeSequence(c);
+}
+
+std::string &SimpleEscapeSequence::str(std::string &res, std::size_t &indent) const
+{
+    res.push_back('\\');
+    res.push_back(c);
+    return res;
 }
 
 OctalEscapeSequence::~OctalEscapeSequence()
@@ -728,6 +1345,15 @@ OctalEscapeSequence *OctalEscapeSequence::copy() const
     return new OctalEscapeSequence(std::move(cseq));
 }
 
+std::string &OctalEscapeSequence::str(std::string &res, std::size_t &indent) const
+{
+    res.push_back('\\');
+    for(auto &&od : seq)
+        od->str(res, indent);
+    
+    return res;
+}
+
 HexadecimalEscapeSequence::~HexadecimalEscapeSequence()
 {
     for(auto &&hd : seq)
@@ -741,6 +1367,15 @@ HexadecimalEscapeSequence *HexadecimalEscapeSequence::copy() const
         cseq.push_back(hd->copy());
     
     return new HexadecimalEscapeSequence(std::move(cseq));
+}
+
+std::string &HexadecimalEscapeSequence::str(std::string &res, std::size_t &indent) const
+{
+    res += "\\x";
+    for(auto &&hd : seq)
+        hd->str(res, indent);
+
+    return res;
 }
 
 PreprocessingToken::~PreprocessingToken()
@@ -776,6 +1411,24 @@ PreprocessingToken *PreprocessingToken::copy() const
         cvar.emplace<Punctuator*>(std::get<Punctuator*>(var)->copy());
 
     return new PreprocessingToken(cvar);
+}
+
+std::string &PreprocessingToken::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Identifier*>(var))
+        std::get<Identifier*>(var)->str(res, indent);
+    else if(std::holds_alternative<PPNumber*>(var))
+        std::get<PPNumber*>(var)->str(res, indent);
+    else if(std::holds_alternative<CharacterConstant*>(var))
+        std::get<CharacterConstant*>(var)->str(res, indent);
+    else if(std::holds_alternative<StringLiteral*>(var))
+        std::get<StringLiteral*>(var)->str(res, indent);
+    else if(std::holds_alternative<Punctuator*>(var))
+        std::get<Punctuator*>(var)->str(res, indent);
+    
+    return res;
 }
 
 PPNumber::~PPNumber()
@@ -815,6 +1468,46 @@ PPNumber *PPNumber::copy() const
     }
 
     return new PPNumber(std::move(cseq));
+}
+
+std::string &PPNumber::str(std::string &res, std::size_t &indent) const
+{
+    for(auto &&v : seq)
+    {
+        if(std::holds_alternative<std::monostate>(v))
+            ;
+        else if(std::holds_alternative<Digit*>(v))
+            std::get<Digit*>(v)->str(res, indent);
+        else if(std::holds_alternative<Tag>(v))
+        {
+            switch(std::get<Tag>(v))
+            {
+                case(Tag::PERIOD):
+                    res.push_back('.');
+                    break;
+                case(Tag::e):
+                    res.push_back('e');
+                    break;
+                case(Tag::E):
+                    res.push_back('E');
+                    break;
+                case(Tag::p):
+                    res.push_back('p');
+                    break;
+                case(Tag::P):
+                    res.push_back('P');
+                    break;
+                
+                default:;
+            }
+        }
+        else if(std::holds_alternative<IdentifierNondigit*>(v))
+            std::get<IdentifierNondigit*>(v)->str(res, indent);
+        else if(std::holds_alternative<Sign*>(v))
+            std::get<Sign*>(v)->str(res, indent);
+    }
+
+    return res;
 }
 
 IntegerSuffix::~IntegerSuffix()
@@ -880,9 +1573,61 @@ IntegerSuffix *IntegerSuffix::copy() const
     return new IntegerSuffix(var);
 }
 
+std::string &IntegerSuffix::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        ;
+    else if(std::holds_alternative<Sus_ls>(var))
+    {
+        auto &&s = std::get<Sus_ls>(var);
+        s.us->str(res, indent);
+        if(s.ls != nullptr)
+            s.ls->str(res, indent);
+    }
+    else if(std::holds_alternative<Sus_lls>(var))
+    {
+        auto &&s = std::get<Sus_lls>(var);
+        s.us->str(res, indent);
+        s.lls->str(res, indent);
+    }
+    else if(std::holds_alternative<Sls_us>(var))
+    {
+        auto &&s = std::get<Sls_us>(var);
+        s.ls->str(res, indent);
+        if(s.us != nullptr)
+            s.us->str(res, indent);
+    }
+    else if(std::holds_alternative<Slls_us>(var))
+    {
+        auto &&s = std::get<Slls_us>(var);
+        s.lls->str(res, indent);
+        if(s.us != nullptr)
+            s.us->str(res, indent);
+    }
+
+    return res;
+}
+
 UnsignedSuffix *UnsignedSuffix::copy() const
 {
     return new UnsignedSuffix(tag);
+}
+
+std::string &UnsignedSuffix::str(std::string &res, std::size_t &indent) const
+{
+    switch(tag)
+    {
+        case(Tag::u):
+            res.push_back('u');
+            break;
+        case(Tag::U):
+            res.push_back('U');
+            break;
+        
+        default:;
+    }
+
+    return res;
 }
 
 LongSuffix *LongSuffix::copy() const
@@ -890,9 +1635,43 @@ LongSuffix *LongSuffix::copy() const
     return new LongSuffix(tag);
 }
 
+std::string &LongSuffix::str(std::string &res, std::size_t &indent) const
+{
+    switch(tag)
+    {
+        case(Tag::l):
+            res.push_back('l');
+            break;
+        case(Tag::L):
+            res.push_back('L');
+            break;
+        
+        default:;
+    }
+
+    return res;
+}
+
 LongLongSuffix *LongLongSuffix::copy() const
 {
     return new LongLongSuffix(tag);
+}
+
+std::string &LongLongSuffix::str(std::string &res, std::size_t &indent) const
+{
+    switch(tag)
+    {
+        case(Tag::ll):
+            res += "ll";
+            break;
+        case(Tag::LL):
+            res += "LL";
+            break;
+        
+        default:;
+    }
+
+    return res;
 }
 
 TranslationUnit::~TranslationUnit()
