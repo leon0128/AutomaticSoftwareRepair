@@ -1110,6 +1110,9 @@ struct TranslationUnit
     TranslationUnit(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~TranslationUnit();
+
+    TranslationUnit *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct ExternalDeclaration
@@ -1124,6 +1127,9 @@ struct ExternalDeclaration
     ExternalDeclaration(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~ExternalDeclaration();
+
+    ExternalDeclaration *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct FunctionDefinition
@@ -1142,6 +1148,9 @@ struct FunctionDefinition
         , dl(indl)
         , cs(incs){}
     ~FunctionDefinition();
+
+    FunctionDefinition *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Declaration
@@ -1172,6 +1181,9 @@ struct Declaration
     Declaration(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~Declaration();
+
+    Declaration *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct DeclarationSpecifiers
@@ -1189,6 +1201,9 @@ struct DeclarationSpecifiers
     DeclarationSpecifiers(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~DeclarationSpecifiers();
+
+    DeclarationSpecifiers *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Declarator
@@ -1201,6 +1216,9 @@ struct Declarator
         : p(inp)
         , dd(indd){}
     ~Declarator();
+
+    Declarator *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct DeclarationList
@@ -1211,6 +1229,9 @@ struct DeclarationList
     DeclarationList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~DeclarationList();
+
+    DeclarationList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct CompoundStatement
@@ -1220,6 +1241,9 @@ struct CompoundStatement
     CompoundStatement(BlockItemList *inbil = nullptr) noexcept
         : bil(inbil){}
     ~CompoundStatement();
+
+    CompoundStatement *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct InitDeclaratorList
@@ -1230,6 +1254,9 @@ struct InitDeclaratorList
     InitDeclaratorList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~InitDeclaratorList();
+
+    InitDeclaratorList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct StaticAssertDeclaration
@@ -1242,6 +1269,9 @@ struct StaticAssertDeclaration
         : ce(ince)
         , sl(insl){}
     ~StaticAssertDeclaration();
+
+    StaticAssertDeclaration *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct StorageClassSpecifier
@@ -1262,6 +1292,9 @@ struct StorageClassSpecifier
     constexpr StorageClassSpecifier(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~StorageClassSpecifier() = default;
+
+    StorageClassSpecifier *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct TypeSpecifier
@@ -1295,6 +1328,9 @@ struct TypeSpecifier
     TypeSpecifier(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~TypeSpecifier();
+
+    TypeSpecifier *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct TypeQualifier
@@ -1313,6 +1349,9 @@ struct TypeQualifier
     constexpr TypeQualifier(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~TypeQualifier() = default;
+
+    TypeQualifier *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct FunctionSpecifier
@@ -1329,6 +1368,9 @@ struct FunctionSpecifier
     constexpr FunctionSpecifier(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~FunctionSpecifier() = default;
+
+    FunctionSpecifier *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct AlignmentSpecifier
@@ -1343,6 +1385,9 @@ struct AlignmentSpecifier
     AlignmentSpecifier(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~AlignmentSpecifier();
+
+    AlignmentSpecifier *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Pointer
@@ -1373,6 +1418,9 @@ struct Pointer
     Pointer(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~Pointer();
+
+    Pointer *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct DirectDeclarator
@@ -1434,6 +1482,9 @@ struct DirectDeclarator
     DirectDeclarator(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~DirectDeclarator();
+
+    DirectDeclarator *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct BlockItemList
@@ -1444,6 +1495,9 @@ struct BlockItemList
     BlockItemList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~BlockItemList();
+
+    BlockItemList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct InitDeclarator
@@ -1474,6 +1528,9 @@ struct InitDeclarator
     InitDeclarator(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~InitDeclarator();
+
+    InitDeclarator *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct ConstantExpression
@@ -1483,6 +1540,9 @@ struct ConstantExpression
     constexpr ConstantExpression(ConditionalExpression *ince = nullptr) noexcept
         : ce(ince){}
     ~ConstantExpression();
+
+    ConstantExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct AtomicTypeSpecifier
@@ -1492,6 +1552,9 @@ struct AtomicTypeSpecifier
     constexpr AtomicTypeSpecifier(TypeName *intn = nullptr) noexcept
         : tn(intn){}
     ~AtomicTypeSpecifier();
+
+    AtomicTypeSpecifier *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct StructOrUnionSpecifier
@@ -1528,6 +1591,9 @@ struct StructOrUnionSpecifier
     StructOrUnionSpecifier(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~StructOrUnionSpecifier();
+
+    StructOrUnionSpecifier *copy() const;
+    std::string &str(std::string &res, std::size_t &indent) const;
 };
 
 struct EnumSpecifier
@@ -1558,6 +1624,9 @@ struct EnumSpecifier
     EnumSpecifier(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~EnumSpecifier();
+
+    EnumSpecifier *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct TypedefName
@@ -1567,6 +1636,9 @@ struct TypedefName
     constexpr TypedefName(Identifier *ini = nullptr) noexcept
         : i(ini){}
     ~TypedefName();
+
+    TypedefName *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct TypeName
@@ -1579,6 +1651,9 @@ struct TypeName
         : sql(insql)
         , ad(inad){}
     ~TypeName();
+
+    TypeName *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct TypeQualifierList
@@ -1589,6 +1664,9 @@ struct TypeQualifierList
     TypeQualifierList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~TypeQualifierList();
+
+    TypeQualifierList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct AssignmentExpression
@@ -1622,6 +1700,9 @@ struct AssignmentExpression
     AssignmentExpression(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~AssignmentExpression();
+
+    AssignmentExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct ParameterTypeList
@@ -1634,6 +1715,9 @@ struct ParameterTypeList
         : pl(inpl)
         , isValiable(inIsValiable){}
     ~ParameterTypeList();
+
+    ParameterTypeList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct IdentifierList
@@ -1644,6 +1728,9 @@ struct IdentifierList
     IdentifierList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~IdentifierList();
+
+    IdentifierList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct BlockItem
@@ -1658,6 +1745,9 @@ struct BlockItem
     BlockItem(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~BlockItem();
+
+    BlockItem *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Initializer
@@ -1672,6 +1762,9 @@ struct Initializer
     Initializer(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~Initializer();
+
+    Initializer *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct ConditionalExpression
@@ -1705,6 +1798,9 @@ struct ConditionalExpression
     ConditionalExpression(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~ConditionalExpression();
+
+    ConditionalExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct StructOrUnion
@@ -1721,6 +1817,9 @@ struct StructOrUnion
     constexpr StructOrUnion(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~StructOrUnion() = default;
+
+    StructOrUnion *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct StructDeclarationList
@@ -1731,6 +1830,9 @@ struct StructDeclarationList
     StructDeclarationList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~StructDeclarationList();
+
+    StructDeclarationList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct EnumeratorList
@@ -1741,6 +1843,9 @@ struct EnumeratorList
     EnumeratorList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~EnumeratorList();
+
+    EnumeratorList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct SpecifierQualifierList
@@ -1755,6 +1860,9 @@ struct SpecifierQualifierList
     SpecifierQualifierList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~SpecifierQualifierList();
+
+    SpecifierQualifierList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct AbstractDeclarator
@@ -1785,6 +1893,9 @@ struct AbstractDeclarator
     AbstractDeclarator(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~AbstractDeclarator();
+
+    AbstractDeclarator *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct UnaryExpression
@@ -1850,6 +1961,9 @@ struct UnaryExpression
     UnaryExpression(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~UnaryExpression();
+
+    UnaryExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct AssignmentOperator
@@ -1875,6 +1989,9 @@ struct AssignmentOperator
     constexpr AssignmentOperator(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~AssignmentOperator() = default;
+
+    AssignmentOperator *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct ParameterList
@@ -1885,6 +2002,9 @@ struct ParameterList
     ParameterList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~ParameterList();
+
+    ParameterList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Statement
@@ -1903,6 +2023,9 @@ struct Statement
     Statement(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~Statement();
+
+    Statement *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct InitializerList
@@ -1923,6 +2046,9 @@ struct InitializerList
     InitializerList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~InitializerList();
+
+    InitializerList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct LogicalORExpression
@@ -1933,6 +2059,9 @@ struct LogicalORExpression
     LogicalORExpression(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~LogicalORExpression();
+
+    LogicalORExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Expression
@@ -1943,6 +2072,9 @@ struct Expression
     Expression(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~Expression();
+
+    Expression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct StructDeclaration
@@ -1973,6 +2105,9 @@ struct StructDeclaration
     StructDeclaration(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~StructDeclaration();
+
+    StructDeclaration *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Enumerator
@@ -2003,6 +2138,9 @@ struct Enumerator
     Enumerator(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~Enumerator();
+
+    Enumerator *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct DirectAbstractDeclarator
@@ -2048,6 +2186,9 @@ struct DirectAbstractDeclarator
     DirectAbstractDeclarator(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~DirectAbstractDeclarator();
+
+    DirectAbstractDeclarator *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct PostfixExpression
@@ -2116,6 +2257,9 @@ struct PostfixExpression
     PostfixExpression(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~PostfixExpression();
+
+    PostfixExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct UnaryOperator
@@ -2136,6 +2280,9 @@ struct UnaryOperator
     constexpr UnaryOperator(Tag intag = Tag::NONE) noexcept
         : tag(intag){}
     ~UnaryOperator() = default;
+
+    UnaryOperator *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct CastExpression
@@ -2166,6 +2313,9 @@ struct CastExpression
     CastExpression(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~CastExpression();
+
+    CastExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct ParameterDeclaration
@@ -2199,6 +2349,9 @@ struct ParameterDeclaration
     ParameterDeclaration(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~ParameterDeclaration();
+
+    ParameterDeclaration *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct LabeledStatement
@@ -2239,6 +2392,9 @@ struct LabeledStatement
     LabeledStatement(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~LabeledStatement();
+
+    LabeledStatement *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct ExpressionStatement
@@ -2248,6 +2404,9 @@ struct ExpressionStatement
     constexpr ExpressionStatement(Expression *ine = nullptr) noexcept
         : e(ine){}
     ~ExpressionStatement();
+
+    ExpressionStatement *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct SelectionStatement
@@ -2294,6 +2453,9 @@ struct SelectionStatement
     SelectionStatement(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~SelectionStatement();
+
+    SelectionStatement *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct IterationStatement
@@ -2359,6 +2521,9 @@ struct IterationStatement
     IterationStatement(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~IterationStatement();
+
+    IterationStatement *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct JumpStatement
@@ -2396,6 +2561,9 @@ struct JumpStatement
     JumpStatement(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~JumpStatement();
+
+    JumpStatement *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Designation
@@ -2405,6 +2573,9 @@ struct Designation
     constexpr Designation(DesignatorList *indl = nullptr) noexcept
         : dl(indl){}
     ~Designation();
+
+    Designation *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct LogicalANDExpression
@@ -2415,6 +2586,9 @@ struct LogicalANDExpression
     LogicalANDExpression(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~LogicalANDExpression();
+
+    LogicalANDExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct StructDeclaratorList
@@ -2425,6 +2599,9 @@ struct StructDeclaratorList
     StructDeclaratorList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~StructDeclaratorList();
+
+    StructDeclaratorList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct PrimaryExpression
@@ -2442,6 +2619,9 @@ struct PrimaryExpression
     PrimaryExpression(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~PrimaryExpression();
+
+    PrimaryExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct ArgumentExpressionList
@@ -2452,6 +2632,9 @@ struct ArgumentExpressionList
     ArgumentExpressionList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~ArgumentExpressionList();
+
+    ArgumentExpressionList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct DesignatorList
@@ -2462,6 +2645,9 @@ struct DesignatorList
     DesignatorList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~DesignatorList();
+
+    DesignatorList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct InclusiveORExpression
@@ -2472,6 +2658,9 @@ struct InclusiveORExpression
     InclusiveORExpression(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~InclusiveORExpression();
+
+    InclusiveORExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct StructDeclarator
@@ -2502,6 +2691,9 @@ struct StructDeclarator
     StructDeclarator(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~StructDeclarator();
+
+    StructDeclarator *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct GenericSelection
@@ -2514,6 +2706,9 @@ struct GenericSelection
         : ae(inae)
         , gal(ingal){}
     ~GenericSelection();
+
+    GenericSelection *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct Designator
@@ -2528,6 +2723,9 @@ struct Designator
     Designator(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~Designator();
+
+    Designator *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct ExclusiveORExpression
@@ -2538,6 +2736,9 @@ struct ExclusiveORExpression
     ExclusiveORExpression(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~ExclusiveORExpression();
+
+    ExclusiveORExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct GenericAssocList
@@ -2548,6 +2749,9 @@ struct GenericAssocList
     GenericAssocList(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~GenericAssocList();
+
+    GenericAssocList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct ANDExpression
@@ -2558,6 +2762,9 @@ struct ANDExpression
     ANDExpression(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~ANDExpression();
+
+    ANDExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct GenericAssociation
@@ -2588,6 +2795,9 @@ struct GenericAssociation
     GenericAssociation(Args &&...args)
         : var(std::forward<Args>(args)...){}
     ~GenericAssociation();
+
+    GenericAssociation *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct EqualityExpression
@@ -2622,6 +2832,9 @@ struct EqualityExpression
     EqualityExpression(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~EqualityExpression();
+
+    EqualityExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct RelationalExpression
@@ -2670,6 +2883,9 @@ struct RelationalExpression
     RelationalExpression(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~RelationalExpression();
+
+    RelationalExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct ShiftExpression
@@ -2704,6 +2920,9 @@ struct ShiftExpression
     ShiftExpression(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~ShiftExpression();
+
+    ShiftExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct AdditiveExpression
@@ -2738,6 +2957,9 @@ struct AdditiveExpression
     AdditiveExpression(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~AdditiveExpression();
+
+    AdditiveExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 struct MultiplicativeExpression
@@ -2779,6 +3001,9 @@ struct MultiplicativeExpression
     MultiplicativeExpression(Args &&...args)
         : seq(std::forward<Args>(args)...){}
     ~MultiplicativeExpression();
+
+    MultiplicativeExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
 };
 
 }
