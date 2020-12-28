@@ -134,6 +134,15 @@ class ShiftExpression;
 class AdditiveExpression;
 class MultiplicativeExpression;
 
+template<class T>
+extern std::string str(const T *t)
+{
+    std::string ret;
+    std::size_t i = 0;
+    t->str(ret, i);
+    return ret;
+}
+
 struct Token
 {
     using Variant = std::variant<std::monostate
@@ -2091,7 +2100,7 @@ struct StructDeclaration
     struct Ssad
     {
         StaticAssertDeclaration *sad;
-        constexpr Ssad(StaticAssertDeclaration *insad) noexcept
+        constexpr Ssad(StaticAssertDeclaration *insad = nullptr) noexcept
             : sad(insad){}
     };
 
@@ -2234,9 +2243,9 @@ struct PostfixExpression
     struct Stn_il
     {
         TypeName *tn;
-        IdentifierList *il;
+        InitializerList *il;
         constexpr Stn_il(TypeName *intn = nullptr
-            , IdentifierList *inil = nullptr) noexcept
+            , InitializerList *inil = nullptr) noexcept
             : tn(intn)
             , il(inil){}
     };
