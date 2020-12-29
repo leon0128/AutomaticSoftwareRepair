@@ -108,10 +108,10 @@ private:
     TOKEN::AdditiveExpression *tokAdditiveExpression();
     TOKEN::MultiplicativeExpression *tokMultiplicativeExpression();
 
-    TOKEN::IntegerConstant *convIntegerConstant(){return nullptr;}
-    TOKEN::FloatingConstant *convFloatingConstant(){return nullptr;}
-    TOKEN::EnumerationConstant *convEnumerationConstant(){return nullptr;}
-    TOKEN::CharacterConstant *convCharacterConstant(){return nullptr;}
+    TOKEN::IntegerConstant *convIntegerConstant();
+    TOKEN::FloatingConstant *convFloatingConstant();
+    TOKEN::EnumerationConstant *convEnumerationConstant();
+    TOKEN::CharacterConstant *convCharacterConstant();
 
     // if token is matching, idx is increment
     bool isMatch(TOKEN::Keyword::Tag);

@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "scope.hpp"
+#include "tokenizer.hpp"
 #include "analyzer.hpp"
 
 const std::unordered_map<std::string, TOKEN::Keyword::Tag> Analyzer::KEYWORD_MAP
@@ -2416,6 +2417,60 @@ TOKEN::MultiplicativeExpression *Analyzer::tokMultiplicativeExpression()
     }
 
     return new TOKEN::MultiplicativeExpression(std::move(seq));
+}
+
+TOKEN::IntegerConstant *Analyzer::convIntegerConstant()
+{
+    if(mIdx < mSeq.size()
+        && std::holds_alternative<TOKEN::PPNumber*>(mSeq[mIdx]->var))
+    {
+        std::string str(TOKEN::str(mSeq[mIdx]));
+        std::size_t idx = 0;
+        TOKEN::IntegerConstant *ic = TOKENIZER::decIntegerConstant(str, idx);
+        if(ic != nullptr
+            && idx == str.size())
+            return mIdx++, ic;
+        else
+            delete ic;
+    }
+
+    return nullptr;
+}
+
+TOKEN::FloatingConstant *Analyzer::convFloatingConstant()
+{
+    if(mIdx < mSeq.size()
+        && std::holds_alternative<TOKEN::PPNumber*>(mSeq[mIdx]->var))
+    {
+        std::string str(TOKEN::str(mSeq[mIdx]));
+        std::size_t idx = 0;
+        TOKEN::FloatingConstant *fc = TOKENIZER::decFloatingConstant(str, idx);
+        if(fc != nullptr
+            && idx == str.size())
+            return mIdx++, fc;
+        else
+            delete fc;
+    }
+
+    return nullptr;
+}
+
+TOKEN::EnumerationConstant *Analyzer::convEnumerationConstant()
+{
+    if(TOKEN::Identifier *i = tokIdentifier();
+        i != nullptr)
+        return new TOKEN::EnumerationConstant(i);
+    else
+        return nullptr;
+}
+
+TOKEN::CharacterConstant *Analyzer::convCharacterConstant()
+{
+    if(mIdx < mSeq.size()
+        && std::holds_alternative<TOKEN::CharacterConstant*>(mSeq[mIdx]->var))
+        return mIdx++, std::get<TOKEN::CharacterConstant*>(mSeq[mIdx - 1]->var)->copy();
+    else
+        return nullptr;
 }
 
 bool Analyzer::isMatch(TOKEN::Keyword::Tag tag)
