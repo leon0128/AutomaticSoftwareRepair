@@ -71,6 +71,9 @@ bool Analyzer::execute()
 {
     mTranslationUnit = tokTranslationUnit();
 
+    if(mTranslationUnit != nullptr)
+        std::cout << TOKEN::str(mTranslationUnit) << std::endl;
+
     if(mIdx == mSeq.size())
         return true;
     else
@@ -98,13 +101,14 @@ TOKEN::TranslationUnit *Analyzer::tokTranslationUnit()
 
 TOKEN::ExternalDeclaration *Analyzer::tokExternalDeclaration()
 {
-    TOKEN::ExternalDeclaration::Var var;
+    if(TOKEN::Declaration *d = tokDeclaration();
+        d != nullptr)
+        return new TOKEN::ExternalDeclaration(d);
+    else if(TOKEN::FunctionDefinition *fd = tokFunctionDefinition();
+        fd != nullptr)
+        return new TOKEN::ExternalDeclaration(fd);
 
-    if(var.emplace<TOKEN::FunctionDefinition*>(tokFunctionDefinition()) != nullptr
-        || var.emplace<TOKEN::Declaration*>(tokDeclaration()) != nullptr)
-        return new TOKEN::ExternalDeclaration(var);
-    else
-        return nullptr;
+    return nullptr;
 }
 
 TOKEN::FunctionDefinition *Analyzer::tokFunctionDefinition()
@@ -139,7 +143,8 @@ TOKEN::Declaration *Analyzer::tokDeclaration()
     // declaration-specifiers init-declarator-list
     if(TOKEN::Declaration::Sds_idl sds_idl;
         (sds_idl.ds = tokDeclarationSpecifiers()) != nullptr
-        && (sds_idl.idl = tokInitDeclaratorList()) != nullptr)
+        && (sds_idl.idl = tokInitDeclaratorList(), true)
+        && isMatch(TOKEN::Punctuator::Tag::SEMICOLON))
         return new TOKEN::Declaration(sds_idl);
     else
     {
@@ -2479,7 +2484,8 @@ bool Analyzer::isMatch(TOKEN::Keyword::Tag tag)
         && std::holds_alternative<TOKEN::Identifier*>(mSeq[mIdx]->var))
     {
         if(auto iter = KEYWORD_MAP.find(TOKEN::str(mSeq[mIdx]));
-            iter != KEYWORD_MAP.end())
+            iter != KEYWORD_MAP.end()
+                && iter->second == tag)
             return mIdx++, true;
     }
     
