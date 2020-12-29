@@ -56,6 +56,46 @@ namespace TOKENIZER
         , std::size_t &idx);
     extern TOKEN::OctalDigit *decOctalDigit(const std::string &src
         , std::size_t &idx);
+    extern TOKEN::IntegerConstant *decIntegerConstant(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::FloatingConstant *decFloatingConstant(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::DecimalConstant *decDecimalConstant(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::IntegerSuffix *decIntegerSuffix(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::OctalConstant *decOctalConstant(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::HexadecimalConstant *decHexadecimalConstant(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::DecimalFloatingConstant *decDecimalFloatingConstant(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::HexadecimalFloatingConstant *decHexadecimalFloatingConstant(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::NonzeroDigit *decNonzeroDigit(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::UnsignedSuffix *decUnsignedSuffix(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::LongSuffix *decLongSuffix(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::LongLongSuffix *decLongLongSuffix(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::HexadecimalPrefix *decHexadecimalPrefix(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::FractionalConstant *decFractionalConstant(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::ExponentPart *decExponentPart(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::FloatingSuffix *decFloatingSuffix(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::DigitSequence *decDigitSequence(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::HexadecimalFractionalConstant *decHexadecimalFractionalConstant(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::BinaryExponentPart *decBinaryExponentPart(const std::string &src
+        , std::size_t &idx);
+    extern TOKEN::HexadecimalDigitSequence *decHexadecimalDigitSequence(const std::string &src
+        , std::size_t &idx);
 
     inline extern const std::unordered_map<std::string, TOKEN::Punctuator::Tag> PUNCTUATOR_MAP
         = {{"[", TOKEN::Punctuator::Tag::L_SQUARE_BRACKET}
