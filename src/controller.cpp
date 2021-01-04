@@ -1,7 +1,7 @@
 #include <iostream>
 #include <utility>
 
-#include "analyzer.hpp"
+#include "tree_generator.hpp"
 #include "sequencer.hpp"
 #include "controller.hpp"
 
@@ -28,9 +28,11 @@ bool Controller::createTree()
         if(!sequencer.execute())
             return false;
 
-        Analyzer analyzer(p.first, sequencer.seq());
-        if(!analyzer.execute())
+        TreeGenerator generator(p.first, sequencer.seq());
+        if(!generator.execute())
             return false;
+
+        delete generator.translationUnit();
     }
 
     return true;
