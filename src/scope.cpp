@@ -13,6 +13,11 @@ Scope::Scope(Scope *p, ScopeTag sTag)
 
 Scope::~Scope()
 {
+    for(auto &&m : mMap)
+    {
+        for(auto &&p : m)
+            delete p.second;
+    }
     for(auto &&s : mChildren)
         delete s;
 }
