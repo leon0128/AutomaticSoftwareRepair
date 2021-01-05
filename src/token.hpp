@@ -3015,6 +3015,8 @@ struct MultiplicativeExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
+std::string &addLine(std::string&, std::size_t&);
+
 }
 
 #endif

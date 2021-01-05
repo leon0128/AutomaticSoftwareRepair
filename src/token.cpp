@@ -1695,7 +1695,8 @@ std::string &TranslationUnit::str(std::string &res, std::size_t &indent) const
         seq.front()->str(res, indent);
     for(std::size_t i = 1; i < seq.size(); i++)
     {
-        res.push_back('\n');
+        addLine(res, indent);
+        addLine(res, indent);
         seq[i]->str(res, indent);
     }
 
@@ -1758,13 +1759,13 @@ std::string &FunctionDefinition::str(std::string &res, std::size_t &indent) cons
     ds->str(res, indent);
     res.push_back(' ');
     d->str(res, indent);
-    res.push_back('\n');
+    addLine(res, indent);
     if(dl != nullptr)
     {
         indent++;
         dl->str(res, indent);
         indent--;
-        res.push_back('\n');
+        addLine(res, indent);
     }
     cs->str(res, indent);
 
@@ -1956,8 +1957,7 @@ std::string &DeclarationList::str(std::string &res, std::size_t &indent) const
 
     for(std::size_t i = 1; i < seq.size(); i++)
     {
-        res.push_back('\n');
-        res = std::string(4 * indent, ' ');
+        addLine(res, indent);
         seq[i]->str(res, indent);
     }
 
@@ -1976,14 +1976,14 @@ CompoundStatement *CompoundStatement::copy() const
 
 std::string &CompoundStatement::str(std::string &res, std::size_t &indent) const
 {
-    res += std::string(4 * indent, ' ');
-    res += "{\n";
+    res.push_back('{');
     indent++;
+    addLine(res, indent);
     if(bil != nullptr)
         bil->str(res, indent);
     indent--;
-    res += std::string(4 * indent, ' ');
-    res += "\n}";
+    addLine(res, indent);
+    res.push_back('}');
 
     return res;
 }
@@ -2008,7 +2008,7 @@ std::string &InitDeclaratorList::str(std::string &res, std::size_t &indent) cons
     if(!seq.empty())
         seq.front()->str(res, indent);
     
-    for(std::size_t i = 0; i < seq.size(); i++)
+    for(std::size_t i = 1; i < seq.size(); i++)
     {
         res += ", ";
         seq[i]->str(res, indent);
@@ -2489,8 +2489,14 @@ BlockItemList *BlockItemList::copy() const
 
 std::string &BlockItemList::str(std::string &res, std::size_t &indent) const
 {
-    for(auto &&bi : seq)
-        bi->str(res, indent);
+    for(std::size_t i = 0; i + 1 < seq.size(); i++)
+    {
+        seq[i]->str(res, indent);
+        addLine(res, indent);
+    }
+
+    if(!seq.empty())
+        seq.back()->str(res, indent);
 
     return res;
 }
@@ -2640,14 +2646,14 @@ std::string &StructOrUnionSpecifier::str(std::string &res, std::size_t &indent) 
             res.push_back(' ');
             s.i->str(res, indent);
         }
-        res.push_back('\n');
-        res += std::string(4 * indent, ' ');
+        addLine(res, indent);
+        res.push_back('{');
         indent++;
+        addLine(res, indent);
         s.sdl->str(res, indent);
         indent--;
-        res.push_back('\n'); 
-        res += std::string(4 * indent, ' ');
-        res += "}\n";
+        addLine(res, indent);
+        res += "}";
     }
     else if(std::holds_alternative<Ssou_i>(var))
     {
@@ -2710,15 +2716,14 @@ std::string &EnumSpecifier::str(std::string &res, std::size_t &indent) const
             res.push_back(' ');
             s.i->str(res, indent);
         }
-        res.push_back('\n');
-        res += std::string(4 * indent, ' ');
-        res += "{\n";
+        addLine(res, indent);
+        res.push_back('{');
+        addLine(res, indent);
         indent++;
         s.el->str(res, indent);
         indent--;
-        res.push_back('\n');
-        res += std::string(4 * indent, ' ');
-        res += "}\n";
+        addLine(res, indent);
+        res.push_back('}');
     }
     else if(std::holds_alternative<Si>(var))
     {
@@ -2932,7 +2937,6 @@ BlockItem *BlockItem::copy() const
 
 std::string &BlockItem::str(std::string &res, std::size_t &indent) const
 {
-    res += std::string(4 * indent, ' ');
     if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Declaration*>(var))
@@ -2940,7 +2944,6 @@ std::string &BlockItem::str(std::string &res, std::size_t &indent) const
     else if(std::holds_alternative<Statement*>(var))
         std::get<Statement*>(var)->str(res, indent);
 
-    res.push_back('\n');
     return res;
 }
 
@@ -3084,15 +3087,11 @@ StructDeclarationList *StructDeclarationList::copy() const
 std::string &StructDeclarationList::str(std::string &res, std::size_t &indent) const
 {
     if(!seq.empty())
-    {
-        res += std::string(4 * indent, ' ');
         seq.front()->str(res, indent);
-    }
 
     for(std::size_t i = 1; i < seq.size(); i++)
     {
-        res.push_back('\n');
-        res += std::string(4 * indent, ' ');
+        addLine(res, indent);
         seq[i]->str(res, indent);
     }
 
@@ -3124,8 +3123,8 @@ std::string &EnumeratorList::str(std::string &res, std::size_t &indent) const
 
     for(std::size_t i = 1; i < seq.size(); i++)
     {
-        res += ",\n";
-        res += std::string(4 * indent, ' ');
+        res.push_back(',');
+        addLine(res, indent);
         seq[i]->str(res, indent);
     }
 
@@ -4213,7 +4212,8 @@ std::string &LabeledStatement::str(std::string &res, std::size_t &indent) const
     {
         auto &&s = std::get<Si_s>(var);
         s.i->str(res, indent);
-        res += " : ";
+        res.push_back(':');
+        addLine(res, indent);
         s.s->str(res, indent);
     }
     else if(std::holds_alternative<Sce_s>(var))
@@ -4221,13 +4221,15 @@ std::string &LabeledStatement::str(std::string &res, std::size_t &indent) const
         auto &&s = std::get<Sce_s>(var);
         res += "case ";
         s.ce->str(res, indent);
-        res += " : ";
+        res.push_back(':');
+        addLine(res, indent);
         s.s->str(res, indent);
     }
     else if(std::holds_alternative<Ss>(var))
     {
         auto &&s = std::get<Ss>(var);
-        res += "default : ";
+        res += "default:";
+        addLine(res, indent);
         s.s->str(res, indent);
     }
 
@@ -4309,7 +4311,10 @@ std::string &SelectionStatement::str(std::string &res, std::size_t &indent) cons
         res += "if(";
         s.e->str(res, indent);
         res.push_back(')');
+        indent++;
+        addLine(res, indent);
         s.s->str(res, indent);
+        indent--;
     }
     else if(std::holds_alternative<Si_e_s_s>(var))
     {
@@ -4317,9 +4322,16 @@ std::string &SelectionStatement::str(std::string &res, std::size_t &indent) cons
         res += "if(";
         s.e->str(res, indent);
         res.push_back(')');
+        indent++;
+        addLine(res, indent);
         s.s0->str(res, indent);
-        res += " else ";
+        indent--;
+        addLine(res, indent);
+        res += "else";
+        indent++;
+        addLine(res, indent);
         s.s1->str(res, indent);
+        indent--;
     }
     else if(std::holds_alternative<Ss_e_s>(var))
     {
@@ -4327,7 +4339,10 @@ std::string &SelectionStatement::str(std::string &res, std::size_t &indent) cons
         res += "switch(";
         s.e->str(res, indent);
         res.push_back(')');
+        indent++;
+        addLine(res, indent);
         s.s->str(res, indent);
+        indent--;
     }
 
     return res;
@@ -4414,14 +4429,21 @@ std::string &IterationStatement::str(std::string &res, std::size_t &indent) cons
         res += "while(";
         s.e->str(res, indent);
         res.push_back(')');
+        indent++;
+        addLine(res, indent);
         s.s->str(res, indent);
+        indent--;
     }
     else if(std::holds_alternative<Sd_s_e>(var))
     {
         auto &&s = std::get<Sd_s_e>(var);
-        res += "do ";
+        res += "do";
+        indent++;
+        addLine(res, indent);
         s.s->str(res, indent);
-        res += " while(";
+        indent--;
+        addLine(res, indent);
+        res += "while(";
         s.e->str(res, indent);
         res += ");";
     }
@@ -4438,7 +4460,10 @@ std::string &IterationStatement::str(std::string &res, std::size_t &indent) cons
         if(s.e2 != nullptr)
             s.e2->str(res, indent);
         res.push_back(')');
+        indent++;
+        addLine(res, indent);
         s.s->str(res, indent);
+        indent--;
     }
     else if(std::holds_alternative<Sf_d_e_e_s>(var))
     {
@@ -4451,7 +4476,10 @@ std::string &IterationStatement::str(std::string &res, std::size_t &indent) cons
         if(s.e1 != nullptr)
             s.e1->str(res, indent);
         res.push_back(')');
+        indent++;
+        addLine(res, indent);
         s.s->str(res, indent);
+        indent--;
     }
 
     return res;
@@ -5474,6 +5502,13 @@ std::string &MultiplicativeExpression::str(std::string &res, std::size_t &indent
     }
 
     return res;
+}
+
+std::string &addLine(std::string &str, std::size_t &indent)
+{
+    str.push_back('\n');
+    str += std::string(4 * indent, ' ');
+    return str;
 }
 
 }
