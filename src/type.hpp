@@ -50,8 +50,9 @@ struct EnumInfo
 
     template<class ...Args>
     EnumInfo(Args &&...args)
-        : members(std::forward<Args>(args)...){}    if(mTranslationUnit != nullptr)
-        std::cout << TOKEN::str(mTranslationUnit) << std::endl;
+        : members(std::forward<Args>(args)...){}
+    ~EnumInfo();
+};
 
 struct IdInfo
 {
@@ -88,8 +89,9 @@ struct Qualifier
 
     std::bitset<4> flags;
 
-    template<class ...Args>    if(mTranslationUnit != nullptr)
-        std::cout << TOKEN::str(mTranslationUnit) << std::endl;
+    template<class ...Args>
+    Qualifier(Args &&...args)
+        : flags(std::forward<Args>(args)...){}
     ~Qualifier() = default;
     Qualifier(const Qualifier&) = default;
     Qualifier(Qualifier&&) = default;
