@@ -31,6 +31,8 @@ class Enumeration;
 class Struct;
 class Bitfield;
 class Typedef;
+class Lvalue;
+class Aggregate;
 
 struct StructInfo
 {
@@ -245,6 +247,44 @@ struct Typedef
     ~Typedef();
 
     Typedef *copy() const;
+};
+
+struct Lvalue
+{
+    Type *type;
+
+    constexpr Lvalue(Type *t) noexcept
+        : type(t){}
+    ~Lvalue();
+
+    Lvalue *copy() const;
+};
+
+struct Aggregate
+{
+    using Designator = std::variant<std::monostate
+        , TOKEN::ConstantExpression*
+        , std::string>;
+
+    struct Element
+    {
+        Designator designator;
+        Type *type;
+        
+        template<class ...Args>
+        Element(Type *t, Args &&...args)
+            : designator(std::forward<Args>(args)...)
+            , type(t){}
+    };
+
+    std::vector<Element> aggregate;
+
+    template<class ...Args>
+    Aggregate(Args &&...args)
+        : aggregate(std::forward<Args>(args)...){}
+    ~Aggregate();
+
+    Aggregate *copy() const;
 };
 
 }
