@@ -69,9 +69,6 @@ bool TreeGenerator::execute()
 {
     mTranslationUnit = tokTranslationUnit();
 
-    if(mTranslationUnit != nullptr)
-        std::cout << TOKEN::str(mTranslationUnit) << std::endl;
-
     if(mIdx == mSeq.size())
         return true;
     else
