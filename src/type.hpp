@@ -37,10 +37,12 @@ class Aggregate;
 struct StructInfo
 {
     std::vector<std::pair<Type*, std::string>> members;
+    bool isUnion;
 
     template<class ...Args>
-    StructInfo(Args &&...args)
-        : members(std::forward<Args>(args)...){}
+    StructInfo(bool u, Args &&...args)
+        : members(std::forward<Args>(args)...)
+        , isUnion(u){}
     ~StructInfo();
 };
 
@@ -48,9 +50,8 @@ struct EnumInfo
 {
     std::vector<std::pair<std::string, TOKEN::ConstantExpression*>> members;
 
-    template<class ...Args>
-    EnumInfo(Args &&...args)
-        : members(std::forward<Args>(args)...){}
+    EnumInfo()
+        : members(){}
     ~EnumInfo();
 };
 
@@ -127,7 +128,8 @@ struct Base
         VOID, CHAR, S_CHAR, U_CHAR
         , S_SHORT, U_SHORT, S_INT, U_INT
         , S_LONG, U_LONG, S_LONG_LONG, U_LONG_LONG
-        , FLOAT, DOUBLE, LONG_DOUBLE
+        , FLOAT, DOUBLE, LONG_DOUBLE, BOOL
+        , FLOAT_COMPLEX, DOUBLE_COMPLEX, LONG_DOUBLE_COMPLEX
     };
 
     Tag tag;

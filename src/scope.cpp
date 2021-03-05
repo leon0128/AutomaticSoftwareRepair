@@ -50,13 +50,23 @@ bool Scope::addIdentifier(ScopeTag sTag
 }
 
 IDENTIFIER::Identifier *Scope::getIdentifier(NamespaceTag nTag
-    , const std::string &str)
+    , const std::string &str
+    , bool isCurrent)
 {
-    for(Scope *scope = this; scope != nullptr; scope = scope->mParent)
+    if(isCurrent)
     {
-        if(auto iter = scope->mMap[static_cast<std::size_t>(nTag)].find(str);
-            iter != scope->mMap[static_cast<std::size_t>(nTag)].end())
+        if(auto iter = mMap[static_cast<std::size_t>(nTag)].find(str);
+            iter != mMap[static_cast<std::size_t>(nTag)].end())
             return iter->second;
+    }
+    else
+    {
+        for(Scope *scope = this; scope != nullptr; scope = scope->mParent)
+        {
+            if(auto iter = scope->mMap[static_cast<std::size_t>(nTag)].find(str);
+                iter != scope->mMap[static_cast<std::size_t>(nTag)].end())
+                return iter->second;
+        }
     }
 
     return nullptr;

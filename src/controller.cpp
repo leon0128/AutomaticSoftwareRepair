@@ -1,6 +1,7 @@
 #include <iostream>
 #include <utility>
 
+#include "ga/controller.hpp"
 #include "analyzer.hpp"
 #include "tree_generator.hpp"
 #include "sequencer.hpp"
@@ -31,19 +32,18 @@ bool Controller::createTree()
 
         TreeGenerator generator(p.first, sequencer.seq());
         if(!generator.execute())
-        {
-            delete generator.translationUnit();
             return false;
-        }
 
-        Analyzer analyzer(p.first, generator.translationUnit());
-        if(!analyzer.execute())
-        {
-            delete generator.translationUnit();
+        // Analyzer analyzer(p.first, generator.translationUnit());
+        // if(!analyzer.execute())
+        // {
+        //     delete generator.translationUnit();
+        //     return false;
+        // }
+
+        GA::Controller gaController(generator.translationUnit());
+        if(!gaController.execute())
             return false;
-        }
-        
-        delete generator.translationUnit();
     }
 
     return true;

@@ -26,8 +26,12 @@ public:
     Scope *getParent() const;
 
     bool addIdentifier(ScopeTag, NamespaceTag, const std::string&, IDENTIFIER::Identifier*);
-    IDENTIFIER::Identifier *getIdentifier(NamespaceTag, const std::string&);
+    IDENTIFIER::Identifier *getIdentifier(NamespaceTag
+        , const std::string&
+        , bool isCurrent = false);
 
+    constexpr ScopeTag scopeTag() const noexcept
+        {return mScopeTag;}
 private:
     Scope *mParent;
     std::vector<Scope*> mChildren;

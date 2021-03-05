@@ -3252,6 +3252,11 @@ UnaryExpression::~UnaryExpression()
 {
     if(std::holds_alternative<std::monostate>(var))
         ;
+    else if(std::holds_alternative<Spe>(var))
+    {
+        auto &&s = std::get<Spe>(var);
+        delete s.pe;
+    }
     else if(std::holds_alternative<Si_ue>(var))
     {
         auto &&s = std::get<Si_ue>(var);
@@ -4165,6 +4170,12 @@ LabeledStatement::~LabeledStatement()
 {
     if(std::holds_alternative<std::monostate>(var))
         ;
+    else if(std::holds_alternative<Si_s>(var))
+    {
+        auto &&s = std::get<Si_s>(var);
+        delete s.i;
+        delete s.s;
+    }
     else if(std::holds_alternative<Sce_s>(var))
     {
         auto &&s = std::get<Sce_s>(var);
@@ -4270,6 +4281,12 @@ SelectionStatement::~SelectionStatement()
         delete s.e;
         delete s.s0;
         delete s.s1;
+    }
+    else if(std::holds_alternative<Ss_e_s>(var))
+    {
+        auto &&s = std::get<Ss_e_s>(var);
+        delete s.e;
+        delete s.s;
     }
 }
 

@@ -63,6 +63,7 @@ TreeGenerator::TreeGenerator(const std::string &file
 
 TreeGenerator::~TreeGenerator()
 {
+    delete mTranslationUnit;
 }
 
 bool TreeGenerator::execute()

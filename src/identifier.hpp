@@ -1,9 +1,10 @@
-#ifndef IDENTIIFER_HPP
+#ifndef IDENTIFIER_HPP
 #define IDENTIFIER_HPP
 
 #include <string>
 #include <variant>
 #include <utility>
+#include <bitset>
 
 namespace TOKEN{class ConstantExpression;}
 namespace TYPE{class Type;}
@@ -11,7 +12,9 @@ namespace TYPE{class Type;}
 namespace IDENTIFIER
 {
 
-enum class Storage : signed char;
+class Storage;
+class Alignment;
+class FunctionSpecifier;
 
 class Identifier;
 class Object;
@@ -22,15 +25,56 @@ class Enumeration;
 class Typedef;
 class Label;
 
-enum class Storage : signed char
+struct Storage
 {
-    NONE
-    , EXTERN
-    , STATIC
-    , THREAD_LOCAL_EXTERN
-    , THREAD_LOCAL_STATIC
-    , AUTO
-    , REGISTER
+    enum class Tag : signed char
+    {
+        TYPEDEF = 0
+        , EXTERN = 1
+        , STATIC = 2
+        , THREAD_LOCAL = 3
+        , AUTO = 4
+        , REGISTER = 5
+    };
+
+    std::bitset<6> flags;
+    
+    Storage(std::bitset<6> f)
+        : flags(f){}
+    ~Storage() = default;
+};
+
+struct Alignment
+{
+    using Var = std::variant<std::monostate
+        , TYPE::Type*
+        , TOKEN::ConstantExpression*>;
+    
+    Var var;
+
+    template<class ...Args>
+    Alignment(Args &&...args)
+        : var(std::forward<Args>(args)...){}
+    ~Alignment();
+
+    Alignment *copy() const;
+};
+
+struct FunctionSpecifier
+{
+    enum class Tag : signed char
+    {
+        INLINE = 0
+        , NORETURN = 1
+    };
+
+    std::bitset<2> flags;
+    
+    FunctionSpecifier(std::bitset<2> f)
+        : flags(f){}
+    ~FunctionSpecifier() = default;
+    FunctionSpecifier(const FunctionSpecifier&) = default;
+    FunctionSpecifier(FunctionSpecifier&&) = default;
 };
 
 struct Identifier
@@ -57,13 +101,16 @@ struct Object
 {
     TYPE::Type *type;
     Storage storage;
+    Alignment *alignment;
     bool isDefined;
 
-    constexpr Object(TYPE::Type *t
+    Object(TYPE::Type *t
         , Storage s
-        , bool d) noexcept
+        , Alignment *a
+        , bool d)
         : type(t)
         , storage(s)
+        , alignment(a)
         , isDefined(d){}
     ~Object();
 };
@@ -72,13 +119,16 @@ struct Function
 {
     TYPE::Type *type;
     Storage storage;
+    FunctionSpecifier specifier;
     bool isDefined;
 
-    constexpr Function(TYPE::Type *t
+    Function(TYPE::Type *t
         , Storage s
-        , bool d) noexcept
+        , bool d
+        , FunctionSpecifier fs)
         : type(t)
         , storage(s)
+        , specifier(fs)
         , isDefined(d){}
     ~Function();
 };
