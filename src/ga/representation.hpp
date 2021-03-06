@@ -98,6 +98,7 @@ extern OpTag selectOpTag(OpTag def = OpTag::ADD);
 extern TOKEN::TranslationUnit *createTranslationUnit(const Block*);
 extern TOKEN::CompoundStatement *createCompoundStatement(const Block*);
 extern TOKEN::Statement *createStatement(const Block::Element&);
+extern TOKEN::Statement *createStatement(const Block*);
 
 }
 

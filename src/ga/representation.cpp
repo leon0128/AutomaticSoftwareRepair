@@ -81,22 +81,50 @@ Block *createBlock(const TOKEN::SelectionStatement *ss)
 
     if(std::holds_alternative<TOKEN::SelectionStatement::Si_e_s>(ss->var))
     {
-        Block *b = new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>());
-        b->elems.emplace_back(createElement(std::get<TOKEN::SelectionStatement::Si_e_s>(ss->var).s));
+        auto &&s = std::get<TOKEN::SelectionStatement::Si_e_s>(ss->var);
+        Block *b = nullptr;
+        if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+            b = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var));
+        else
+        {
+            b = new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>());
+            b->elems.emplace_back(createElement(s.s));
+        }
         block->elems.emplace_back(static_cast<TOKEN::Statement*>(nullptr), b);
         block->elems.emplace_back(static_cast<TOKEN::Statement*>(nullptr), new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>()));
     }
     else if(std::holds_alternative<TOKEN::SelectionStatement::Si_e_s_s>(ss->var))
     {
-        Block *ifb = new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>());
-        Block *elseb = new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>());
-        ifb->elems.emplace_back(createElement(std::get<TOKEN::SelectionStatement::Si_e_s_s>(ss->var).s0));
-        elseb->elems.emplace_back(createElement(std::get<TOKEN::SelectionStatement::Si_e_s_s>(ss->var).s1));
+        auto &&s = std::get<TOKEN::SelectionStatement::Si_e_s_s>(ss->var);
+        Block *ifb = nullptr, *elseb = nullptr;
+        if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s0->var))
+            ifb = createBlock(std::get<TOKEN::CompoundStatement*>(s.s0->var));
+        else
+        {
+            ifb = new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>());
+            ifb->elems.emplace_back(createElement(std::get<TOKEN::SelectionStatement::Si_e_s_s>(ss->var).s0));
+        }
+        if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s1->var))
+            elseb = createBlock(std::get<TOKEN::CompoundStatement*>(s.s1->var));
+        else
+        {
+            elseb = new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>());
+            elseb->elems.emplace_back(createElement(std::get<TOKEN::SelectionStatement::Si_e_s_s>(ss->var).s1));
+        }
         block->elems.emplace_back(static_cast<TOKEN::Statement*>(nullptr), ifb);
         block->elems.emplace_back(static_cast<TOKEN::Statement*>(nullptr), elseb);
     }
     else if(std::holds_alternative<TOKEN::SelectionStatement::Ss_e_s>(ss->var))
-        block->elems.emplace_back(createElement(std::get<TOKEN::SelectionStatement::Ss_e_s>(ss->var).s));
+    {
+        auto &&s = std::get<TOKEN::SelectionStatement::Ss_e_s>(ss->var);
+        if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+        {
+            delete block;
+            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var));
+        }
+        else
+            block->elems.emplace_back(createElement(s.s));
+    }
 
     return block;
 }
@@ -106,14 +134,51 @@ Block *createBlock(const TOKEN::IterationStatement *is)
     Block *block = new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>());
 
     if(std::holds_alternative<TOKEN::IterationStatement::Sw_e_s>(is->var))
-        block->elems.emplace_back(createElement(std::get<TOKEN::IterationStatement::Sw_e_s>(is->var).s));
+    {
+        auto &&s = std::get<TOKEN::IterationStatement::Sw_e_s>(is->var);
+        if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+        {
+            delete block;
+            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var));
+        }
+        else
+            block->elems.emplace_back(createElement(s.s));
+    }
     else if(std::holds_alternative<TOKEN::IterationStatement::Sd_s_e>(is->var))
-        block->elems.emplace_back(createElement(std::get<TOKEN::IterationStatement::Sd_s_e>(is->var).s));
+    {
+        auto &&s = std::get<TOKEN::IterationStatement::Sd_s_e>(is->var);
+        if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+        {
+            delete block;
+            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var));
+        }
+        else
+            block->elems.emplace_back(createElement(s.s));
+
+    }
     else if(std::holds_alternative<TOKEN::IterationStatement::Sf_e_e_e_s>(is->var))
-        block->elems.emplace_back(createElement(std::get<TOKEN::IterationStatement::Sf_e_e_e_s>(is->var).s));
+    {
+        auto &&s = std::get<TOKEN::IterationStatement::Sf_e_e_e_s>(is->var);
+        if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+        {
+            delete block;
+            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var));
+        }
+        else
+            block->elems.emplace_back(createElement(s.s));
+    }
     else if(std::holds_alternative<TOKEN::IterationStatement::Sf_d_e_e_s>(is->var))
-        block->elems.emplace_back(createElement(std::get<TOKEN::IterationStatement::Sf_d_e_e_s>(is->var).s));
-    
+    {
+        auto &&s = std::get<TOKEN::IterationStatement::Sf_d_e_e_s>(is->var);
+        if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+        {
+            delete block;
+            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var));
+        }
+        else
+            block->elems.emplace_back(createElement(s.s));
+    }
+
     return block;
 }
 
@@ -399,7 +464,7 @@ TOKEN::TranslationUnit *createTranslationUnit(const Block *block)
             TOKEN::FunctionDefinition *newFd = new TOKEN::FunctionDefinition();
             newFd->ds = oldFd->ds->copy();
             newFd->d = oldFd->d->copy();
-            newFd->dl = oldFd->dl->copy();
+            newFd->dl = oldFd->dl != nullptr ? oldFd->dl->copy() : nullptr;
             newFd->cs = createCompoundStatement(e.second);
 
             edvec.push_back(new TOKEN::ExternalDeclaration(newFd));
@@ -456,7 +521,7 @@ TOKEN::Statement *createStatement(const Block::Element &element)
             auto &&s = std::get<TOKEN::LabeledStatement::Si_s>(oldLs->var);
             TOKEN::LabeledStatement::Si_s tmp;
             tmp.i = s.i->copy();
-            tmp.s = new TOKEN::Statement(createCompoundStatement(element.second));
+            tmp.s = createStatement(element.second);
             newS->var.emplace<TOKEN::LabeledStatement*>(new TOKEN::LabeledStatement(tmp));
         }
         else if(std::holds_alternative<TOKEN::LabeledStatement::Sce_s>(oldLs->var))
@@ -464,14 +529,14 @@ TOKEN::Statement *createStatement(const Block::Element &element)
             auto &&s = std::get<TOKEN::LabeledStatement::Sce_s>(oldLs->var);
             TOKEN::LabeledStatement::Sce_s tmp;
             tmp.ce = s.ce->copy();
-            tmp.s = new TOKEN::Statement(createCompoundStatement(element.second));
+            tmp.s = createStatement(element.second);
             newS->var.emplace<TOKEN::LabeledStatement*>(new TOKEN::LabeledStatement(tmp));
         }
         else if(std::holds_alternative<TOKEN::LabeledStatement::Ss>(oldLs->var))
         {
             auto &&s = std::get<TOKEN::LabeledStatement::Ss>(oldLs->var);
             TOKEN::LabeledStatement::Ss tmp;
-            tmp.s = new TOKEN::Statement(createCompoundStatement(element.second));
+            tmp.s = createStatement(element.second);
             newS->var.emplace<TOKEN::LabeledStatement*>(new TOKEN::LabeledStatement(tmp));
         }
     }
@@ -584,6 +649,25 @@ TOKEN::Statement *createStatement(const Block::Element &element)
             delete newS;
             newS = oldS->copy();
         }
+    }
+
+    return newS;
+}
+
+TOKEN::Statement *createStatement(const Block *block)
+{
+    TOKEN::Statement *newS = nullptr;
+
+    if(block->elems.empty())
+        newS = new TOKEN::Statement(new TOKEN::ExpressionStatement());
+    else if(block->elems.size() == 1)
+        newS = createStatement(block->elems.front());
+    else
+    {
+        newS = createStatement(block->elems.front());
+        std::cerr << "Representation warning:\n"
+            "    what: labeled-statement should not have element more than one.\n"
+            << std::flush;
     }
 
     return newS;

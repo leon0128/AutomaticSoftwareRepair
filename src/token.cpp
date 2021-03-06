@@ -1762,6 +1762,7 @@ std::string &FunctionDefinition::str(std::string &res, std::size_t &indent) cons
     addLine(res, indent);
     if(dl != nullptr)
     {
+        addLine(res, indent);
         indent++;
         dl->str(res, indent);
         indent--;
@@ -4328,10 +4329,12 @@ std::string &SelectionStatement::str(std::string &res, std::size_t &indent) cons
         res += "if(";
         s.e->str(res, indent);
         res.push_back(')');
-        indent++;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+            indent++;
         addLine(res, indent);
         s.s->str(res, indent);
-        indent--;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+            indent--;
     }
     else if(std::holds_alternative<Si_e_s_s>(var))
     {
@@ -4339,16 +4342,20 @@ std::string &SelectionStatement::str(std::string &res, std::size_t &indent) cons
         res += "if(";
         s.e->str(res, indent);
         res.push_back(')');
-        indent++;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s0->var))
+            indent++;
         addLine(res, indent);
         s.s0->str(res, indent);
-        indent--;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s0->var))
+            indent--;
         addLine(res, indent);
         res += "else";
-        indent++;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s1->var))
+            indent++;
         addLine(res, indent);
         s.s1->str(res, indent);
-        indent--;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s1->var))
+            indent--;
     }
     else if(std::holds_alternative<Ss_e_s>(var))
     {
@@ -4356,10 +4363,12 @@ std::string &SelectionStatement::str(std::string &res, std::size_t &indent) cons
         res += "switch(";
         s.e->str(res, indent);
         res.push_back(')');
-        indent++;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+            indent++;
         addLine(res, indent);
         s.s->str(res, indent);
-        indent--;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+            indent--;
     }
 
     return res;
@@ -4446,19 +4455,23 @@ std::string &IterationStatement::str(std::string &res, std::size_t &indent) cons
         res += "while(";
         s.e->str(res, indent);
         res.push_back(')');
-        indent++;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+            indent++;
         addLine(res, indent);
         s.s->str(res, indent);
-        indent--;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+            indent--;
     }
     else if(std::holds_alternative<Sd_s_e>(var))
     {
         auto &&s = std::get<Sd_s_e>(var);
         res += "do";
-        indent++;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+            indent++;
         addLine(res, indent);
         s.s->str(res, indent);
-        indent--;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+            indent--;
         addLine(res, indent);
         res += "while(";
         s.e->str(res, indent);
@@ -4477,10 +4490,12 @@ std::string &IterationStatement::str(std::string &res, std::size_t &indent) cons
         if(s.e2 != nullptr)
             s.e2->str(res, indent);
         res.push_back(')');
-        indent++;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+            indent++;
         addLine(res, indent);
         s.s->str(res, indent);
-        indent--;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+            indent--;
     }
     else if(std::holds_alternative<Sf_d_e_e_s>(var))
     {
@@ -4493,10 +4508,12 @@ std::string &IterationStatement::str(std::string &res, std::size_t &indent) cons
         if(s.e1 != nullptr)
             s.e1->str(res, indent);
         res.push_back(')');
-        indent++;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+            indent++;
         addLine(res, indent);
         s.s->str(res, indent);
-        indent--;
+        if(!std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
+            indent--;
     }
 
     return res;
