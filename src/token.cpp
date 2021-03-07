@@ -4218,6 +4218,7 @@ LabeledStatement *LabeledStatement::copy() const
 
 std::string &LabeledStatement::str(std::string &res, std::size_t &indent) const
 {
+    addLine(res, indent);
     if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Si_s>(var))
@@ -4321,6 +4322,7 @@ SelectionStatement *SelectionStatement::copy() const
 
 std::string &SelectionStatement::str(std::string &res, std::size_t &indent) const
 {
+    addLine(res, indent);
     if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Si_e_s>(var))
@@ -4447,6 +4449,7 @@ IterationStatement *IterationStatement::copy() const
 
 std::string &IterationStatement::str(std::string &res, std::size_t &indent) const
 {
+    addLine(res, indent);
     if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Sw_e_s>(var))
@@ -4562,6 +4565,7 @@ JumpStatement *JumpStatement::copy() const
 
 std::string &JumpStatement::str(std::string &res, std::size_t &indent) const
 {
+    addLine(res, indent);
     if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Sg_i>(var))
