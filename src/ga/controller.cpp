@@ -43,7 +43,12 @@ bool Controller::execute()
         std::vector<std::pair<int, std::size_t>> scores;
         
         for(std::size_t i = 0; i < mGen.size(); i++)
-            scores.emplace_back(fitness(mGen[i]), i);
+        {
+            auto &&s = scores.emplace_back(fitness(mGen[i]), i);
+            std::cout << "gen: " << gen << ',' << "idx: " << i << '\n';
+            mGen[i].print();
+            std::cout << "score: " << s.first << std::endl;
+        }
 
         std::sort(scores.begin()
             , scores.end()
@@ -111,6 +116,7 @@ int Controller::fitness(const Representation &rep) const
             << std::endl;
         return std::numeric_limits<decltype(Configure::GOAL_SCORE)>::min();
     }
+    fstr.close();
 
     if(SYSTEM::system(Configure::COMPILER, filename, "-o", Configure::TEST_NAME) != 0)
     {

@@ -1,6 +1,8 @@
 #include <iostream>
 #include <utility>
+#include <iterator>
 #include <stdexcept>
+#include <functional>
 
 #include "../random.hpp"
 #include "../token.hpp"
@@ -20,6 +22,45 @@ Representation &Representation::append(const Representation &rhs)
         , rhs.ops.end());
     
     return *this;
+}
+
+void Representation::print() const
+{
+    auto printContainer = [](const auto &container)
+        {
+            std::cout << '{';
+            if(!container.empty())
+            {
+                auto iter = container.begin();
+                std::cout << *iter;
+                for(iter++; iter != container.end(); iter++)
+                    std::cout << ',' << *iter;
+            }
+            std::cout << '}';
+        };
+
+    std::cout << "Rep:\n";
+    for(auto &&op : ops)
+    {
+        std::cout << "    ";
+        switch(op.tag)
+        {
+            case(OpTag::ADD):
+                std::cout << "add : ";
+                break;
+            case(OpTag::SUB):
+                std::cout << "sub : ";
+                break;
+            case(OpTag::SWAP):
+                std::cout << "swap: ";
+                break;
+            default:;
+        }
+        printContainer(op.src);
+        printContainer(op.dst);
+        std::cout << '\n';
+    }
+    std::cout << std::flush;
 }
 
 Block *createBlock(const TOKEN::TranslationUnit *tu)
@@ -270,11 +311,11 @@ bool manipulateAdd(const Block *srcBlock
 
         if(i + 1 == dstPos.size())
         {
-            auto &&element{dstBlock->elems[pos]};
-            std::visit([](auto &&p){delete p;}, element.first);
-            delete element.second;
-            element.first = std::visit([](auto &&p){return static_cast<Block::FunctionOrStatement>(p != nullptr ? p->copy() : nullptr);}, fors);
-            element.second = srcBlock != nullptr ? srcBlock->copy() : nullptr;
+            auto &&iter = std::next(dstBlock->elems.begin(), pos);
+            dstBlock->elems.emplace(iter
+                , std::visit([](auto &&p){return static_cast<Block::FunctionOrStatement>(p != nullptr ? p->copy() : nullptr);}
+                    , fors)
+                , dstBlock != nullptr ? dstBlock->copy() : nullptr);
         }
         else
             dstBlock = dstBlock->elems[pos].second;
@@ -301,10 +342,10 @@ bool manipulateSub(Block *dstBlock
 
         if(i + 1 == dstPos.size())
         {
-            auto &&element{dstBlock->elems[pos]};
-            std::visit([](auto &&p){delete p;}, element.first);
-            delete element.second;
-            dstBlock->elems.erase(dstBlock->elems.begin() + pos);
+            auto &&iter = std::next(dstBlock->elems.begin(), pos);
+            std::visit([](auto &&p){delete p;}, iter->first);
+            delete iter->second;
+            dstBlock->elems.erase(iter);
         }
         else
             dstBlock = dstBlock->elems[pos].second;
@@ -323,7 +364,7 @@ bool manipulateSwap(Block *dstBlock
         , const std::vector<std::size_t> &pos)
             -> std::pair<Block::Element&, bool>
         {
-            Block::Element &ret = tmp;
+            std::reference_wrapper<Block::Element> ret = std::ref(tmp);
 
             Block *currentBlock = block;
             for(auto &&p : pos)
@@ -336,12 +377,14 @@ bool manipulateSwap(Block *dstBlock
                         << std::flush;
                     return {tmp, false};
                 }
+                else if(currentBlock->elems.size() == p)
+                    return {ret.get(), true};
 
-                ret = currentBlock->elems[p];
+                ret = std::ref(currentBlock->elems[p]);
                 currentBlock = currentBlock->elems[p].second;
             }
 
-            return {ret, true};
+            return {ret.get(), true};
         };
 
     auto &&[lhs, isFoundLhs] = selectElement(dstBlock, lhsPos);
@@ -439,11 +482,11 @@ OpTag selectOpTag(OpTag def)
     double prob = RAND.floating();
     double sum = 0.0;
 
-    if((sum += Configure::ADDING_PROBABILITY) <= prob)
+    if((sum += Configure::ADDING_PROBABILITY) >= prob)
         ret = OpTag::ADD;
-    else if((sum += Configure::SUBTRACTING_PROBABILITY) <= prob)
+    else if((sum += Configure::SUBTRACTING_PROBABILITY) >= prob)
         ret = OpTag::SUB;
-    else if((sum += Configure::SWAPPING_PROBABILITY) <= prob)
+    else if((sum += Configure::SWAPPING_PROBABILITY) >= prob)
         ret = OpTag::SWAP;
     
     return ret;

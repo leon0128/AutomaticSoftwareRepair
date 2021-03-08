@@ -72,6 +72,7 @@ struct Representation
         , ops(){}
 
     Representation &append(const Representation&);
+    void print() const;
 };
 
 extern Block *createBlock(const TOKEN::TranslationUnit*);

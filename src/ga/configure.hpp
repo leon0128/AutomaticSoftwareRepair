@@ -21,8 +21,8 @@ public:
     inline static const char *TEST_SCRIPT = "test.sh";
     inline static const char *POSITIVE_TEST_PREFIX = "p";
     inline static const char *NEGATIVE_TEST_PREFIX = "n";
-    inline static int NUM_POSITIVE = 1;
-    inline static int NUM_NEGATIVE = 0;
+    inline static int NUM_POSITIVE = 0;
+    inline static int NUM_NEGATIVE = 1;
     inline static int POSITIVE_WEIGHT = 1;
     inline static int NEGATIVE_WEIGHT = 10;
 
