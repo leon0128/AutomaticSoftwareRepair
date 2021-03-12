@@ -67,6 +67,27 @@ bool Controller::execute()
         mGen.swap(nextGen);
     }
 
+    std::cout << "Result:\n";
+    mResult.print();
+    std::ofstream file{Configure::RESULT_FILE};
+    if(!file.is_open())
+    {
+        std::cerr << "GA::Controller warning:\n"
+            "    what: fail to open result file.\n"
+            "    file: " << Configure::RESULT_FILE
+            << std::endl;
+        return false;
+    }
+    else
+    {
+        Block *b = createBlock(mResult);
+        TOKEN::TranslationUnit *tu = createTranslationUnit(b);
+        file << TOKEN::str(tu) << std::endl;
+        file.close();
+        delete b;
+        delete tu;
+    }
+
     return true;
 }
 

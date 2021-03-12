@@ -9,7 +9,7 @@
 Analyzer::Analyzer(const std::string &filename
     , TOKEN::TranslationUnit *translationUnit)
     : mFilename(filename)
-    , mTranslationUnit(translationUnit)
+    , mTranslationUnit(mTranslationUnit != nullptr ? translationUnit->copy() : nullptr)
     , mIdMap()
     , mNextId(0)
     , mScope(new SCOPE::Scope(nullptr, SCOPE::Scope::ScopeTag::FILE))

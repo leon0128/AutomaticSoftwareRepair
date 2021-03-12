@@ -79,6 +79,11 @@ struct FunctionSpecifier
 
 struct Identifier
 {
+private:
+    static inline std::size_t NEXT_ID = 0;
+    std::size_t mId;
+
+public:
     using Var = std::variant<Object*
         , Function*
         , Tag*
@@ -86,13 +91,16 @@ struct Identifier
         , Enumeration*
         , Typedef*
         , Label*>;
-    
+
+    std::size_t id() const noexcept
+        {return mId;}
     std::string name;
     Var var;
-    
+
     template<class Str, class ...Args>
     Identifier(Str &&str, Args &&...args)
-        : name(std::forward<Str>(str))
+        : mId(NEXT_ID++)
+        , name(std::forward<Str>(str))
         , var(std::forward<Args>(args)...){}
     ~Identifier();
 };

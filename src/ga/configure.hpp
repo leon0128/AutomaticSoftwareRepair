@@ -9,12 +9,13 @@ namespace GA
 class Configure
 {
 public:
-    inline static std::size_t POP_SIZE = 10;
-    inline static std::size_t MAX_GEN = 2;
+    inline static std::size_t POP_SIZE = 40;
+    inline static std::size_t MAX_GEN = 10;
     inline static std::size_t NUM_ELITE = 1;
     inline static std::size_t TOURNAMENT_SIZE = 2;
 
     inline static int GOAL_SCORE = 10;
+    inline static const char *RESULT_FILE = "repair.c";
 
     inline static const char *COMPILER = "gcc";
     inline static const char *TEST_NAME = "__test";

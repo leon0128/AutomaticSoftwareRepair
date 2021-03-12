@@ -2,7 +2,7 @@
 #include <utility>
 
 #include "ga/controller.hpp"
-#include "analyzer.hpp"
+#include "normalizer.hpp"
 #include "tree_generator.hpp"
 #include "sequencer.hpp"
 #include "controller.hpp"
@@ -34,16 +34,13 @@ bool Controller::createTree()
         if(!generator.execute())
             return false;
 
-        // Analyzer analyzer(p.first, generator.translationUnit());
-        // if(!analyzer.execute())
-        // {
-        //     delete generator.translationUnit();
-        //     return false;
-        // }
-
-        GA::Controller gaController(generator.translationUnit());
-        if(!gaController.execute())
+        Normalizer normalizer(generator.translationUnit());
+        if(!normalizer.execute())
             return false;
+
+        // GA::Controller gaController(normalizer.translationUnit());
+        // if(!gaController.execute())
+        //     return false;
     }
 
     return true;
