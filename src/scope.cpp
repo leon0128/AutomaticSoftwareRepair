@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "identifier.hpp"
 #include "scope.hpp"
 
 namespace SCOPE
@@ -10,7 +11,7 @@ Scope::Scope(Scope *parent
     : mParent{parent}
     , mChildren{}
     , mScopeTag{tag}
-    , mArr{Set{}, Set{}, Set{}, Set{}}
+    , mArr{Map{}, Map{}, Map{}, Map{}}
 {
 }
 
@@ -27,12 +28,7 @@ Scope *Scope::addChild(ScopeTag tag)
     return child;
 }
 
-Scope *Scope::getParent() const noexcept
-{
-    return mParent;
-}
-
-bool Scope::addIdentifier(const Identifier &id
+bool Scope::addIdentifier(const std::shared_ptr<IDENTIFIER::Identifier> &id
     , NamespaceTag nTag
     , ScopeTag sTag)
 {
@@ -53,23 +49,43 @@ bool Scope::addIdentifier(const Identifier &id
         return false;
     }
 
-    auto &&[iter, isSuccessful]{scope->set(nTag).emplace(id)};
+    auto &&[iter, isSuccessful]{scope->map(nTag).emplace(id->key(), id)};
     if(!isSuccessful)
     {
         std::cerr << "Scope error:\n"
             "    what: fail to add identifier.\n"
-            "    key: " << id.key() << "\n"
-            "    id: " << id.id()
+            "    key: " << id->key() << "\n"
+            "    id: " << id->id()
             << std::endl;
     }
 
     return isSuccessful;
 }
 
-bool Scope::addIdentifier(const Identifier &id
+bool Scope::addIdentifier(const std::shared_ptr<IDENTIFIER::Identifier> &id
     , NamespaceTag nTag)
 {
     return addIdentifier(id, nTag, scopeTag());
+}
+
+std::shared_ptr<IDENTIFIER::Identifier> Scope::getIdentifier(const std::string &str
+    , NamespaceTag tag
+    , bool isCurrent)
+{
+    if(isCurrent)
+    {
+        if(auto &&iter{map(tag).find(str)};
+            iter != map(tag).end())
+            return iter->second;
+    }
+    else
+    {
+        if(auto &&iter{map(tag).find(str)};
+            iter != map(tag).end())
+            return iter->second;
+    }
+
+    return {};
 }
 
 }

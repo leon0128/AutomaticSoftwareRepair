@@ -9,8 +9,8 @@ namespace GA
 class Configure
 {
 public:
-    inline static std::size_t POP_SIZE = 40;
-    inline static std::size_t MAX_GEN = 10;
+    inline static std::size_t POP_SIZE = 2;
+    inline static std::size_t MAX_GEN = 1;
     inline static std::size_t NUM_ELITE = 1;
     inline static std::size_t TOURNAMENT_SIZE = 2;
 

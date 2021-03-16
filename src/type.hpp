@@ -32,9 +32,9 @@ class Lvalue;
 class Initializer;
 class Type;
 
+class IdInfo;
 class StructInfo;
 class EnumInfo;
-class IdInfo;
 
 class Qualifiers
 {
@@ -167,36 +167,64 @@ public:
     std::any type;
 };
 
-class StructInfo
+class IdInfo
+{
+private:
+    inline static std::size_t NEXT_ID{0ull};
+
+public:
+    enum class DerivedTag : unsigned char;
+
+    IdInfo(DerivedTag
+        , const std::string&);
+    virtual ~IdInfo() = 0;
+
+    DerivedTag derivedTag() const noexcept
+        {return mDerivedTag;}
+    std::size_t id() const noexcept
+        {return mId;}
+    const std::string &tag() const noexcept
+        {return mTag;}
+    bool isDefined() const noexcept
+        {return mIsDefined;}
+    void isDefined(bool b) noexcept
+        {mIsDefined = b;}
+
+private:
+    DerivedTag mDerivedTag;
+    std::size_t mId;
+    std::string mTag;
+    bool mIsDefined;
+};
+
+enum class IdInfo::DerivedTag : unsigned char
+{
+    STRUCT
+    , ENUM
+};
+
+class StructInfo : public IdInfo
 {
 public:
     using ElemT = std::pair<Type
         , std::string>;
-
+    
     std::vector<ElemT> members;
-    bool isUnion{false};
+    bool isUnion;
+
+    StructInfo(const std::string&
+        , bool);
 };
 
-class EnumInfo
+class EnumInfo : public IdInfo
 {
 public:
     using ElemT = std::pair<std::string
         , std::shared_ptr<TOKEN::ConstantExpression>>;
 
     std::vector<ElemT> members;
-};
 
-class IdInfo
-{
-public:
-    using Var = std::variant<std::monostate
-        , StructInfo
-        , EnumInfo>;
-
-    std::size_t id{0ull};
-    std::string tag;
-    bool isDefined{false};
-    Var var;
+    EnumInfo(const std::string&);
 };
 
 }
