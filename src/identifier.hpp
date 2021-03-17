@@ -33,12 +33,12 @@ class Label;
 class StorageClass
 {
 private:
-    inline static constexpr const std::size_t NUM_TAG{4ull};
+    inline static constexpr const std::size_t NUM_TAG{6ull};
 
 public:
     enum class Tag : unsigned char;
 
-    std::bitset<NUM_TAG> flags{0b0000ull};
+    std::bitset<NUM_TAG> flags{0b000000ull};
 };
 
 enum class StorageClass::Tag : unsigned char
@@ -82,20 +82,44 @@ class Identifier
 {
 private:
     inline static std::size_t NEXT_ID{0ull};
+    inline static std::unordered_map<std::size_t
+        , std::shared_ptr<Identifier>>ID_MAP{};
 
 public:
-    Identifier(const std::string&);
+    enum class DerivedTag : unsigned char;
 
-    virtual const std::string &key() const = 0;
+    Identifier(DerivedTag
+        , const std::string&);
 
+    virtual const std::string &key() const
+        {return mStr;}
+
+    DerivedTag derivedTag() const noexcept
+        {return mTag;}
     const std::string &str() const noexcept
         {return mStr;}
     std::size_t id() const noexcept
         {return mId;}
 
+    static std::unordered_map<std::size_t
+        , std::shared_ptr<Identifier>> &idMap()
+        {return ID_MAP;}
+
 private:
+    DerivedTag mTag;
     std::string mStr;
     std::size_t mId;
+};
+
+enum class Identifier::DerivedTag : unsigned char
+{
+    OBJECT
+    , FUNCTION
+    , TAG
+    , MEMBER
+    , ENUM
+    , TYPEDEF
+    , LABEL
 };
 
 class Object : public Identifier

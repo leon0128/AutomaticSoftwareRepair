@@ -3,15 +3,12 @@
 namespace IDENTIFIER
 {
 
-Identifier::Identifier(const std::string &str)
-    : mStr{str}
+Identifier::Identifier(DerivedTag tag
+    , const std::string &str)
+    : mTag{tag}
+    , mStr{str}
     , mId{NEXT_ID++}
 {
-}
-
-const std::string &Identifier::key() const
-{
-    return mStr;
 }
 
 Object::Object(const std::string &s
@@ -19,7 +16,8 @@ Object::Object(const std::string &s
     , const StorageClass &sc
     , const Alignment &a
     , bool b)
-    : Identifier{s}
+    : Identifier{DerivedTag::OBJECT
+        ,s}
     , mType{t}
     , mStorage{sc}
     , mAlignment{a}
@@ -32,7 +30,8 @@ Function::Function(const std::string &s
     , const StorageClass &sc
     , const FunctionSpecifiers &f
     , bool b)
-    : Identifier{s}
+    : Identifier{DerivedTag::FUNCTION
+        ,s}
     , mType{t}
     , mStorage{sc}
     , mSpecifiers{f}
@@ -43,7 +42,8 @@ Function::Function(const std::string &s
 Tag::Tag(const std::string &s
     , std::size_t i
     , T t)
-    : Identifier{s}
+    : Identifier{DerivedTag::TAG
+        , s}
     , mTypeId{i}
     , mTag{t}
 {
@@ -52,7 +52,8 @@ Tag::Tag(const std::string &s
 Member::Member(const std::string &s
     , std::size_t i
     , const std::string &n)
-    : Identifier{s}
+    : Identifier{DerivedTag::MEMBER
+        , s}
     , mTypeId{i}
     , mName{n}
 {
@@ -60,21 +61,24 @@ Member::Member(const std::string &s
 
 Enum::Enum(const std::string &s
     , std::size_t i)
-    : Identifier{s}
+    : Identifier{DerivedTag::ENUM
+        , s}
     , mTypeId{i}
 {
 }
 
 Typedef::Typedef(const std::string &s
     , const TYPE::Type &t)
-    : Identifier{s}
+    : Identifier{DerivedTag::TYPEDEF
+        , s}
     , mType{t}
 {
 }
 
 Label::Label(const std::string &s
     , bool b)
-    : Identifier{s}
+    : Identifier{DerivedTag::LABEL
+        , s}
     , mIsDefined{b}
 {
 }

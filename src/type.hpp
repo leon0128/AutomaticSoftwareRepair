@@ -8,6 +8,8 @@
 #include <variant>
 #include <bitset>
 #include <memory>
+#include <set>
+#include <unordered_map>
 
 namespace TOKEN
 {
@@ -171,6 +173,8 @@ class IdInfo
 {
 private:
     inline static std::size_t NEXT_ID{0ull};
+    inline static std::unordered_map<std::size_t
+        , std::shared_ptr<IdInfo>> ID_MAP{};
 
 public:
     enum class DerivedTag : unsigned char;
@@ -189,6 +193,10 @@ public:
         {return mIsDefined;}
     void isDefined(bool b) noexcept
         {mIsDefined = b;}
+
+    static std::unordered_map<std::size_t
+        , std::shared_ptr<IdInfo>> &idMap()
+        {return ID_MAP;}
 
 private:
     DerivedTag mDerivedTag;
