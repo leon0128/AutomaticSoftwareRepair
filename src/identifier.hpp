@@ -82,8 +82,6 @@ class Identifier
 {
 private:
     inline static std::size_t NEXT_ID{0ull};
-    inline static std::unordered_map<std::size_t
-        , std::shared_ptr<Identifier>>ID_MAP{};
 
 public:
     enum class DerivedTag : unsigned char;
@@ -100,10 +98,6 @@ public:
         {return mStr;}
     std::size_t id() const noexcept
         {return mId;}
-
-    static std::unordered_map<std::size_t
-        , std::shared_ptr<Identifier>> &idMap()
-        {return ID_MAP;}
 
 private:
     DerivedTag mTag;
@@ -208,20 +202,16 @@ class Member : public Identifier
 {
 public:
     Member(const std::string&
-        , std::size_t
-        , const std::string&);
+        , std::size_t);
 
     const std::string &key() const noexcept override
-        {return std::to_string(typeId()) + '.' + mName;}
+        {return std::to_string(typeId()) + '.' + str();}
 
     std::size_t typeId() const noexcept
         {return mTypeId;}
-    const std::string &name() const noexcept
-        {return mName;}
 
 private:
     std::size_t mTypeId;
-    std::string mName;
 };
 
 class Enum : public Identifier

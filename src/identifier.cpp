@@ -50,12 +50,10 @@ Tag::Tag(const std::string &s
 }
 
 Member::Member(const std::string &s
-    , std::size_t i
-    , const std::string &n)
+    , std::size_t i)
     : Identifier{DerivedTag::MEMBER
         , s}
     , mTypeId{i}
-    , mName{n}
 {
 }
 
