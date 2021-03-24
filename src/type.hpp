@@ -38,6 +38,9 @@ class IdInfo;
 class StructInfo;
 class EnumInfo;
 
+extern bool equalTo(const TYPE::Type&
+    , const TYPE::Type&);
+
 class Qualifiers
 {
 private:

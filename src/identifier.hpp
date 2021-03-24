@@ -4,6 +4,7 @@
 #include <string>
 #include <bitset>
 #include <variant>
+#include <iostream>
 #include <memory>
 
 #include "type.hpp"
@@ -29,6 +30,9 @@ class Member;
 class Enum;
 class Typedef;
 class Label;
+
+template<class DerivedType, class BaseTypePtr>
+std::shared_ptr<DerivedType> dynamicPointerCast(BaseTypePtr&&);
 
 class StorageClass
 {
@@ -129,6 +133,8 @@ public:
         {return mType;}
     const StorageClass &storageClass() const noexcept
         {return mStorage;}
+    void storageClass(const StorageClass &sc) noexcept
+        {mStorage.flags |= sc.flags;}
     const Alignment &alignment() const noexcept
         {return mAlignment;}
     
@@ -157,8 +163,12 @@ public:
         {return mType;}
     const StorageClass &storageClass() const noexcept
         {return mStorage;}
+    void storageClass(const StorageClass &sc) noexcept
+        {mStorage.flags |= sc.flags;}
     const FunctionSpecifiers &functionSpecifiers() const noexcept
         {return mSpecifiers;}
+    void functionSpecifiers(const FunctionSpecifiers &fs) noexcept
+        {mSpecifiers.flags |= fs.flags;}
     
     bool isDefined() const noexcept
         {return mIsDefined;}

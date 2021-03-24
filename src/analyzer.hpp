@@ -5,9 +5,12 @@
 #include <bitset>
 #include <unordered_map>
 #include <memory>
-#include <stdexcept>
+#include <string>
+#include <optional>
 
 #include "token.hpp"
+#include "type.hpp"
+#include "identifier.hpp"
 
 namespace SCOPE
 {
@@ -26,7 +29,7 @@ class Analyzer
 {
 private:
     enum class FlagTag : unsigned char;
-    inline static constexpr const std::size_t NUM_FLAG_TAG{2};
+    inline static constexpr const std::size_t NUM_FLAG_TAG{3};
 
     using Flags = std::bitset<NUM_FLAG_TAG>;
 
@@ -47,17 +50,36 @@ public:
 
 private:
     bool analyze(const TOKEN::TranslationUnit*);
-    bool analyze(const TOKEN::ExternalDeclaration*);
     bool analyze(const TOKEN::FunctionDefinition*);
     bool analyze(const TOKEN::Declaration*);
+    bool analyze(const TOKEN::CompoundStatement*);
+    bool analyze(const TOKEN::Statement*);
+    bool analyze(const TOKEN::LabeledStatement*);
+    bool analyze(const TOKEN::ExpressionStatement*);
+    bool analyze(const TOKEN::SelectionStatement*);
+    bool analyze(const TOKEN::IterationStatement*);
+    bool analyze(const TOKEN::JumpStatement*);
 
-    void flag(FlagTag tag, bool b)
-        {mFlags.set(static_cast<std::size_t>(tag), b);}
-    bool flag(FlagTag tag) const
-        {return mFlags.test(static_cast<std::size_t>(tag));}
+    bool analyze(const TOKEN::Initializer*);
+    bool analyze(const TOKEN::ConstantExpression*);
 
-    void variantError(const char *className) const
-        {throw std::runtime_error(className);}
+    std::optional<std::tuple<IDENTIFIER::StorageClass
+        , TYPE::Type
+        , IDENTIFIER::FunctionSpecifiers
+        , IDENTIFIER::Alignment>>
+        analyzeAttributes(const TOKEN::DeclarationSpecifiers*);
+    std::optional<std::pair<TYPE::Type
+        , std::string>>
+        analyzeTypeAndIdentifier(const TOKEN::Declarator*
+            , const TYPE::Type&);
+
+    bool flag(FlagTag tag, bool b);
+    bool flag(FlagTag tag) const;
+
+    void variantError(const char *className) const;
+    bool differentTypeError(const std::string&) const;
+    bool redefinedError(const std::string&) const;
+    bool notSupportedError(const std::string&) const;
 
     Flags mFlags;
     SCOPE::Scope *mScope;
@@ -69,6 +91,9 @@ enum class Analyzer::FlagTag : unsigned char
     IS_FUNCTION
     // does declaration form [struct-or-union identifier;]
     , IS_DECLARATION_OVER
+    // if it flag is false,
+    // block scope is not created at compound-statement
+    , IS_CREATING_BLOCK
 };
 
 #endif
