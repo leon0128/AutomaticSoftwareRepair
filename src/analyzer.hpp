@@ -61,7 +61,26 @@ private:
     bool analyze(const TOKEN::JumpStatement*);
 
     bool analyze(const TOKEN::Initializer*);
+    bool analyze(const TOKEN::InitializerList*);
     bool analyze(const TOKEN::ConstantExpression*);
+    bool analyze(const TOKEN::Expression*);
+    bool analyze(const TOKEN::AssignmentExpression*);
+    bool analyze(const TOKEN::ConditionalExpression*);
+    bool analyze(const TOKEN::LogicalORExpression*);
+    bool analyze(const TOKEN::LogicalANDExpression*);
+    bool analyze(const TOKEN::InclusiveORExpression*);
+    bool analyze(const TOKEN::ExclusiveORExpression*);
+    bool analyze(const TOKEN::ANDExpression*);
+    bool analyze(const TOKEN::EqualityExpression*);
+    bool analyze(const TOKEN::RelationalExpression*);
+    bool analyze(const TOKEN::ShiftExpression*);
+    bool analyze(const TOKEN::AdditiveExpression*);
+    bool analyze(const TOKEN::MultiplicativeExpression*);
+    bool analyze(const TOKEN::CastExpression*);
+    bool analyze(const TOKEN::UnaryExpression*);
+    bool analyze(const TOKEN::PostfixExpression*);
+    bool analyze(const TOKEN::PrimaryExpression*);
+    bool analyze(const TOKEN::GenericSelection*);
 
     std::optional<std::tuple<IDENTIFIER::StorageClass
         , TYPE::Type
@@ -72,6 +91,7 @@ private:
         , std::string>>
         analyzeTypeAndIdentifier(const TOKEN::Declarator*
             , const TYPE::Type&);
+    std::optional<TYPE::Type> analyzeType(const TOKEN::TypeName*);
 
     bool flag(FlagTag tag, bool b);
     bool flag(FlagTag tag) const;
