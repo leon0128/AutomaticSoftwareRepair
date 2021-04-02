@@ -1,7 +1,19 @@
+#include <iostream>
+
 #include "type.hpp"
 
 namespace TYPE
 {
+
+bool equalTo(const TYPE::Type &lhs
+    , const TYPE::Type &rhs)
+{
+    std::cerr << "Type error:\n"
+        "    what: TYPE::equalTo() is not defined.\n"
+        << std::endl;
+
+    return true;
+}
 
 IdInfo::IdInfo(DerivedTag dTag
     , const std::string &tag)

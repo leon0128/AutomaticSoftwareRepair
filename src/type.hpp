@@ -76,6 +76,7 @@ public:
     Qualifiers quals;
     std::shared_ptr<TOKEN::AssignmentExpression> exp;
     bool hasStatic{false};
+    bool isVariable{false};
 };
 
 class Pointer

@@ -4,6 +4,8 @@
 #include <utility>
 #include <bitset>
 #include <unordered_map>
+#include <vector>
+#include <unordered_set>
 #include <memory>
 #include <string>
 #include <optional>
@@ -41,6 +43,15 @@ private:
 
     inline static TypeMap TYPE_MAP{};
     inline static IdMap ID_MAP{};
+
+    using ResultTypeTag = TYPE::Base::Tag;
+    using BaseTypeTag = TOKEN::TypeSpecifier::Tag;
+    using BaseTypeSet = std::multiset<BaseTypeTag>;
+    using BaseTypeCandidate = std::vector<BaseTypeSet>;
+    using BaseTypeMap = std::unordered_map<ResultTypeTag
+        , BaseTypeCandidate>;
+
+    static const BaseTypeMap BASE_TYPE_MAP;
 
 public:
     Analyzer();
@@ -87,19 +98,83 @@ private:
         , IDENTIFIER::FunctionSpecifiers
         , IDENTIFIER::Alignment>>
         analyzeAttributes(const TOKEN::DeclarationSpecifiers*);
+    std::optional<IDENTIFIER::StorageClass>
+        analyzeStorageClassSpecifiers(const std::vector<const TOKEN::StorageClassSpecifier*>&);
+    std::optional<TYPE::Type>
+        analyzeType(const std::vector<const TOKEN::TypeSpecifier*>&
+            , const std::vector<const TOKEN::TypeQualifier*>&);
+    std::optional<IDENTIFIER::FunctionSpecifiers>
+        analyzeFunctionSpecifiers(const std::vector<const TOKEN::FunctionSpecifier*>&);
+    std::optional<IDENTIFIER::Alignment>
+        analyzeAlignmentSpecifier(const std::vector<const TOKEN::AlignmentSpecifier*>&);
+    std::optional<TYPE::Type>
+        analyzeType(const std::vector<const TOKEN::TypeSpecifier*>&);
+    std::optional<TYPE::Type>
+        analyzeType(const BaseTypeSet&);
+    std::optional<TYPE::Type>
+        analyzeType(const std::vector<const TOKEN::AtomicTypeSpecifier*>&);
+    std::optional<TYPE::Type>
+        analyzeType(const std::vector<const TOKEN::StructOrUnionSpecifier*>&);
+    bool analyzeMember(const TOKEN::StructDeclarationList*
+        , std::size_t);
+    std::optional<TYPE::Type>
+        analyzeType(const TOKEN::SpecifierQualifierList*);
+    std::optional<TYPE::Type>
+        analyzeType(const TOKEN::ConstantExpression*
+            , const TYPE::Type&);
+    std::optional<TYPE::Type>
+        analyzeType(const std::vector<const TOKEN::EnumSpecifier*>&);
+    bool analyzeMember(const TOKEN::EnumeratorList*
+        , std::size_t);
+    std::optional<TYPE::Type>
+        analyzeType(const std::vector<const TOKEN::TypedefName*>&);
+    std::optional<TYPE::Qualifiers>
+        analyzeTypeQualifiers(const std::vector<const TOKEN::TypeQualifier*>&);
+    std::optional<TYPE::Type>
+        analyzeType(const TYPE::Type&
+            , const TYPE::Qualifiers&);
     std::optional<std::pair<TYPE::Type
         , std::string>>
         analyzeTypeAndIdentifier(const TOKEN::Declarator*
             , const TYPE::Type&);
-    std::optional<TYPE::Type> analyzeType(const TOKEN::TypeName*);
+    std::optional<TYPE::Type>
+        analyzeType(const TOKEN::Pointer*
+            , const TYPE::Type&);
+    std::optional<TYPE::Qualifiers>
+        analyzeTypeQualifiers(const TOKEN::TypeQualifierList*);
+    // for array
+    std::optional<TYPE::Type>
+        analyzeType(const TOKEN::TypeQualifierList*
+            , const TOKEN::AssignmentExpression*
+            , bool hasStatic
+            , bool isVariable
+            , const TYPE::Type&);
+    // for function
+    std::optional<TYPE::Type>
+        analyzeType(const TOKEN::ParameterTypeList*
+            , const TYPE::Type&);
+    // for function
+    std::optional<TYPE::Type>
+        analyzeType(const TOKEN::IdentifierList*
+            , const TYPE::Type&);
+    std::optional<TYPE::Type>
+        analyzeType(const TOKEN::ParameterDeclaration*);
+    std::optional<TYPE::Type>
+        analyzeType(const TOKEN::AbstractDeclarator*
+            , const TYPE::Type&);
+    std::optional<TYPE::Type>
+        analyzeType(const TOKEN::TypeName*);
 
     bool flag(FlagTag tag, bool b);
     bool flag(FlagTag tag) const;
 
-    void variantError(const char *className) const;
+    void variantError(const std::string&) const noexcept(false); // throw error
     bool differentTypeError(const std::string&) const;
     bool redefinedError(const std::string&) const;
     bool notSupportedError(const std::string&) const;
+    bool invalidAttributeError(const std::string&) const;
+    bool invalidTypeError(const std::string&) const;
+    bool notDeclarationError(const std::string&) const;
 
     Flags mFlags;
     SCOPE::Scope *mScope;

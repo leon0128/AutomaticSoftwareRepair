@@ -60,7 +60,7 @@ class Alignment
 public:
     using Var = std::variant<std::monostate
         , TYPE::Type
-        , std::shared_ptr<TOKEN::ConstantExpression*>>;
+        , std::shared_ptr<TOKEN::ConstantExpression>>;
     
     Var var;
 };

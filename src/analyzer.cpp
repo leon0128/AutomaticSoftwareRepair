@@ -3,6 +3,97 @@
 #include "scope.hpp"
 #include "analyzer.hpp"
 
+const Analyzer::BaseTypeMap Analyzer::BASE_TYPE_MAP
+    {{ResultTypeTag::VOID
+        , {{BaseTypeTag::VOID}}}
+        , {ResultTypeTag::CHAR
+            , {{BaseTypeTag::CHAR}}}
+        , {ResultTypeTag::S_CHAR
+            , {{BaseTypeTag::SIGNED
+                , BaseTypeTag::CHAR}}}
+        , {ResultTypeTag::U_CHAR
+            , {{BaseTypeTag::UNSIGNED
+                , {BaseTypeTag::CHAR}}}}
+        , {ResultTypeTag::S_SHORT
+            , {{BaseTypeTag::SHORT}
+                , {BaseTypeTag::SIGNED
+                    , BaseTypeTag::SHORT}
+                , {BaseTypeTag::SHORT
+                    , BaseTypeTag::INT}
+                , {BaseTypeTag::SIGNED
+                    , BaseTypeTag::SHORT
+                    , BaseTypeTag::INT}}}
+        , {ResultTypeTag::U_SHORT
+            , {{BaseTypeTag::UNSIGNED
+                , BaseTypeTag::SHORT}
+                , {BaseTypeTag::UNSIGNED
+                    , BaseTypeTag::SHORT
+                    , BaseTypeTag::INT}}}
+        , {ResultTypeTag::S_INT
+            , {{BaseTypeTag::INT}
+                , {BaseTypeTag::SIGNED}
+                , {BaseTypeTag::SIGNED
+                    , BaseTypeTag::INT}}}
+        , {ResultTypeTag::U_INT
+            , {{BaseTypeTag::UNSIGNED}
+                , {BaseTypeTag::UNSIGNED
+                    , BaseTypeTag::INT}}}
+        , {ResultTypeTag::S_LONG
+            , {{BaseTypeTag::LONG}
+                , {BaseTypeTag::SIGNED
+                    , BaseTypeTag::LONG}
+                , {BaseTypeTag::LONG
+                    , BaseTypeTag::INT}
+                , {BaseTypeTag::SIGNED
+                    , BaseTypeTag::LONG
+                    , BaseTypeTag::INT}}}
+        , {ResultTypeTag::U_LONG
+            , {{BaseTypeTag::UNSIGNED
+                , BaseTypeTag::LONG}
+                , {BaseTypeTag::UNSIGNED
+                    , BaseTypeTag::LONG
+                    , BaseTypeTag::INT}}}
+        , {ResultTypeTag::S_LONG_LONG
+            , {{BaseTypeTag::LONG
+                , BaseTypeTag::LONG}
+                , {BaseTypeTag::SIGNED
+                    , BaseTypeTag::LONG
+                    , BaseTypeTag::LONG}
+                , {BaseTypeTag::LONG
+                    , BaseTypeTag::LONG
+                    , BaseTypeTag::INT}
+                , {BaseTypeTag::SIGNED
+                    , BaseTypeTag::LONG
+                    , BaseTypeTag::LONG
+                    , BaseTypeTag::INT}}}
+        , {ResultTypeTag::U_LONG_LONG
+            , {{BaseTypeTag::UNSIGNED
+                , BaseTypeTag::LONG
+                , BaseTypeTag::LONG}
+                , {BaseTypeTag::UNSIGNED
+                    , BaseTypeTag::LONG
+                    , BaseTypeTag::LONG
+                    , BaseTypeTag::INT}}}
+        , {ResultTypeTag::FLOAT
+            , {{BaseTypeTag::FLOAT}}}
+        , {ResultTypeTag::DOUBLE
+            , {{BaseTypeTag::DOUBLE}}}
+        , {ResultTypeTag::LONG_DOUBLE
+            , {{BaseTypeTag::LONG
+                , BaseTypeTag::DOUBLE}}}
+        , {ResultTypeTag::BOOL
+            , {{BaseTypeTag::BOOL}}}
+        , {ResultTypeTag::FLOAT_COMPLEX
+            , {{BaseTypeTag::FLOAT
+                , BaseTypeTag::COMPLEX}}}
+        , {ResultTypeTag::DOUBLE_COMPLEX
+            , {{BaseTypeTag::DOUBLE
+                , BaseTypeTag::COMPLEX}}}
+        , {ResultTypeTag::LONG_DOUBLE_COMPLEX
+            , {{BaseTypeTag::LONG
+                , BaseTypeTag::DOUBLE
+                , BaseTypeTag::COMPLEX}}}};
+
 Analyzer::Analyzer()
     : mFlags{}
     , mScope{nullptr}
@@ -1060,6 +1151,1175 @@ bool Analyzer::analyze(const TOKEN::GenericSelection *gs)
     return true;
 }
 
+std::optional<std::tuple<IDENTIFIER::StorageClass
+    , TYPE::Type
+    , IDENTIFIER::FunctionSpecifiers
+    , IDENTIFIER::Alignment>>
+    Analyzer::analyzeAttributes(const TOKEN::DeclarationSpecifiers *ds)
+{
+    using namespace TOKEN;
+
+    std::vector<const StorageClassSpecifier*> scsVec;
+    std::vector<const TypeSpecifier*> tsVec;
+    std::vector<const TypeQualifier*> tqVec;
+    std::vector<const FunctionSpecifier*> fsVec;
+    std::vector<const AlignmentSpecifier*> asVec;
+
+    for(const auto &v : ds->seq)
+    {
+        if(std::holds_alternative<StorageClassSpecifier*>(v))
+            scsVec.push_back(std::get<StorageClassSpecifier*>(v));
+        else if(std::holds_alternative<TypeSpecifier*>(v))
+            tsVec.push_back(std::get<TypeSpecifier*>(v));
+        else if(std::holds_alternative<TypeQualifier*>(v))
+            tqVec.push_back(std::get<TypeQualifier*>(v));
+        else if(std::holds_alternative<FunctionSpecifier*>(v))
+            fsVec.push_back(std::get<FunctionSpecifier*>(v));
+        else if(std::holds_alternative<AlignmentSpecifier*>(v))
+            asVec.push_back(std::get<AlignmentSpecifier*>(v));
+    }
+
+    auto &&scsOpt{analyzeStorageClassSpecifiers(scsVec)};
+    auto &&tOpt{analyzeType(tsVec, tqVec)};
+    auto &&fsOpt{analyzeFunctionSpecifiers(fsVec)};
+    auto &&asOpt{analyzeAlignmentSpecifier(asVec)};
+
+    if(!(scsOpt && tOpt && fsOpt && asOpt))
+        return std::nullopt;
+    
+    return {std::make_tuple(std::move(*scsOpt)
+        , std::move(*tOpt)
+        , std::move(*fsOpt)
+        , std::move(*asOpt))};
+}
+
+std::optional<IDENTIFIER::StorageClass>
+    Analyzer::analyzeStorageClassSpecifiers(const std::vector<const TOKEN::StorageClassSpecifier*> &scsVec)
+{
+    using TTag = TOKEN::StorageClassSpecifier::Tag;
+    using ITag = IDENTIFIER::StorageClass::Tag;
+    
+    static const std::unordered_map<TTag, ITag> tagMap{{TTag::TYPEDEF, ITag::TYPEDEF}
+        , {TTag::EXTERN, ITag::EXTERN}
+        , {TTag::STATIC, ITag::STATIC}
+        , {TTag::THREAD_LOCAL, ITag::THREAD_LOCAL}
+        , {TTag::AUTO, ITag::AUTO}
+        , {TTag::REGISTER, ITag::REGISTER}};
+
+    IDENTIFIER::StorageClass sc;
+    
+    for(const auto &scs : scsVec)
+    {
+        if(const auto &iter{tagMap.find(scs->tag)};
+            iter != tagMap.end())
+            sc.flags.set(static_cast<std::size_t>(iter->second));
+        else 
+            variantError("StorageClassSpecifier");
+    }
+
+    return {std::move(sc)};
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const std::vector<const TOKEN::TypeSpecifier*> &tsVec
+        , const std::vector<const TOKEN::TypeQualifier*> &tqVec)
+{
+    auto &&tOpt{analyzeType(tsVec)};
+    auto &&qOpt{analyzeTypeQualifiers(tqVec)};
+
+    if(!(tOpt && qOpt))
+        return std::nullopt;
+
+    auto &&result{analyzeType(*tOpt, *qOpt)};
+    if(!result)
+        return std::nullopt;
+    
+    return {std::move(result)};
+}
+
+std::optional<IDENTIFIER::FunctionSpecifiers>
+    Analyzer::analyzeFunctionSpecifiers(const std::vector<const TOKEN::FunctionSpecifier*> &fsVec)
+{
+    using TTag = TOKEN::FunctionSpecifier::Tag;
+    using ITag = IDENTIFIER::FunctionSpecifiers::Tag;
+
+    static const std::unordered_map<TTag, ITag> tagMap{{TTag::INLINE, ITag::INLINE}
+        , {TTag::NORETURN, ITag::NORETURN}};
+    
+    IDENTIFIER::FunctionSpecifiers fs;
+    for(const auto &f : fsVec)
+    {
+        if(const auto &iter{tagMap.find(f->tag)};
+            iter != tagMap.end())
+            fs.flags.set(static_cast<std::size_t>(iter->second));
+        else
+            variantError("FunctionSpecifier");
+    }
+
+    return {std::move(fs)};
+}
+
+std::optional<IDENTIFIER::Alignment>
+    Analyzer::analyzeAlignmentSpecifier(const std::vector<const TOKEN::AlignmentSpecifier*> &asVec)
+{
+    if(asVec.size() > 1)
+    {
+        invalidAttributeError("AlignmentSpecifier");
+        return std::nullopt;
+    }
+
+    IDENTIFIER::Alignment alignment;
+
+    if(!asVec.empty())
+    {
+        if(std::holds_alternative<TOKEN::TypeName*>(asVec.front()->var))
+        {
+            auto &&tOpt{analyzeType(std::get<TOKEN::TypeName*>(asVec.front()->var))};
+            if(!tOpt)
+                return std::nullopt;
+            
+            alignment.var.emplace<TYPE::Type>(std::move(*tOpt));
+        }
+        else if(std::holds_alternative<TOKEN::ConstantExpression*>(asVec.front()->var))
+            alignment.var.emplace<std::shared_ptr<TOKEN::ConstantExpression>>(std::get<TOKEN::ConstantExpression*>(asVec.front()->var)->copy());
+        else
+            variantError("AlignmentSpecifier");
+    }
+
+    return {std::move(alignment)};
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const std::vector<const TOKEN::TypeSpecifier*> &tsVec)
+{
+    using namespace TOKEN;
+    using TTag = BaseTypeTag;
+
+    std::bitset<5ull> notEmptyFlags;
+
+    BaseTypeSet tSet;
+    std::vector<const AtomicTypeSpecifier*> atsVec;
+    std::vector<const StructOrUnionSpecifier*> sousVec;
+    std::vector<const EnumSpecifier*> esVec;
+    std::vector<const TypedefName*> tnVec;
+
+    for(const auto &ts : tsVec)
+    {
+        if(std::holds_alternative<TTag>(ts->var))
+        {
+            tSet.insert(std::get<TTag>(ts->var));
+            notEmptyFlags.set(0ull);
+        }
+        else if(std::holds_alternative<AtomicTypeSpecifier*>(ts->var))
+        {
+            atsVec.push_back(std::get<AtomicTypeSpecifier*>(ts->var));
+            notEmptyFlags.set(1ull);
+        }
+        else if(std::holds_alternative<StructOrUnionSpecifier*>(ts->var))
+        {
+            sousVec.push_back(std::get<StructOrUnionSpecifier*>(ts->var));
+            notEmptyFlags.set(2ull);
+        }
+        else if(std::holds_alternative<EnumSpecifier*>(ts->var))
+        {
+            esVec.push_back(std::get<EnumSpecifier*>(ts->var));
+            notEmptyFlags.set(3ull);
+        }
+        else if(std::holds_alternative<TypedefName*>(ts->var))
+        {
+            tnVec.push_back(std::get<TypedefName*>(ts->var));
+            notEmptyFlags.set(4ull);
+        }
+    }
+
+    std::optional<TYPE::Type> tOpt;
+
+    if(notEmptyFlags.count() == 1ull)
+    {
+        if(notEmptyFlags.test(0ull))
+            tOpt = analyzeType(tSet);
+        else if(notEmptyFlags.test(1ull))
+            tOpt = analyzeType(atsVec);
+        else if(notEmptyFlags.test(2ull))
+            tOpt = analyzeType(sousVec);
+        else if(notEmptyFlags.test(3ull))
+            tOpt = analyzeType(esVec);
+        else if(notEmptyFlags.test(4ull))
+            tOpt = analyzeType(tnVec);
+    }
+    else
+    {
+        invalidTypeError("multiple type-specifier is specifierd.");
+        return {std::nullopt};
+    }
+
+    return tOpt;
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const BaseTypeSet &set)
+{
+    TYPE::Type type;
+
+    for(const auto &mapE : BASE_TYPE_MAP)
+    {
+        for(const auto &vecE : mapE.second)
+        {
+            if(vecE == set)
+            {
+                type.var.emplace<TYPE::Base>(TYPE::Base{mapE.first});
+                break;
+            }
+        }
+    }
+
+    if(std::holds_alternative<std::monostate>(type.var))
+    {
+        invalidTypeError("fail to deduce tyoe from base-type-specifier");
+        return {std::nullopt};
+    }
+
+    return {std::move(type)};
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const std::vector<const TOKEN::AtomicTypeSpecifier*> &atsVec)
+{
+    if(atsVec.size() == 1ull)
+    {
+        invalidTypeError("multiple atomic-type-specifiers are given.");
+        return {std::nullopt};
+    }
+
+    auto &&tOpt{analyzeType(atsVec.front()->tn)};
+    if(!tOpt)
+        return {std::nullopt};
+    
+    TYPE::Qualifiers quals;
+    quals.flags.set(static_cast<std::size_t>(TYPE::Qualifiers::Tag::ATOMIC));
+
+    tOpt = analyzeType(*tOpt, quals);
+    if(!tOpt)
+        return {std::nullopt};
+
+    return tOpt;
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const std::vector<const TOKEN::StructOrUnionSpecifier*> &sousVec)
+{
+    using NTag = SCOPE::Scope::NamespaceTag;
+    using Sous = TOKEN::StructOrUnionSpecifier;
+    using Sou = TOKEN::StructOrUnion;
+    
+    auto isUnion{[](const Sou *sou)
+        {return sou->tag == Sou::Tag::UNION;}};
+    auto isMatchTag{[](const Sou *sou
+        , IDENTIFIER::Tag::T t)
+        {
+            if((sou->tag == Sou::Tag::STRUCT
+                && t == IDENTIFIER::Tag::T::STRUCT)
+                || (sou->tag == Sou::Tag::UNION
+                && t == IDENTIFIER::Tag::T::UNION))
+                return true;
+            else
+                return false;
+        }};
+    auto define{[&](const TOKEN::StructDeclarationList *sdl
+        , std::size_t id)
+            -> std::optional<TYPE::Type>
+        {
+            if(!analyzeMember(sdl, id))
+                return {std::nullopt};
+
+            TYPE_MAP.find(id)->second->isDefined(true);
+            return {TYPE::Type{TYPE::Struct{id}}};
+        }};
+    auto addTagInfo{[&](const std::string &tag
+        , const Sou *sou)
+        {
+            TYPE::StructInfo sInfo{tag, isUnion(sou)};
+            IDENTIFIER::Tag tagIdent{tag
+                , sInfo.id()
+                , sInfo.isUnion 
+                    ? IDENTIFIER::Tag::T::UNION
+                    : IDENTIFIER::Tag::T::STRUCT};
+            
+            std::shared_ptr<IDENTIFIER::Identifier> tagIdentPtr{new IDENTIFIER::Tag{tagIdent}};
+            mScope->addIdentifier(tagIdentPtr, NTag::TAG);
+            ID_MAP.emplace(tagIdent.id(), tagIdentPtr);
+            TYPE_MAP.emplace(sInfo.id(), new TYPE::StructInfo{sInfo});
+
+            return sInfo.id();
+        }};
+
+    if(sousVec.size() != 1ull)
+    {
+        invalidTypeError("multiple struct-or-union-type-specifiers are given.");
+        return {std::nullopt};
+    }
+
+    if(std::holds_alternative<Sous::Ssou_i_sdl>(sousVec.front()->var))
+    {
+        auto &&s{std::get<Sous::Ssou_i_sdl>(sousVec.front()->var)};
+        if(!s.i)
+        {
+            TYPE::StructInfo sInfo{{}, isUnion(s.sou)};
+            TYPE_MAP.emplace(sInfo.id(), new TYPE::StructInfo{sInfo});
+            
+            return define(s.sdl, sInfo.id());
+        }
+        else
+        {
+            std::string tag{TOKEN::str(s.i)};
+            auto &&identifier{mScope->getIdentifier(tag, NTag::TAG, true)};
+            if(bool(identifier))
+            {
+                auto &&tagIdent{std::dynamic_pointer_cast<IDENTIFIER::Tag>(identifier)};
+                if(!tagIdent
+                    || !isMatchTag(s.sou, tagIdent->tag()))
+                {
+                    differentTypeError(tag);
+                    return {std::nullopt};
+                }
+
+                auto &&iter{TYPE_MAP.find(tagIdent->typeId())};
+                if(iter->second->isDefined())
+                {
+                    redefinedError(tag);
+                    return {std::nullopt};
+                }
+
+                return define(s.sdl, iter->first);
+            }
+            else
+            {
+                std::size_t id{addTagInfo(tag, s.sou)};
+
+                return define(s.sdl, id);
+            }
+        }
+    }
+    else
+    {
+        auto &&s{std::get<Sous::Ssou_i>(sousVec.front()->var)};
+        if(flag(FlagTag::IS_DECLARATION_OVER))
+        {
+            std::string tag{TOKEN::str(s.i)};
+            auto &&identifier{mScope->getIdentifier(tag, NTag::TAG, true)};
+            if(bool(identifier))
+            {
+                auto &&tagIdent{std::dynamic_pointer_cast<IDENTIFIER::Tag>(identifier)};
+                if(!tagIdent
+                    || !isMatchTag(s.sou, tagIdent->tag()))
+                {
+                    differentTypeError(tag);
+                    return {std::nullopt};
+                }
+
+                return TYPE::Type{TYPE::Struct{tagIdent->typeId()}};
+            }
+            else
+            {
+                std::size_t id{addTagInfo(tag, s.sou)};
+                
+                return TYPE::Type{TYPE::Struct{id}};
+            }
+        }
+        else
+        {
+            std::string tag{TOKEN::str(s.i)};
+            auto &&identifier{mScope->getIdentifier(tag, NTag::TAG, false)};
+            if(!identifier)
+            {
+                std::size_t id{addTagInfo(tag, s.sou)};
+                
+                return TYPE::Type{TYPE::Struct{id}};
+            }
+            else
+            {
+                auto &&tagIdent{std::dynamic_pointer_cast<IDENTIFIER::Tag>(identifier)};
+                if(!tagIdent
+                    || !isMatchTag(s.sou, tagIdent->tag()))
+                {
+                    differentTypeError(tag);
+                    return {std::nullopt};
+                }
+
+                return TYPE::Type{TYPE::Struct{tagIdent->typeId()}};
+            }
+        }
+    }
+}
+
+bool Analyzer::analyzeMember(const TOKEN::StructDeclarationList *sdl
+    , std::size_t typeId)
+{
+    using namespace TOKEN;
+
+    auto &&addMemberInfo{[&](std::optional<std::pair<TYPE::Type, std::string>> opt
+        , std::shared_ptr<TYPE::StructInfo> &sInfo)
+        {
+            if(!opt)
+                return false;
+
+            const auto &[type, ident]{*opt};
+            sInfo->members.emplace_back(type, ident);
+            std::shared_ptr<IDENTIFIER::Identifier> member{new IDENTIFIER::Member{ident, sInfo->id()}};
+            
+            ID_MAP.emplace(member->id(), member);
+            return mScope->addIdentifier(member, SCOPE::Scope::NamespaceTag::MEMBER);
+        }};
+
+    auto &&sInfo{std::dynamic_pointer_cast<TYPE::StructInfo>(TYPE_MAP.find(typeId)->second)};
+    if(!sInfo)
+        return differentTypeError(std::to_string(typeId));
+
+    for(const auto &sd : sdl->seq)
+    {
+        if(std::holds_alternative<StructDeclaration::Ssad>(sd->var))
+            continue;
+        
+        auto &&s{std::get<StructDeclaration::Ssql_sdl>(sd->var)};
+        
+        bool oldIsFunction{flag(FlagTag::IS_FUNCTION, false)};
+        bool oldIsDeclarationOver{flag(FlagTag::IS_DECLARATION_OVER, !s.sdl)};
+
+        auto &&tOpt{analyzeType(s.sql)};
+        if(!tOpt)
+            return false;
+        
+        if(!s.sdl)
+            sInfo->members.emplace_back(*tOpt, std::string{});
+        else
+        {
+            for(const auto &sdr: s.sdl->seq)
+            {
+                if(std::holds_alternative<StructDeclarator::Sd>(sdr->var))
+                {   
+                    auto &&opt{analyzeTypeAndIdentifier(std::get<StructDeclarator::Sd>(sdr->var).d, *tOpt)};
+                    if(!addMemberInfo(opt, sInfo))
+                        return false;
+                }
+                else
+                {
+                    auto &&s{std::get<StructDeclarator::Sd_ce>(sdr->var)};
+                    if(!s.d)
+                    {
+                        auto &&to{analyzeType(s.ce, *tOpt)};
+                        if(!to)
+                            return false;
+                        
+                        sInfo->members.emplace_back(*to, std::string{});
+                    }
+                    else
+                    {
+                        auto &&opt{analyzeTypeAndIdentifier(s.d, *tOpt)};
+
+                        if(opt)
+                            return false;
+                        
+                        auto &&[type, ident]{*opt};
+                        auto &&to{analyzeType(s.ce, type)};
+                        if(!to)
+                            return false;
+                        
+                        if(!addMemberInfo(std::pair<TYPE::Type, std::string>{*to, ident}
+                            , sInfo))
+                            return false;
+                    }
+                }
+            }            
+        }
+
+        flag(FlagTag::IS_FUNCTION, oldIsFunction);
+        flag(FlagTag::IS_DECLARATION_OVER, oldIsDeclarationOver);
+    }
+
+    return true;
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const TOKEN::SpecifierQualifierList *sql)
+{
+    using namespace TOKEN;
+
+    std::vector<const TypeSpecifier*> tsVec;
+    std::vector<const TypeQualifier*> tqVec;
+
+    for(const auto &v : sql->seq)
+    {
+        if(std::holds_alternative<TypeSpecifier*>(v))
+            tsVec.push_back(std::get<TypeSpecifier*>(v));
+        else if(std::holds_alternative<TypeQualifier*>(v))
+            tqVec.push_back(std::get<TypeQualifier*>(v));
+    }
+
+    return analyzeType(tsVec, tqVec);
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const TOKEN::ConstantExpression *ce
+        , const TYPE::Type &baseType)
+{
+    std::shared_ptr<TOKEN::ConstantExpression> ptr{ce->copy()};
+    TYPE::Bitfield bitfield{baseType, std::move(ptr)};
+    return {TYPE::Type{std::move(bitfield)}};
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const std::vector<const TOKEN::EnumSpecifier*> &esVec)
+{
+    using ES = TOKEN::EnumSpecifier;
+
+    auto &&define{[&](const TOKEN::EnumeratorList *el
+        , std::size_t id)
+            -> std::optional<TYPE::Type>
+        {
+            if(!analyzeMember(el, id))
+                return {std::nullopt};
+            
+            TYPE_MAP.find(id)->second->isDefined(true);
+            return {TYPE::Type{TYPE::Enum{id}}};
+        }};
+
+    if(esVec.size() != 1ull)
+    {
+        invalidTypeError("EnumSpecifier");
+        return {std::nullopt};
+    }
+
+    const auto &var{esVec.front()->var};
+
+    if(std::holds_alternative<ES::Si_el>(var))
+    {
+        const auto &s{std::get<ES::Si_el>(var)};
+
+        if(bool(s.i))
+        {
+            std::string tag{TOKEN::str(s.i)};
+            auto &&identifier{mScope->getIdentifier(tag
+                , SCOPE::Scope::NamespaceTag::TAG
+                , true)};
+            
+            if(bool(identifier))
+            {
+                auto &&tagIdent{std::dynamic_pointer_cast<IDENTIFIER::Tag>(identifier)};
+                if(!tagIdent
+                    || tagIdent->tag() != IDENTIFIER::Tag::T::ENUM)
+                {
+                    differentTypeError(tag);
+                    return {std::nullopt};
+                }
+
+                auto &&iter{TYPE_MAP.find(tagIdent->typeId())};
+                if(iter->second->isDefined())
+                {
+                    redefinedError(tag);
+                    return {std::nullopt};
+                }
+
+                return define(s.el, iter->first);
+            }
+            else
+            {
+                TYPE::EnumInfo eInfo{tag};
+                
+                std::shared_ptr<IDENTIFIER::Identifier> tagIdentPtr{new IDENTIFIER::Tag{tag, eInfo.id(), IDENTIFIER::Tag::T::ENUM}};
+                mScope->addIdentifier(tagIdentPtr
+                    , SCOPE::Scope::NamespaceTag::TAG);
+                ID_MAP.emplace(tagIdentPtr->id()
+                    , tagIdentPtr);
+                TYPE_MAP.emplace(eInfo.id()
+                    , new TYPE::EnumInfo{eInfo});
+                
+                return {TYPE::Type{TYPE::Enum{eInfo.id()}}};
+            }
+        }
+        else
+        {
+            TYPE::EnumInfo eInfo{{}};
+            TYPE_MAP.emplace(eInfo.id()
+                , new TYPE::EnumInfo{eInfo});
+            
+            return define(s.el, eInfo.id());
+        }
+    }
+    else if(std::holds_alternative<ES::Si>(var))
+    {
+        const auto &s{std::get<ES::Si>(var)};
+
+        auto &&tag{TOKEN::str(s.i)};
+        
+        auto &&iPtr{mScope->getIdentifier(tag
+            , SCOPE::Scope::NamespaceTag::TAG
+            , false)};
+        
+        if(!iPtr)
+        {
+            notDeclarationError(tag);
+            return {std::nullopt};
+        }
+
+        auto &&ePtr{std::dynamic_pointer_cast<IDENTIFIER::Tag>(iPtr)};
+        if(!ePtr)
+        {
+            differentTypeError(tag);
+            return {std::nullopt};
+        }
+
+        return {TYPE::Type{TYPE::Enum{ePtr->typeId()}}};
+    }
+}
+
+bool Analyzer::analyzeMember(const TOKEN::EnumeratorList *el
+    , std::size_t typeId)
+{
+    using E = TOKEN::Enumerator;
+
+    auto &&iter{TYPE_MAP.find(typeId)};
+    auto &&enumInfo{std::dynamic_pointer_cast<TYPE::EnumInfo>(iter->second)};
+
+    for(const auto &e : el->seq)
+    {
+        std::string str;
+        std::shared_ptr<TOKEN::ConstantExpression> ce;
+
+        if(std::holds_alternative<E::Sec>(e->var))
+        {
+            const auto &s{std::get<E::Sec>(e->var)};
+            str = TOKEN::str(s.ec->i);
+        }
+        else if(std::holds_alternative<E::Sec_ce>(e->var))
+        {
+            const auto &s{std::get<E::Sec_ce>(e->var)};
+            str = TOKEN::str(s.ec->i);
+            if(!analyze(s.ce))
+                return false;
+
+            ce.reset(s.ce->copy());
+        }
+        else
+            variantError("Enumerator");
+
+        if(bool(mScope->getIdentifier(str
+            , SCOPE::Scope::NamespaceTag::OTHER
+            , true)))
+            return redefinedError(str);
+
+        std::shared_ptr<IDENTIFIER::Identifier> identPtr{new IDENTIFIER::Enum{str, typeId}};
+        mScope->addIdentifier(identPtr
+            , SCOPE::Scope::NamespaceTag::OTHER);
+        ID_MAP.emplace(identPtr->id()
+            , identPtr);
+        
+        enumInfo->members.emplace_back(str
+            , std::move(ce));
+    }
+
+    return true;
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const std::vector<const TOKEN::TypedefName*> &tnVec)
+{
+    if(tnVec.size() != 1ull)
+    {
+        invalidTypeError("multiple typedef-name are given.");
+        return {std::nullopt};
+    }
+
+    auto &&str{TOKEN::str(tnVec.front()->i)};
+    const auto &identifier{mScope->getIdentifier(str
+        , SCOPE::Scope::NamespaceTag::OTHER
+        , false)};
+    
+    if(!identifier)
+    {
+        notDeclarationError(str);
+        return {std::nullopt};
+    }
+
+    if(identifier->derivedTag() != IDENTIFIER::Identifier::DerivedTag::TYPEDEF)
+    {
+        differentTypeError(str);
+        return {std::nullopt};
+    }
+
+    const auto &typedefPtr{std::dynamic_pointer_cast<IDENTIFIER::Typedef>(identifier)};
+    return typedefPtr->type();
+}
+
+std::optional<TYPE::Qualifiers>
+    Analyzer::analyzeTypeQualifiers(const std::vector<const TOKEN::TypeQualifier*> &tqVec)
+{
+    using TokenTag = TOKEN::TypeQualifier::Tag;
+    using TypeTag = TYPE::Qualifiers::Tag;
+
+    static const std::unordered_map<TokenTag, TypeTag> tagMap
+        {{TokenTag::CONST, TypeTag::CONST}
+            , {TokenTag::RESTRICT, TypeTag::RESTRICT}
+            , {TokenTag::VOLATILE, TypeTag::VOLATILE}
+            , {TokenTag::ATOMIC, TypeTag::ATOMIC}};
+    
+    TYPE::Qualifiers qualifiers;
+
+    for(const auto &tq : tqVec)
+    {
+        if(const auto &iter{tagMap.find(tq->tag)};
+            iter != tagMap.end())
+            qualifiers.flags.set(static_cast<std::size_t>(iter->second));
+        else
+            variantError("TypeQualifier");
+    }
+
+    return {std::move(qualifiers)};
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const TYPE::Type &baseType
+        , const TYPE::Qualifiers &qualifiers)
+{
+    TYPE::Type resultType{baseType};
+
+    if(std::holds_alternative<TYPE::Base>(resultType.var))
+        std::get<TYPE::Base>(resultType.var).quals.flags |= qualifiers.flags;
+    else if(std::holds_alternative<TYPE::Array>(resultType.var))
+        std::get<TYPE::Array>(resultType.var).quals.flags |= qualifiers.flags;
+    else if(std::holds_alternative<TYPE::Pointer>(resultType.var))
+        std::get<TYPE::Pointer>(resultType.var).quals.flags |= qualifiers.flags;
+    else if(std::holds_alternative<TYPE::Enum>(resultType.var))
+        std::get<TYPE::Enum>(resultType.var).quals.flags |= qualifiers.flags;
+    else if(std::holds_alternative<TYPE::Struct>(resultType.var))
+        std::get<TYPE::Struct>(resultType.var).quals.flags |= qualifiers.flags;
+    else if(std::holds_alternative<TYPE::Typedef>(resultType.var))
+        std::get<TYPE::Typedef>(resultType.var).quals.flags |= qualifiers.flags;
+    else if(std::holds_alternative<TYPE::Function>(resultType.var)
+        || std::holds_alternative<TYPE::Bitfield>(resultType.var)
+        || std::holds_alternative<TYPE::Lvalue>(resultType.var)
+        || std::holds_alternative<TYPE::Initializer>(resultType.var))
+    {
+        invalidAttributeError("type-qualifiers");
+        return {std::nullopt};
+    }
+    else
+        variantError("TYPE::Type");
+    
+    return {std::move(resultType)};
+}
+
+std::optional<std::pair<TYPE::Type
+    , std::string>>
+    Analyzer::analyzeTypeAndIdentifier(const TOKEN::Declarator *declarator
+        , const TYPE::Type &baseType)
+{
+    using DD = TOKEN::DirectDeclarator;
+
+    std::pair<TYPE::Type
+        , std::string> result;
+
+    if(bool(declarator->p))
+    {
+        auto &&typeOpt{analyzeType(declarator->p, baseType)};
+        if(!typeOpt)
+            return {std::nullopt};
+        
+        result.first = std::move(*typeOpt);
+    }
+    else
+        result.first = baseType;
+    
+    for(auto &&iter{declarator->dd->seq.crbegin()};
+        iter != declarator->dd->seq.crend();
+        iter++)
+    {
+        if(std::holds_alternative<DD::Si>(*iter))
+        {
+            const auto &s{std::get<DD::Si>(*iter)};
+            result.second = TOKEN::str(s.i);
+        }
+        else if(std::holds_alternative<DD::Sd>(*iter))
+        {
+            const auto &s{std::get<DD::Sd>(*iter)};
+            
+            auto &&pairOpt{analyzeTypeAndIdentifier(s.d, result.first)};
+            if(!pairOpt)
+                return {std::nullopt};
+
+            result = std::move(*pairOpt);
+        }
+        else if(std::holds_alternative<DD::Stql_ae>(*iter))
+        {
+            const auto &s{std::get<DD::Stql_ae>(*iter)};
+            
+            auto &&typeOpt{analyzeType(s.tql, s.ae, s.hasStatic, false, result.first)};
+            if(!typeOpt)
+                return {std::nullopt};
+        
+            result.first = std::move(*typeOpt);
+        }
+        else if(std::holds_alternative<DD::Stql>(*iter))
+        {
+            const auto &s{std::get<DD::Stql>(*iter)};
+
+            auto &&typeOpt{analyzeType(s.tql, nullptr, false, true, result.first)};
+            if(!typeOpt)
+                return {std::nullopt};
+
+            result.first = std::move(*typeOpt);
+        }
+        else if(std::holds_alternative<DD::Sptl>(*iter))
+        {
+            const auto &s{std::get<DD::Sptl>(*iter)};
+
+            auto &&typeOpt{analyzeType(s.ptl, result.first)};
+            if(!typeOpt)
+                return {std::nullopt};
+
+            result.first = std::move(*typeOpt);
+        }
+        else if(std::holds_alternative<DD::Sil>(*iter))
+        {
+            const auto &s{std::get<DD::Sil>(*iter)};
+
+            auto &&typeOpt{analyzeType(s.il, result.first)};
+            if(!typeOpt)
+                return {std::nullopt};
+
+            result.first = std::move(*typeOpt);
+        }
+        else
+            variantError("DirectDeclarator");
+    }
+
+    return {std::move(result)};
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const TOKEN::Pointer *pointer
+        , const TYPE::Type &baseType)
+{
+    using P = TOKEN::Pointer;
+
+    TYPE::Type resultType{TYPE::Pointer{baseType}};
+
+    const TOKEN::TypeQualifierList *tql{nullptr};
+    const TOKEN::Pointer *p{nullptr};
+
+    if(std::holds_alternative<P::Stql>(pointer->var))
+        tql = std::get<P::Stql>(pointer->var).tql;
+    else if(std::holds_alternative<P::Stql_p>(pointer->var))
+    {
+        const auto &s{std::get<P::Stql_p>(pointer->var)};
+        tql = s.tql;
+        p = s.p;
+    }
+    else
+        variantError("Pointer");
+
+    if(bool(tql))
+    {
+        auto &&qualsOpt{analyzeTypeQualifiers(tql)};
+        if(!qualsOpt)
+            return {std::nullopt};
+        
+        std::get<TYPE::Pointer>(resultType.var).quals = std::move(*qualsOpt);
+    }
+
+    if(bool(p))
+    {
+        auto &&typeOpt{analyzeType(p, resultType)};
+        if(!typeOpt)
+            return {std::nullopt};
+        
+        resultType = std::move(*typeOpt);
+    }
+    
+    return {std::move(resultType)};
+}
+
+std::optional<TYPE::Qualifiers>
+    Analyzer::analyzeTypeQualifiers(const TOKEN::TypeQualifierList *tql)
+{
+    return analyzeTypeQualifiers(std::vector<const TOKEN::TypeQualifier*>{tql->seq.cbegin(), tql->seq.cend()});
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const TOKEN::TypeQualifierList *tql
+        , const TOKEN::AssignmentExpression *ae
+        , bool hasStatic
+        , bool isVariable
+        , const TYPE::Type &baseType)
+{
+    TYPE::Array array{baseType};
+
+    if(bool(tql))
+    {
+        auto &&qualsOpt{analyzeTypeQualifiers(tql)};
+        if(!qualsOpt)
+            return {std::nullopt};
+        
+        array.quals = std::move(*qualsOpt);
+    }
+
+    if(bool(ae))
+    {
+        if(!analyze(ae))
+            return {std::nullopt};
+
+        array.exp.reset(ae->copy());
+    }
+
+    array.hasStatic = hasStatic;
+    array.isVariable = isVariable;
+
+    return {TYPE::Type{std::move(array)}};
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const TOKEN::ParameterTypeList *ptl
+        , const TYPE::Type &baseType)
+{
+    TYPE::Function function{baseType};
+
+    for(const auto &pd : ptl->pl->seq)
+    {
+        auto &&typeOpt{analyzeType(pd)};
+        if(!typeOpt)
+            return {std::nullopt};
+        
+        function.paramTypes.push_back(std::move(*typeOpt));
+    }
+
+    function.isVariable = ptl->isValiable;
+
+    return {TYPE::Type{std::move(function)}};
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const TOKEN::IdentifierList *il
+        , const TYPE::Type &baseType)
+{
+    if(bool(il))
+    {
+        notSupportedError("IdentifierList");
+        return {std::nullopt};
+    }
+
+    return {TYPE::Type{TYPE::Function{baseType}}};
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const TOKEN::ParameterDeclaration *pd)
+{
+    using namespace TOKEN;
+    using PD = ParameterDeclaration;
+
+    const DeclarationSpecifiers *ds{nullptr};
+    const Declarator *d{nullptr};
+    const AbstractDeclarator *ad{nullptr};
+
+    if(std::holds_alternative<PD::Sds_d>(pd->var))
+    {
+        const auto &s{std::get<PD::Sds_d>(pd->var)};
+        ds = s.ds;
+        d = s.d;
+    }
+    else if(std::holds_alternative<PD::Sds_ad>(pd->var))
+    {
+        const auto &s{std::get<PD::Sds_ad>(pd->var)};
+        ds = s.ds;
+        ad = s.ad;
+    }
+    else
+        variantError("ParameterDeclaration");
+
+    auto &&attrsOpt{analyzeAttributes(ds)};
+    if(!attrsOpt)
+        return {std::nullopt};
+    
+    auto &&[storageClass
+        , resultType
+        , functionSpecifiers
+        , alignment]{*attrsOpt};
+    
+    if(bool(d))
+    {
+        auto &&pairOpt{analyzeTypeAndIdentifier(d, resultType)};
+        if(!pairOpt)
+            return {std::nullopt};
+        
+        if(bool(mScope->getIdentifier(pairOpt->second
+            , SCOPE::Scope::NamespaceTag::OTHER
+            , true)))
+        {
+            redefinedError(pairOpt->second);
+            return {std::nullopt};
+        }
+
+        std::shared_ptr<IDENTIFIER::Identifier> identifier;
+
+        if(std::holds_alternative<TYPE::Function>(pairOpt->first.var))
+        {
+             identifier.reset(new IDENTIFIER::Function{pairOpt->second
+                , pairOpt->first
+                , storageClass
+                , functionSpecifiers
+                , false});
+        }
+        else if(!std::holds_alternative<std::monostate>(pairOpt->first.var))
+        {
+            identifier.reset(new IDENTIFIER::Object{pairOpt->second
+                , pairOpt->first
+                , storageClass
+                , alignment
+                , true});
+        }
+        else
+            variantError("TYPE::Type");
+
+        mScope->addIdentifier(identifier
+            , SCOPE::Scope::NamespaceTag::OTHER);
+        ID_MAP.emplace(identifier->id()
+            , identifier);
+
+        resultType = pairOpt->first;
+    }
+    else if(bool(ad))
+    {
+        auto &&typeOpt{analyzeType(ad, resultType)};
+        if(!typeOpt)
+            return {std::nullopt};
+        
+        resultType = std::move(*typeOpt);
+    }
+
+    return {std::move(resultType)};
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const TOKEN::AbstractDeclarator *ad
+        , const TYPE::Type &baseType)
+{
+    using namespace TOKEN;
+    using AD = AbstractDeclarator;
+    using DAD = DirectAbstractDeclarator;
+
+    const Pointer *p{nullptr};
+    const DAD *dad{nullptr};
+
+    TYPE::Type resultType;
+
+    if(std::holds_alternative<AD::Sp>(ad->var))
+    {
+        const auto &s{std::get<AD::Sp>(ad->var)};
+        p = s.p;
+    }
+    else if(std::holds_alternative<AD::Sp_dad>(ad->var))
+    {
+        const auto &s{std::get<AD::Sp_dad>(ad->var)};
+        if(bool(s.p))
+            p = s.p;
+        dad = s.dad;
+    }
+    else
+        variantError("AbstractDeclarator");
+    
+    if(bool(p))
+    {
+        auto &&typeOpt{analyzeType(p, baseType)};
+        if(!typeOpt)
+            return {std::nullopt};
+        
+        resultType = std::move(*typeOpt);
+    }
+    else
+        resultType = baseType;
+    
+    if(bool(dad))
+    {
+        for(auto &&iter{dad->seq.crbegin()};
+            iter != dad->seq.crend();
+            iter++)
+        {
+            if(std::holds_alternative<DAD::Sad>(*iter))
+            {
+                auto &&s{std::get<DAD::Sad>(*iter)};
+                auto &&typeOpt{analyzeType(s.ad, resultType)};
+                if(!typeOpt)
+                    return {std::nullopt};
+
+                resultType = std::move(*typeOpt);
+            }
+            else if(std::holds_alternative<DAD::Stql_ae>(*iter))
+            {
+                auto &&s{std::get<DAD::Stql_ae>(*iter)};
+                auto &&typeOpt{analyzeType(s.tql, s.ae, s.hasStatic, false, resultType)};
+                if(!typeOpt)
+                    return {std::nullopt};
+                
+                resultType = std::move(*typeOpt);
+            }
+            else if(std::holds_alternative<DAD::Sp>(*iter))
+            {
+                auto &&s{std::get<DAD::Sp>(*iter)};
+                auto &&typeOpt{analyzeType(nullptr, nullptr, false, true, resultType)};
+                if(!typeOpt)
+                    return {std::nullopt};
+
+                resultType = std::move(*typeOpt);
+            }
+            else if(std::holds_alternative<DAD::Sptl>(*iter))
+            {
+                auto &&s{std::get<DAD::Sptl>(*iter)};
+                if(bool(s.ptl))
+                {
+                    auto &&typeOpt{analyzeType(s.ptl, resultType)};
+                    if(!typeOpt)
+                        return {std::nullopt};
+                    
+                    resultType = std::move(*typeOpt);
+                }
+                else
+                {
+                    auto &&typeOpt{analyzeType(static_cast<IdentifierList*>(nullptr), resultType)};
+                    if(!typeOpt)
+                        return {std::nullopt};
+
+                    resultType = std::move(*typeOpt);
+                }
+            }
+            else
+                variantError("DirectAbstractDeclarator");
+        }
+    }
+
+    return {std::move(resultType)};
+}
+
+std::optional<TYPE::Type>
+    Analyzer::analyzeType(const TOKEN::TypeName *typeName)
+{
+    TYPE::Type resultType;
+
+    auto &&typeOpt{analyzeType(typeName->sql)};
+    if(!typeOpt)
+        return {std::nullopt};
+
+    if(bool(typeName->ad))
+    {
+        auto &&tOpt{analyzeType(typeName->ad, *typeOpt)};
+        if(!tOpt)
+            return {std::nullopt};
+        
+        resultType = std::move(*tOpt);
+    }
+    else
+        resultType = std::move(*typeOpt);
+    
+    return {std::move(resultType)};
+}
+
 bool Analyzer::flag(Analyzer::FlagTag tag, bool b)
 {
     bool old{flag(tag)};
@@ -1072,9 +2332,9 @@ bool Analyzer::flag(Analyzer::FlagTag tag) const
     return mFlags.test(static_cast<std::size_t>(tag));
 }
 
-void Analyzer::variantError(const char *className) const
+void Analyzer::variantError(const std::string &className) const
 {
-    throw std::runtime_error(className);
+    throw std::runtime_error(className.c_str());
 }
 
 bool Analyzer::differentTypeError(const std::string &identifier) const
@@ -1100,6 +2360,33 @@ bool Analyzer::notSupportedError(const std::string &message) const
     std::cerr << "Analyzer error:\n"
         "    what: below function is not supported.\n"
         "    func: " << message
+        << std::endl;
+    return false;
+}
+
+bool Analyzer::invalidAttributeError(const std::string &message) const
+{
+    std::cerr << "Analyzer error:\n"
+        "    what: invalid attribute.\n"
+        "    attr: " << message
+        << std::endl;
+    return false;
+}
+
+bool Analyzer::invalidTypeError(const std::string &message) const
+{
+    std::cerr << "Analyzer error:\n"
+        "    what: invalid type.\n"
+        "    --: " << message
+        << std::endl;
+    return false;
+}
+
+bool Analyzer::notDeclarationError(const std::string &message) const
+{
+    std::cerr << "Analyzer error:\n"
+        "    what: declaration is not found.\n"
+        "    --: " << message
         << std::endl;
     return false;
 }
