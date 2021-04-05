@@ -1,0 +1,32 @@
+{
+    "source_filename": "test.c",
+    "pool":
+    [
+        "test2.c",
+        "test3.c"
+    ],
+    "result_filename": "repair.c",
+
+    "compiler": "gcc",
+    "test_script": "test.sh",
+    "test_filename": "__test.c",
+    "positive_test_prefix": "p",
+    "negative_test_prefix": "n",
+    "num_positive_test": 1,
+    "num_negative_test": 1,
+    "positive_test_weight": 1,
+    "negative_test_weight": 10,
+    "goal_score": 11,
+
+    "pop_size": 10,
+    "max_gen": 10,
+    "num_elite": 1,
+    "tournament_size": 2,
+    
+    "adding_probability": 0.75,
+    "subtracting_probability": 0.25,
+    "swapping_probability": 0.00,
+
+    "adding_new_operation_probability": 0.50,
+    "concatenation_probability": 0.50
+}

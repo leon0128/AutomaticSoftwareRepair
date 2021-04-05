@@ -8,9 +8,9 @@
 #include "tokenizer.hpp"
 #include "sequencer.hpp"
 
-Sequencer::Sequencer(const std::string &filename)
-    : mFile(filename)
-    , mSeq()
+Sequencer::Sequencer()
+    : mFile{}
+    , mSeq{}
 {
 }
 
@@ -20,8 +20,10 @@ Sequencer::~Sequencer()
         delete pt;
 }
 
-bool Sequencer::execute()
+bool Sequencer::execute(const std::string &filename)
 {
+    mFile = filename;
+    
     std::string src;
 
     if(!openFile(src)

@@ -195,15 +195,24 @@ struct Keyword
 
 struct Identifier
 {
-    using Variant = std::variant<std::monostate
+    using Element = std::variant<std::monostate
         , IdentifierNondigit*
         , Digit*>;
+    using Seq = std::vector<Element>;
+    // first: identifier-id
+    // second: scope-id
+    using Id = std::pair<std::size_t
+        , std::size_t>;
+
+    using Var = std::variant<Seq
+        , Id
+        , std::string>;
     
-    std::vector<Variant> seq;
+    Var var;
 
     template<class... Args>
     Identifier(Args&&... args)
-        : seq(std::forward<Args>(args)...){}
+        : var(std::forward<Args>(args)...){}
     ~Identifier();
 
     Identifier *copy() const;

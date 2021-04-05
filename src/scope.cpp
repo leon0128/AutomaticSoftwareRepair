@@ -8,7 +8,8 @@ namespace SCOPE
 
 Scope::Scope(Scope *parent
     , ScopeTag tag)
-    : mParent{parent}
+    : mId{NEXT_ID++}
+    , mParent{parent}
     , mChildren{}
     , mScopeTag{tag}
     , mArr{Map{}, Map{}, Map{}, Map{}}
@@ -28,7 +29,7 @@ Scope *Scope::addChild(ScopeTag tag)
     return child;
 }
 
-bool Scope::addIdentifier(const std::shared_ptr<IDENTIFIER::Identifier> &id
+Scope::ReturnType Scope::addIdentifier(const std::shared_ptr<IDENTIFIER::Identifier> &id
     , NamespaceTag nTag
     , ScopeTag sTag)
 {
@@ -46,7 +47,7 @@ bool Scope::addIdentifier(const std::shared_ptr<IDENTIFIER::Identifier> &id
             "    what: fail to find scope.\n"
             "    tag: " << static_cast<std::size_t>(sTag)
             << std::endl;
-        return false;
+        return {std::nullopt};
     }
 
     auto &&[iter, isSuccessful]{scope->map(nTag).emplace(id->key(), id)};
@@ -57,18 +58,19 @@ bool Scope::addIdentifier(const std::shared_ptr<IDENTIFIER::Identifier> &id
             "    key: " << id->key() << "\n"
             "    id: " << id->id()
             << std::endl;
+        return {std::nullopt};
     }
 
-    return isSuccessful;
+    return {PairType{iter->second, scope->id()}};
 }
 
-bool Scope::addIdentifier(const std::shared_ptr<IDENTIFIER::Identifier> &id
+Scope::ReturnType Scope::addIdentifier(const std::shared_ptr<IDENTIFIER::Identifier> &id
     , NamespaceTag nTag)
 {
     return addIdentifier(id, nTag, scopeTag());
 }
 
-std::shared_ptr<IDENTIFIER::Identifier> Scope::getIdentifier(const std::string &str
+Scope::ReturnType Scope::getIdentifier(const std::string &str
     , NamespaceTag tag
     , bool isCurrent)
 {
@@ -76,16 +78,21 @@ std::shared_ptr<IDENTIFIER::Identifier> Scope::getIdentifier(const std::string &
     {
         if(auto &&iter{map(tag).find(str)};
             iter != map(tag).end())
-            return iter->second;
+            return {PairType{iter->second, id()}};
     }
     else
     {
-        if(auto &&iter{map(tag).find(str)};
-            iter != map(tag).end())
-            return iter->second;
+        for(auto &&scope{this};
+            scope != nullptr;
+            scope = scope->getParent())
+        {
+            if(auto &&iter{scope->map(tag).find(str)};
+                iter != scope->map(tag).end())
+                return {PairType{iter->second, scope->id()}};
+        }
     }
 
-    return {};
+    return {std::nullopt};
 }
 
 }

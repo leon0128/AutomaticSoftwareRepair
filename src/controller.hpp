@@ -4,19 +4,24 @@
 #include <string>
 #include <unordered_map>
 
-class TranslationUnit;
+class Analyzer;
 
 class Controller
 {
+private:
+    inline static const char *CONFIGURE_FILENAME{"configure.json"};
+
 public:
-    Controller(int argc, char **argv);
+    Controller();
 
     bool execute();
 
 private:
-    bool createTree();    
-
-    std::unordered_map<std::string, TranslationUnit*> mFileMap;
+    bool initialize();
+    bool analyzeFile(const std::string &filename
+        , Analyzer&);
+    
+    bool initConfigureError(const std::string&) const;
 };
 
 #endif

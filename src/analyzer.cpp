@@ -95,7 +95,8 @@ const Analyzer::BaseTypeMap Analyzer::BASE_TYPE_MAP
                 , BaseTypeTag::COMPLEX}}}};
 
 Analyzer::Analyzer()
-    : mFlags{}
+    : mFilename{}
+    , mFlags{}
     , mScope{nullptr}
 {
 }
@@ -104,8 +105,11 @@ Analyzer::~Analyzer()
 {
 }
 
-bool Analyzer::execute(const TOKEN::TranslationUnit *tu)
+bool Analyzer::execute(const std::string &filename
+    , const TOKEN::TranslationUnit *tu)
 {
+    mFilename = filename;
+
     if(!tu)
         return true;
 
@@ -141,6 +145,8 @@ bool Analyzer::analyze(const TOKEN::TranslationUnit *tu)
 
 bool Analyzer::analyze(const TOKEN::FunctionDefinition *fd)
 {
+    using Id = TOKEN::Identifier;
+
     mScope = mScope->addChild(SCOPE::Scope::ScopeTag::FUNCTION);
     mScope = mScope->addChild(SCOPE::Scope::ScopeTag::BLOCK);
 
@@ -174,15 +180,19 @@ bool Analyzer::analyze(const TOKEN::FunctionDefinition *fd)
             , storageClassSpec
             , functionSpec
             , true}};
-        mScope->addIdentifier(id
+        auto &&pair{mScope->addIdentifier(id
             , SCOPE::Scope::NamespaceTag::OTHER
-            , SCOPE::Scope::ScopeTag::FILE);
+            , SCOPE::Scope::ScopeTag::FILE)};
         ID_MAP.emplace(id->id()
             , id);
+        
+        auto &&identifier{getIdentifier(fd->d)};
+        deleteIdentifierElement(identifier);
+        identifier->var.emplace<Id::Id>(pair->first->id(), pair->second);
     }
     else
     {
-        auto &&funcPtr{std::dynamic_pointer_cast<IDENTIFIER::Function>(idPtr)};
+        auto &&funcPtr{std::dynamic_pointer_cast<IDENTIFIER::Function>(idPtr->first)};
         
         if(!funcPtr)
             return differentTypeError(name);
@@ -196,6 +206,10 @@ bool Analyzer::analyze(const TOKEN::FunctionDefinition *fd)
         funcPtr->isDefined(true);
         funcPtr->storageClass(storageClassSpec);
         funcPtr->functionSpecifiers(functionSpec);
+
+        auto &&identifier{getIdentifier(fd->d)};
+        deleteIdentifierElement(identifier);
+        identifier->var.emplace<Id::Id>(idPtr->first->id(), idPtr->second);
     }
 
     if(!analyze(fd->cs))
@@ -286,14 +300,18 @@ bool Analyzer::analyze(const TOKEN::Declaration *d)
                             , bool(initializer)});
                     }
 
-                    mScope->addIdentifier(id
-                        , SCOPE::Scope::NamespaceTag::OTHER);
+                    auto &&pair{mScope->addIdentifier(id
+                        , SCOPE::Scope::NamespaceTag::OTHER)};
                     ID_MAP.emplace(id->id()
                         , id);
+
+                    auto &&i{getIdentifier(declarator)};
+                    deleteIdentifierElement(i);
+                    i->var.emplace<TOKEN::Identifier::Id>(pair->first->id(), pair->second);
                 }
                 else
                 {
-                    if(auto &&tPtr{std::dynamic_pointer_cast<IDENTIFIER::Typedef>(idPtr)};
+                    if(auto &&tPtr{std::dynamic_pointer_cast<IDENTIFIER::Typedef>(idPtr->first)};
                         bool(tPtr))
                     {
                         if(!storageClass.flags.test(static_cast<std::size_t>(IDENTIFIER::StorageClass::Tag::TYPEDEF)))
@@ -302,7 +320,7 @@ bool Analyzer::analyze(const TOKEN::Declaration *d)
                         if(!TYPE::equalTo(tPtr->type(), type))
                             return differentTypeError(identifier);
                     }
-                    else if(auto &&oPtr{std::dynamic_pointer_cast<IDENTIFIER::Object>(idPtr)};
+                    else if(auto &&oPtr{std::dynamic_pointer_cast<IDENTIFIER::Object>(idPtr->first)};
                         bool(oPtr))
                     {   
                         if(mScope->scopeTag() != SCOPE::Scope::ScopeTag::FILE)
@@ -322,7 +340,7 @@ bool Analyzer::analyze(const TOKEN::Declaration *d)
                             || mScope->scopeTag() != SCOPE::Scope::ScopeTag::FILE)
                             oPtr->isDefined(true);
                     }
-                    else if(auto &&fPtr{std::dynamic_pointer_cast<IDENTIFIER::Function>(idPtr)};
+                    else if(auto &&fPtr{std::dynamic_pointer_cast<IDENTIFIER::Function>(idPtr->first)};
                         bool(fPtr))
                     {                        
                         if(storageClass.flags.test(static_cast<std::size_t>(IDENTIFIER::StorageClass::Tag::TYPEDEF)))
@@ -336,6 +354,10 @@ bool Analyzer::analyze(const TOKEN::Declaration *d)
                     }
                     else
                         variantError("IDENTIFIER::Identifier");
+                    
+                    auto &&i{getIdentifier(declarator)};
+                    deleteIdentifierElement(i);
+                    i->var.emplace<TOKEN::Identifier::Id>(idPtr->first->id(), idPtr->second);
                 }
 
                 if(bool(initializer))
@@ -446,20 +468,29 @@ bool Analyzer::analyze(const TOKEN::LabeledStatement *ls)
         {
             std::shared_ptr<IDENTIFIER::Identifier> id{new IDENTIFIER::Label{identifier
                 , true}};
-            mScope->addIdentifier(id
+            auto &&pair{mScope->addIdentifier(id
                 , SCOPE::Scope::NamespaceTag::LABEL
-                , SCOPE::Scope::ScopeTag::FUNCTION);
+                , SCOPE::Scope::ScopeTag::FUNCTION)};
             ID_MAP.emplace(id->id()
                 , id);
+            
+            deleteIdentifierElement(s.i);
+            s.i->var.emplace<TOKEN::Identifier::Id>(pair->first->id(), pair->second);
         }
         else
         {
-            auto &&label{std::dynamic_pointer_cast<IDENTIFIER::Label>(iPtr)};
+            auto &&label{std::dynamic_pointer_cast<IDENTIFIER::Label>(iPtr->first)};
             if(!label)
                 return differentTypeError(identifier);
             
             label->isDefined(true);
+
+            deleteIdentifierElement(s.i);
+            s.i->var.emplace<TOKEN::Identifier::Id>(iPtr->first->id(), iPtr->second);
         }
+
+        if(!analyze(s.s))
+            return false;
     }
     else if(std::holds_alternative<LS::Sce_s>(ls->var))
     {
@@ -497,6 +528,8 @@ bool Analyzer::analyze(const TOKEN::SelectionStatement *ss)
 {
     using SS = TOKEN::SelectionStatement;
 
+    mScope = mScope->addChild(SCOPE::Scope::ScopeTag::BLOCK);
+
     if(std::holds_alternative<SS::Si_e_s>(ss->var))
     {
         auto &&s{std::get<SS::Si_e_s>(ss->var)};
@@ -530,12 +563,16 @@ bool Analyzer::analyze(const TOKEN::SelectionStatement *ss)
     else
         variantError("SelectionStatement");
     
+    mScope = mScope->getParent();
+
     return true;
 }
 
 bool Analyzer::analyze(const TOKEN::IterationStatement *is)
 {
     using IS = TOKEN::IterationStatement;
+
+    mScope = mScope->addChild(SCOPE::Scope::ScopeTag::BLOCK);
 
     if(std::holds_alternative<IS::Sw_e_s>(is->var))
     {
@@ -588,6 +625,8 @@ bool Analyzer::analyze(const TOKEN::IterationStatement *is)
     else
         variantError("IterationStatement");
     
+    mScope = mScope->getParent();
+
     return true;
 }
 
@@ -603,16 +642,25 @@ bool Analyzer::analyze(const TOKEN::JumpStatement *js)
         auto &&iPtr{mScope->getIdentifier(identifier
             , SCOPE::Scope::NamespaceTag::LABEL
             , false)};
+
         if(!iPtr)
         {
             std::shared_ptr<IDENTIFIER::Identifier> id{new IDENTIFIER::Label{identifier
                 , false}};
             
-            mScope->addIdentifier(id
+            auto &&pair{mScope->addIdentifier(id
                 , SCOPE::Scope::NamespaceTag::LABEL
-                , SCOPE::Scope::ScopeTag::FUNCTION);
+                , SCOPE::Scope::ScopeTag::FUNCTION)};
             ID_MAP.emplace(id->id()
                 , id);
+
+            deleteIdentifierElement(s.i);
+            s.i->var.emplace<TOKEN::Identifier::Id>(pair->first->id(), pair->second);
+        }
+        else
+        {
+            deleteIdentifierElement(s.i);
+            s.i->var.emplace<TOKEN::Identifier::Id>(iPtr->first->id(), iPtr->second);
         }
     }
     else if(std::holds_alternative<JS::Sc>(js->var))
@@ -1099,7 +1147,18 @@ bool Analyzer::analyze(const TOKEN::PostfixExpression *pe)
 bool Analyzer::analyze(const TOKEN::PrimaryExpression *pe)
 {
     if(std::holds_alternative<TOKEN::Identifier*>(pe->var))
-        ;
+    {
+        auto &&identifier{std::get<TOKEN::Identifier*>(pe->var)};
+        auto &&str{TOKEN::str(identifier)};
+        auto &&idPtr{mScope->getIdentifier(str
+            , SCOPE::Scope::NamespaceTag::OTHER
+            , false)};
+        if(!idPtr)
+            return notDeclarationError(str);
+
+        deleteIdentifierElement(identifier);
+        identifier->var.emplace<TOKEN::Identifier::Id>(idPtr->first->id(), idPtr->second);
+    }
     else if(std::holds_alternative<TOKEN::Constant*>(pe->var))
         ;
     else if(std::holds_alternative<TOKEN::StringLiteral*>(pe->var))
@@ -1436,7 +1495,8 @@ std::optional<TYPE::Type>
             return {TYPE::Type{TYPE::Struct{id}}};
         }};
     auto addTagInfo{[&](const std::string &tag
-        , const Sou *sou)
+        , const Sou *sou
+        , TOKEN::Identifier *identifier)
         {
             TYPE::StructInfo sInfo{tag, isUnion(sou)};
             IDENTIFIER::Tag tagIdent{tag
@@ -1446,9 +1506,12 @@ std::optional<TYPE::Type>
                     : IDENTIFIER::Tag::T::STRUCT};
             
             std::shared_ptr<IDENTIFIER::Identifier> tagIdentPtr{new IDENTIFIER::Tag{tagIdent}};
-            mScope->addIdentifier(tagIdentPtr, NTag::TAG);
+            auto &&pair{mScope->addIdentifier(tagIdentPtr, NTag::TAG)};
             ID_MAP.emplace(tagIdent.id(), tagIdentPtr);
             TYPE_MAP.emplace(sInfo.id(), new TYPE::StructInfo{sInfo});
+            
+            deleteIdentifierElement(identifier);
+            identifier->var.emplace<TOKEN::Identifier::Id>(pair->first->id(), pair->second);
 
             return sInfo.id();
         }};
@@ -1466,7 +1529,7 @@ std::optional<TYPE::Type>
         {
             TYPE::StructInfo sInfo{{}, isUnion(s.sou)};
             TYPE_MAP.emplace(sInfo.id(), new TYPE::StructInfo{sInfo});
-            
+
             return define(s.sdl, sInfo.id());
         }
         else
@@ -1475,7 +1538,7 @@ std::optional<TYPE::Type>
             auto &&identifier{mScope->getIdentifier(tag, NTag::TAG, true)};
             if(bool(identifier))
             {
-                auto &&tagIdent{std::dynamic_pointer_cast<IDENTIFIER::Tag>(identifier)};
+                auto &&tagIdent{std::dynamic_pointer_cast<IDENTIFIER::Tag>(identifier->first)};
                 if(!tagIdent
                     || !isMatchTag(s.sou, tagIdent->tag()))
                 {
@@ -1490,11 +1553,14 @@ std::optional<TYPE::Type>
                     return {std::nullopt};
                 }
 
+                deleteIdentifierElement(s.i);
+                s.i->var.emplace<TOKEN::Identifier::Id>(identifier->first->id(), identifier->second);
+
                 return define(s.sdl, iter->first);
             }
             else
             {
-                std::size_t id{addTagInfo(tag, s.sou)};
+                std::size_t id{addTagInfo(tag, s.sou, s.i)};
 
                 return define(s.sdl, id);
             }
@@ -1509,7 +1575,7 @@ std::optional<TYPE::Type>
             auto &&identifier{mScope->getIdentifier(tag, NTag::TAG, true)};
             if(bool(identifier))
             {
-                auto &&tagIdent{std::dynamic_pointer_cast<IDENTIFIER::Tag>(identifier)};
+                auto &&tagIdent{std::dynamic_pointer_cast<IDENTIFIER::Tag>(identifier->first)};
                 if(!tagIdent
                     || !isMatchTag(s.sou, tagIdent->tag()))
                 {
@@ -1517,11 +1583,14 @@ std::optional<TYPE::Type>
                     return {std::nullopt};
                 }
 
+                deleteIdentifierElement(s.i);
+                s.i->var.emplace<TOKEN::Identifier::Id>(identifier->first->id(), identifier->second);
+
                 return TYPE::Type{TYPE::Struct{tagIdent->typeId()}};
             }
             else
             {
-                std::size_t id{addTagInfo(tag, s.sou)};
+                std::size_t id{addTagInfo(tag, s.sou, s.i)};
                 
                 return TYPE::Type{TYPE::Struct{id}};
             }
@@ -1532,13 +1601,13 @@ std::optional<TYPE::Type>
             auto &&identifier{mScope->getIdentifier(tag, NTag::TAG, false)};
             if(!identifier)
             {
-                std::size_t id{addTagInfo(tag, s.sou)};
+                std::size_t id{addTagInfo(tag, s.sou, s.i)};
                 
                 return TYPE::Type{TYPE::Struct{id}};
             }
             else
             {
-                auto &&tagIdent{std::dynamic_pointer_cast<IDENTIFIER::Tag>(identifier)};
+                auto &&tagIdent{std::dynamic_pointer_cast<IDENTIFIER::Tag>(identifier->first)};
                 if(!tagIdent
                     || !isMatchTag(s.sou, tagIdent->tag()))
                 {
@@ -1558,7 +1627,8 @@ bool Analyzer::analyzeMember(const TOKEN::StructDeclarationList *sdl
     using namespace TOKEN;
 
     auto &&addMemberInfo{[&](std::optional<std::pair<TYPE::Type, std::string>> opt
-        , std::shared_ptr<TYPE::StructInfo> &sInfo)
+        , std::shared_ptr<TYPE::StructInfo> &sInfo
+        , TOKEN::Identifier *identifier)
         {
             if(!opt)
                 return false;
@@ -1568,7 +1638,14 @@ bool Analyzer::analyzeMember(const TOKEN::StructDeclarationList *sdl
             std::shared_ptr<IDENTIFIER::Identifier> member{new IDENTIFIER::Member{ident, sInfo->id()}};
             
             ID_MAP.emplace(member->id(), member);
-            return mScope->addIdentifier(member, SCOPE::Scope::NamespaceTag::MEMBER);
+            auto &&pair{mScope->addIdentifier(member, SCOPE::Scope::NamespaceTag::MEMBER)};
+            if(!pair)
+                return false;
+
+            deleteIdentifierElement(identifier);
+            identifier->var.emplace<TOKEN::Identifier::Id>(pair->first->id(), pair->second);
+
+            return true;
         }};
 
     auto &&sInfo{std::dynamic_pointer_cast<TYPE::StructInfo>(TYPE_MAP.find(typeId)->second)};
@@ -1581,7 +1658,7 @@ bool Analyzer::analyzeMember(const TOKEN::StructDeclarationList *sdl
             continue;
         
         auto &&s{std::get<StructDeclaration::Ssql_sdl>(sd->var)};
-        
+
         bool oldIsFunction{flag(FlagTag::IS_FUNCTION, false)};
         bool oldIsDeclarationOver{flag(FlagTag::IS_DECLARATION_OVER, !s.sdl)};
 
@@ -1597,8 +1674,9 @@ bool Analyzer::analyzeMember(const TOKEN::StructDeclarationList *sdl
             {
                 if(std::holds_alternative<StructDeclarator::Sd>(sdr->var))
                 {   
-                    auto &&opt{analyzeTypeAndIdentifier(std::get<StructDeclarator::Sd>(sdr->var).d, *tOpt)};
-                    if(!addMemberInfo(opt, sInfo))
+                    auto &&s{std::get<StructDeclarator::Sd>(sdr->var)};
+                    auto &&opt{analyzeTypeAndIdentifier(s.d, *tOpt)};
+                    if(!addMemberInfo(opt, sInfo, getIdentifier(s.d)))
                         return false;
                 }
                 else
@@ -1625,7 +1703,8 @@ bool Analyzer::analyzeMember(const TOKEN::StructDeclarationList *sdl
                             return false;
                         
                         if(!addMemberInfo(std::pair<TYPE::Type, std::string>{*to, ident}
-                            , sInfo))
+                            , sInfo
+                            , getIdentifier(s.d)))
                             return false;
                     }
                 }
@@ -1704,7 +1783,7 @@ std::optional<TYPE::Type>
             
             if(bool(identifier))
             {
-                auto &&tagIdent{std::dynamic_pointer_cast<IDENTIFIER::Tag>(identifier)};
+                auto &&tagIdent{std::dynamic_pointer_cast<IDENTIFIER::Tag>(identifier->first)};
                 if(!tagIdent
                     || tagIdent->tag() != IDENTIFIER::Tag::T::ENUM)
                 {
@@ -1719,6 +1798,9 @@ std::optional<TYPE::Type>
                     return {std::nullopt};
                 }
 
+                deleteIdentifierElement(s.i);
+                s.i->var.emplace<TOKEN::Identifier::Id>(identifier->first->id(), identifier->second);
+
                 return define(s.el, iter->first);
             }
             else
@@ -1726,13 +1808,16 @@ std::optional<TYPE::Type>
                 TYPE::EnumInfo eInfo{tag};
                 
                 std::shared_ptr<IDENTIFIER::Identifier> tagIdentPtr{new IDENTIFIER::Tag{tag, eInfo.id(), IDENTIFIER::Tag::T::ENUM}};
-                mScope->addIdentifier(tagIdentPtr
-                    , SCOPE::Scope::NamespaceTag::TAG);
+                auto &&pair{mScope->addIdentifier(tagIdentPtr
+                    , SCOPE::Scope::NamespaceTag::TAG)};
                 ID_MAP.emplace(tagIdentPtr->id()
                     , tagIdentPtr);
                 TYPE_MAP.emplace(eInfo.id()
                     , new TYPE::EnumInfo{eInfo});
-                
+
+                deleteIdentifierElement(s.i);
+                s.i->var.emplace<TOKEN::Identifier::Id>(pair->first->id(), pair->second);
+
                 return {TYPE::Type{TYPE::Enum{eInfo.id()}}};
             }
         }
@@ -1761,12 +1846,15 @@ std::optional<TYPE::Type>
             return {std::nullopt};
         }
 
-        auto &&ePtr{std::dynamic_pointer_cast<IDENTIFIER::Tag>(iPtr)};
+        auto &&ePtr{std::dynamic_pointer_cast<IDENTIFIER::Tag>(iPtr->first)};
         if(!ePtr)
         {
             differentTypeError(tag);
             return {std::nullopt};
         }
+
+        deleteIdentifierElement(s.i);
+        s.i->var.emplace<TOKEN::Identifier::Id>(iPtr->first->id(), iPtr->second);
 
         return {TYPE::Type{TYPE::Enum{ePtr->typeId()}}};
     }
@@ -1782,18 +1870,18 @@ bool Analyzer::analyzeMember(const TOKEN::EnumeratorList *el
 
     for(const auto &e : el->seq)
     {
-        std::string str;
+        TOKEN::Identifier *identifier;
         std::shared_ptr<TOKEN::ConstantExpression> ce;
 
         if(std::holds_alternative<E::Sec>(e->var))
         {
             const auto &s{std::get<E::Sec>(e->var)};
-            str = TOKEN::str(s.ec->i);
+            identifier = s.ec->i;
         }
         else if(std::holds_alternative<E::Sec_ce>(e->var))
         {
             const auto &s{std::get<E::Sec_ce>(e->var)};
-            str = TOKEN::str(s.ec->i);
+            identifier = s.ec->i;
             if(!analyze(s.ce))
                 return false;
 
@@ -1802,19 +1890,22 @@ bool Analyzer::analyzeMember(const TOKEN::EnumeratorList *el
         else
             variantError("Enumerator");
 
-        if(bool(mScope->getIdentifier(str
+        if(bool(mScope->getIdentifier(TOKEN::str(identifier)
             , SCOPE::Scope::NamespaceTag::OTHER
             , true)))
-            return redefinedError(str);
+            return redefinedError(TOKEN::str(identifier));
 
-        std::shared_ptr<IDENTIFIER::Identifier> identPtr{new IDENTIFIER::Enum{str, typeId}};
-        mScope->addIdentifier(identPtr
-            , SCOPE::Scope::NamespaceTag::OTHER);
+        std::shared_ptr<IDENTIFIER::Identifier> identPtr{new IDENTIFIER::Enum{TOKEN::str(identifier), typeId}};
+        auto &&pair{mScope->addIdentifier(identPtr
+            , SCOPE::Scope::NamespaceTag::OTHER)};
         ID_MAP.emplace(identPtr->id()
             , identPtr);
         
-        enumInfo->members.emplace_back(str
+        enumInfo->members.emplace_back(TOKEN::str(identifier)
             , std::move(ce));
+        
+        deleteIdentifierElement(identifier);
+        identifier->var.emplace<TOKEN::Identifier::Id>(pair->first->id(), pair->second);
     }
 
     return true;
@@ -1830,7 +1921,7 @@ std::optional<TYPE::Type>
     }
 
     auto &&str{TOKEN::str(tnVec.front()->i)};
-    const auto &identifier{mScope->getIdentifier(str
+    auto &&identifier{mScope->getIdentifier(str
         , SCOPE::Scope::NamespaceTag::OTHER
         , false)};
     
@@ -1840,13 +1931,17 @@ std::optional<TYPE::Type>
         return {std::nullopt};
     }
 
-    if(identifier->derivedTag() != IDENTIFIER::Identifier::DerivedTag::TYPEDEF)
+    if(identifier->first->derivedTag() != IDENTIFIER::Identifier::DerivedTag::TYPEDEF)
     {
         differentTypeError(str);
         return {std::nullopt};
     }
 
-    const auto &typedefPtr{std::dynamic_pointer_cast<IDENTIFIER::Typedef>(identifier)};
+    const auto &typedefPtr{std::dynamic_pointer_cast<IDENTIFIER::Typedef>(identifier->first)};
+
+    deleteIdentifierElement(tnVec.front()->i);
+    tnVec.front()->i->var.emplace<TOKEN::Identifier::Id>(identifier->first->id(), identifier->second);
+
     return typedefPtr->type();
 }
 
@@ -2178,10 +2273,14 @@ std::optional<TYPE::Type>
         else
             variantError("TYPE::Type");
 
-        mScope->addIdentifier(identifier
-            , SCOPE::Scope::NamespaceTag::OTHER);
+        auto &&pair{mScope->addIdentifier(identifier
+            , SCOPE::Scope::NamespaceTag::OTHER)};
         ID_MAP.emplace(identifier->id()
             , identifier);
+
+        auto &&i{getIdentifier(d)};
+        deleteIdentifierElement(i);
+        i->var.emplace<TOKEN::Identifier::Id>(pair->first->id(), pair->second);
 
         resultType = pairOpt->first;
     }
@@ -2320,6 +2419,40 @@ std::optional<TYPE::Type>
     return {std::move(resultType)};
 }
 
+TOKEN::Identifier *Analyzer::getIdentifier(const TOKEN::Declarator *declarator)
+{
+    using DD = TOKEN::DirectDeclarator;
+
+    TOKEN::Identifier *identifier{nullptr};
+
+    const auto &var{declarator->dd->seq.front()};
+    if(std::holds_alternative<DD::Si>(var))
+        identifier = std::get<DD::Si>(var).i;
+    else if(std::holds_alternative<DD::Sd>(var))
+        identifier = getIdentifier(std::get<DD::Sd>(var).d);
+    else
+        variantError("DirectDeclarator");
+    
+    return identifier;
+}
+
+void Analyzer::deleteIdentifierElement(TOKEN::Identifier *identifier)
+{
+    using namespace TOKEN;
+    using Id = Identifier;
+
+    if(std::holds_alternative<Id::Seq>(identifier->var))
+    {
+        for(auto &&e : std::get<Id::Seq>(identifier->var))
+        {
+            if(std::holds_alternative<IdentifierNondigit*>(e))
+                delete std::get<IdentifierNondigit*>(e);
+            else if(std::holds_alternative<Digit*>(e))
+                delete std::get<Digit*>(e);
+        }
+    }
+}
+
 bool Analyzer::flag(Analyzer::FlagTag tag, bool b)
 {
     bool old{flag(tag)};
@@ -2382,11 +2515,11 @@ bool Analyzer::invalidTypeError(const std::string &message) const
     return false;
 }
 
-bool Analyzer::notDeclarationError(const std::string &message) const
+bool Analyzer::notDeclarationError(const std::string &identifier) const
 {
     std::cerr << "Analyzer error:\n"
         "    what: declaration is not found.\n"
-        "    --: " << message
+        "    id: " << identifier
         << std::endl;
     return false;
 }

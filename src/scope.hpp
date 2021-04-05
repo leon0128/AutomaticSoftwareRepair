@@ -3,6 +3,8 @@
 
 #include <unordered_map>
 #include <functional>
+#include <optional>
+#include <utility>
 #include <array>
 #include <any>
 #include <memory>
@@ -17,7 +19,14 @@ namespace SCOPE
 
 class Scope
 {
+private:
+    inline static std::size_t NEXT_ID{0ull};
+
 public:
+    using PairType = std::pair<std::shared_ptr<IDENTIFIER::Identifier>
+        , std::size_t>;
+    using ReturnType = std::optional<PairType>;
+
     enum class ScopeTag : unsigned char;
     enum class NamespaceTag : unsigned char;
 
@@ -37,15 +46,18 @@ public:
     Scope *addChild(ScopeTag);
     Scope *getParent() const noexcept
         {return mParent;}
-    bool addIdentifier(const std::shared_ptr<IDENTIFIER::Identifier>&
-        , NamespaceTag
-        , ScopeTag);
-    bool addIdentifier(const std::shared_ptr<IDENTIFIER::Identifier>&
-        , NamespaceTag);
-    std::shared_ptr<IDENTIFIER::Identifier> getIdentifier(const std::string&
-        , NamespaceTag
-        , bool isCurrent);
+    
+    ReturnType addIdentifier(const std::shared_ptr<IDENTIFIER::Identifier>&
+                , NamespaceTag
+                , ScopeTag);
+    ReturnType addIdentifier(const std::shared_ptr<IDENTIFIER::Identifier>&
+                , NamespaceTag);
+    ReturnType getIdentifier(const std::string&
+                , NamespaceTag
+                , bool isCurrent);
 
+    std::size_t id() const noexcept
+        {return mId;}
     ScopeTag scopeTag() const noexcept
         {return mScopeTag;}
 
@@ -53,6 +65,7 @@ private:
     Map &map(NamespaceTag tag)
         {return mArr[static_cast<std::size_t>(tag)];}
 
+    std::size_t mId;
     Scope *mParent;
     std::vector<Scope*> mChildren;
     ScopeTag mScopeTag;

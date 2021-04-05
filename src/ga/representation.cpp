@@ -6,7 +6,7 @@
 
 #include "../random.hpp"
 #include "../token.hpp"
-#include "configure.hpp"
+#include "../configure.hpp"
 #include "representation.hpp"
 
 namespace GA

@@ -2,7 +2,7 @@
 
 int main(int argc, char **argv)
 {
-    Controller controller(argc, argv);
+    Controller controller;
     if(controller.execute())
         return 0;
     else

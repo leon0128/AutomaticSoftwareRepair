@@ -57,7 +57,8 @@ public:
     Analyzer();
     ~Analyzer();
 
-    bool execute(const TOKEN::TranslationUnit*);
+    bool execute(const std::string &filename
+        , const TOKEN::TranslationUnit*);
 
 private:
     bool analyze(const TOKEN::TranslationUnit*);
@@ -165,6 +166,9 @@ private:
     std::optional<TYPE::Type>
         analyzeType(const TOKEN::TypeName*);
 
+    TOKEN::Identifier *getIdentifier(const TOKEN::Declarator*);
+    void deleteIdentifierElement(TOKEN::Identifier*);
+
     bool flag(FlagTag tag, bool b);
     bool flag(FlagTag tag) const;
 
@@ -176,6 +180,7 @@ private:
     bool invalidTypeError(const std::string&) const;
     bool notDeclarationError(const std::string&) const;
 
+    std::string mFilename;
     Flags mFlags;
     SCOPE::Scope *mScope;
 };
@@ -184,7 +189,7 @@ enum class Analyzer::FlagTag : unsigned char
 {
     // is not declaration
     IS_FUNCTION
-    // does declaration form [struct-or-union identifier;]
+    // declaration form [struct-or-union identifier;]
     , IS_DECLARATION_OVER
     // if it flag is false,
     // block scope is not created at compound-statement

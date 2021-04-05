@@ -15,12 +15,12 @@ class Sequencer
 public:
     using Sequence = std::vector<TOKEN::PreprocessingToken*>;
 
-    Sequencer(const std::string &filename);
+    Sequencer();
     ~Sequencer();
     Sequencer(const Sequencer&) = delete;
     Sequencer(Sequencer&&) = delete;
 
-    bool execute();
+    bool execute(const std::string &filename);
 
     const Sequence &seq() const noexcept
         {return mSeq;}

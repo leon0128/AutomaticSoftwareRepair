@@ -26,11 +26,11 @@ PreprocessingToken *decPreprocessingToken(const std::string &src
 Identifier *decIdentifier(const std::string &src
     , std::size_t &idx)
 {
-    Identifier::Variant var;
+    Identifier::Element var;
     if(var.emplace<IdentifierNondigit*>(decIdentifierNondigit(src, idx)) == nullptr)
         return nullptr;
 
-    std::vector<Identifier::Variant> seq;
+    Identifier::Seq seq;
     seq.push_back(var);
 
     while(var.emplace<IdentifierNondigit*>(decIdentifierNondigit(src, idx)) != nullptr

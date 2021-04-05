@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "token.hpp"
 
 namespace TOKEN
@@ -168,47 +170,81 @@ std::string &Keyword::str(std::string &res, std::size_t &indent) const
 
 Identifier::~Identifier()
 {
-    for(auto &&v : seq)
+    if(std::holds_alternative<Seq>(var))
     {
-        if(std::holds_alternative<std::monostate>(v))
-            ;
-        else if(std::holds_alternative<IdentifierNondigit*>(v))
-            delete std::get<IdentifierNondigit*>(v);
-        else if(std::holds_alternative<Digit*>(v))
-            delete std::get<Digit*>(v);
+        for(auto &&e : std::get<Seq>(var))
+        {
+            if(std::holds_alternative<std::monostate>(e))
+                ;
+            else if(std::holds_alternative<IdentifierNondigit*>(e))
+                delete std::get<IdentifierNondigit*>(e);
+            else if(std::holds_alternative<Digit*>(e))
+                delete std::get<Digit*>(e);
+        }
     }
+    else if(std::holds_alternative<Id>(var))
+        ;
+    else if(std::holds_alternative<std::string>(var))
+        ;
 }
 
 Identifier *Identifier::copy() const
 {
-    std::vector<Variant> cseq;
+    Identifier *identifier{nullptr};
 
-    for(auto &&v : seq)
+    if(std::holds_alternative<Seq>(var))
     {
-        Variant cv;
-        if(std::holds_alternative<std::monostate>(v))
-            ;
-        else if(std::holds_alternative<IdentifierNondigit*>(v))
-            cv.emplace<IdentifierNondigit*>(std::get<IdentifierNondigit*>(v)->copy());
-        else if(std::holds_alternative<Digit*>(v))
-            cv.emplace<Digit*>(std::get<Digit*>(v)->copy());
+        Seq cseq;
 
-        cseq.push_back(cv);
+        for(auto &&v : std::get<Seq>(var))
+        {
+            Element cv;
+            if(std::holds_alternative<std::monostate>(v))
+                ;
+            else if(std::holds_alternative<IdentifierNondigit*>(v))
+                cv.emplace<IdentifierNondigit*>(std::get<IdentifierNondigit*>(v)->copy());
+            else if(std::holds_alternative<Digit*>(v))
+                cv.emplace<Digit*>(std::get<Digit*>(v)->copy());
+
+            cseq.push_back(cv);
+        }
+
+        identifier = new Identifier{std::move(cseq)};
     }
-
-    return new Identifier(std::move(cseq));
+    else if(std::holds_alternative<Id>(var))
+    {
+        identifier = new Identifier{std::get<Id>(var)};
+    }
+    else if(std::holds_alternative<std::string>(var))
+    {
+        identifier = new Identifier{std::get<std::string>(var)};
+    }
+    
+    return identifier;
 }
 
 std::string &Identifier::str(std::string &res, std::size_t &indent) const
 {
-    for(auto &&v : seq)
+    if(std::holds_alternative<Seq>(var))
     {
-        if(std::holds_alternative<std::monostate>(v))
-            ;
-        else if(std::holds_alternative<IdentifierNondigit*>(v))
-            std::get<IdentifierNondigit*>(v)->str(res, indent);
-        else if(std::holds_alternative<Digit*>(v))
-            std::get<Digit*>(v)->str(res, indent);
+        for(auto &&v : std::get<Seq>(var))
+        {
+            if(std::holds_alternative<std::monostate>(v))
+                ;
+            else if(std::holds_alternative<IdentifierNondigit*>(v))
+                std::get<IdentifierNondigit*>(v)->str(res, indent);
+            else if(std::holds_alternative<Digit*>(v))
+                std::get<Digit*>(v)->str(res, indent);
+        }
+    }
+    else if(std::holds_alternative<std::string>(var))
+        res += std::get<std::string>(var);
+    else
+    {
+        std::cerr << "Token error:\n"
+            "    what: str function is not implements.\n"
+            "    class: identifier.\n"
+            << std::flush;
     }
 
     return res;
