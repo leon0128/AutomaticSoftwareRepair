@@ -58,7 +58,10 @@ public:
     ~Analyzer();
 
     bool execute(const std::string &filename
-        , const TOKEN::TranslationUnit*);
+        , TOKEN::TranslationUnit*);
+
+    TOKEN::TranslationUnit *translationUnit() const noexcept
+        {return mTranslationUnit;}
 
 private:
     bool analyze(const TOKEN::TranslationUnit*);
@@ -181,6 +184,7 @@ private:
     bool notDeclarationError(const std::string&) const;
 
     std::string mFilename;
+    TOKEN::TranslationUnit *mTranslationUnit;
     Flags mFlags;
     SCOPE::Scope *mScope;
 };

@@ -26,6 +26,8 @@ public:
     bool execute();
     TOKEN::TranslationUnit *translationUnit() const noexcept
         {return mTranslationUnit;}
+    void translationUnit(TOKEN::TranslationUnit *tu) noexcept
+        {mTranslationUnit = tu;}
 
 private:
     std::string mFile;

@@ -64,6 +64,8 @@ bool Controller::initialize()
             = ptree.get<decltype(Configure::TEST_SCRIPT)>("test_script");
         Configure::TEST_FILENAME
             = ptree.get<decltype(Configure::TEST_FILENAME)>("test_filename");
+        Configure::EXECUTION_NAME
+            = ptree.get<decltype(Configure::EXECUTION_NAME)>("execution_name");
         Configure::POSITIVE_TEST_PREFIX
             = ptree.get<decltype(Configure::POSITIVE_TEST_PREFIX)>("positive_test_prefix");
         Configure::NEGATIVE_TEST_PREFIX
@@ -102,6 +104,16 @@ bool Controller::initialize()
         return initConfigureError(e.what());
     }
 
+    if(Configure::MAX_GEN <= 0)
+        return initConfigureError("MAX_GEN <= 0");
+    else if(Configure::POP_SIZE <= 0)
+        return initConfigureError("POP_SIZE <= 0");
+    else if(Configure::POP_SIZE < Configure::NUM_ELITE)
+        return initConfigureError("POP_SIZE < NUM_ELITE");
+    else if(Configure::TOURNAMENT_SIZE <= 0
+        || Configure::TOURNAMENT_SIZE > Configure::POP_SIZE)
+        return initConfigureError("TOURNAMENT_SIZE <= 0 || TOURNAMENT_SIZE > POP_SIZE");
+
     return true;
 }
 
@@ -119,6 +131,8 @@ bool Controller::analyzeFile(const std::string &filename
     if(!analyzer.execute(filename
         , treeGenerator.translationUnit()))
         return false;
+
+    treeGenerator.translationUnit(nullptr);
     
     return true;
 }

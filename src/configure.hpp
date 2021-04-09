@@ -9,13 +9,15 @@ class Configure
 public:
     inline static std::string SOURCE_FILENAME{"test.c"};
     inline static std::vector<std::string>
-        POOL{"test2.c"
+        POOL{"test.c"
+            , "test2.c"
             , "test3.c"};
     inline static std::string RESULT_FILENAME{"repair.c"};
 
     inline static std::string COMPILER{"gcc"};
     inline static std::string TEST_SCRIPT{"test.sh"};
     inline static std::string TEST_FILENAME{"__test.c"};
+    inline static std::string EXECUTION_NAME{"test"};
     inline static std::string POSITIVE_TEST_PREFIX{"p"};
     inline static std::string NEGATIVE_TEST_PREFIX{"n"};
     inline static std::size_t NUM_POSITIVE_TEST{1ull};

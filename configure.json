@@ -2,14 +2,14 @@
     "source_filename": "test.c",
     "pool":
     [
-        "test2.c",
-        "test3.c"
+        "test.c"
     ],
     "result_filename": "repair.c",
 
     "compiler": "gcc",
     "test_script": "test.sh",
     "test_filename": "__test.c",
+    "execution_name" : "test",
     "positive_test_prefix": "p",
     "negative_test_prefix": "n",
     "num_positive_test": 1,

@@ -22,6 +22,7 @@ private:
         , Analyzer&);
     
     bool initConfigureError(const std::string&) const;
+    
 };
 
 #endif

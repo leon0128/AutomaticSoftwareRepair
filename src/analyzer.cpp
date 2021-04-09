@@ -96,6 +96,7 @@ const Analyzer::BaseTypeMap Analyzer::BASE_TYPE_MAP
 
 Analyzer::Analyzer()
     : mFilename{}
+    , mTranslationUnit{nullptr}
     , mFlags{}
     , mScope{nullptr}
 {
@@ -103,12 +104,15 @@ Analyzer::Analyzer()
 
 Analyzer::~Analyzer()
 {
+    delete mTranslationUnit;
+    delete mScope;
 }
 
 bool Analyzer::execute(const std::string &filename
-    , const TOKEN::TranslationUnit *tu)
+    , TOKEN::TranslationUnit *tu)
 {
     mFilename = filename;
+    mTranslationUnit = tu;
 
     if(!tu)
         return true;
