@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include "identifier.hpp"
+#include "scope.hpp"
 #include "token.hpp"
 
 namespace TOKEN
@@ -239,12 +241,11 @@ std::string &Identifier::str(std::string &res, std::size_t &indent) const
     }
     else if(std::holds_alternative<std::string>(var))
         res += std::get<std::string>(var);
-    else
+    else if(std::holds_alternative<Id>(var))
     {
-        std::cerr << "Token error:\n"
-            "    what: str function is not implements.\n"
-            "    class: identifier.\n"
-            << std::flush;
+        const auto &s{std::get<Id>(var)};
+        const auto &idPtr{SCOPE::Scope::identifierMap().at(s.first)};
+        res += idPtr->str();
     }
 
     return res;
@@ -1784,10 +1785,12 @@ FunctionDefinition::~FunctionDefinition()
 
 FunctionDefinition *FunctionDefinition::copy() const
 {
-    return new FunctionDefinition(ds->copy()
+    auto &&ret{new FunctionDefinition(ds->copy()
         , d->copy()
         , dl != nullptr ? dl->copy() : nullptr
-        , cs->copy());
+        , cs->copy())};
+    ret->scopeId = scopeId;
+    return ret;
 }
 
 std::string &FunctionDefinition::str(std::string &res, std::size_t &indent) const
@@ -3537,8 +3540,11 @@ Statement *Statement::copy() const
         cvar.emplace<IterationStatement*>(std::get<IterationStatement*>(var)->copy());
     else if(std::holds_alternative<JumpStatement*>(var))
         cvar.emplace<JumpStatement*>(std::get<JumpStatement*>(var)->copy());
-    
-    return new Statement(cvar);
+
+    auto &&ret{new Statement(cvar)};
+    ret->scopeId = scopeId;
+
+    return ret;
 }
 
 std::string &Statement::str(std::string &res, std::size_t &indent) const

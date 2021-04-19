@@ -1157,6 +1157,8 @@ struct FunctionDefinition
     DeclarationList *dl;
     CompoundStatement *cs;
 
+    std::size_t scopeId;
+
     constexpr FunctionDefinition(DeclarationSpecifiers *inds = nullptr
         , Declarator *ind = nullptr
         , DeclarationList *indl = nullptr
@@ -1164,7 +1166,8 @@ struct FunctionDefinition
         : ds(inds)
         , d(ind)
         , dl(indl)
-        , cs(incs){}
+        , cs(incs)
+        , scopeId{0ull}{}
     ~FunctionDefinition();
 
     FunctionDefinition *copy() const;
@@ -2036,10 +2039,15 @@ struct Statement
         , JumpStatement*>;
 
     Var var;
+    // if statement has sub-statement and sub-statement has block scope,
+    // scope-id is block scope id for that sub-statement,
+    // otherwise scope-id is current scope id.
+    std::size_t scopeId;
 
     template<class ...Args>
     Statement(Args &&...args)
-        : var(std::forward<Args>(args)...){}
+        : var(std::forward<Args>(args)...)
+        , scopeId{0ull}{}
     ~Statement();
 
     Statement *copy() const;

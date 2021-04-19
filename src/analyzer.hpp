@@ -62,13 +62,16 @@ public:
 
     TOKEN::TranslationUnit *translationUnit() const noexcept
         {return mTranslationUnit;}
+    SCOPE::Scope *scope() const noexcept
+        {return mScope;}
 
 private:
     bool analyze(const TOKEN::TranslationUnit*);
-    bool analyze(const TOKEN::FunctionDefinition*);
+    bool analyze(TOKEN::FunctionDefinition*);
     bool analyze(const TOKEN::Declaration*);
-    bool analyze(const TOKEN::CompoundStatement*);
-    bool analyze(const TOKEN::Statement*);
+    bool analyze(const TOKEN::CompoundStatement*
+        , std::size_t &scopeId);
+    bool analyze(TOKEN::Statement*);
     bool analyze(const TOKEN::LabeledStatement*);
     bool analyze(const TOKEN::ExpressionStatement*);
     bool analyze(const TOKEN::SelectionStatement*);

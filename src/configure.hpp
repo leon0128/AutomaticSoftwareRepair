@@ -26,6 +26,8 @@ public:
     inline static int NEGATIVE_TEST_WEIGHT{10};
     inline static int GOAL_SCORE{11};
 
+    inline static std::size_t FAILURE_LIMIT{10ull};
+
     inline static std::size_t POP_SIZE{10ull};
     inline static std::size_t MAX_GEN{10ull};
     inline static std::size_t NUM_ELITE{1ull};

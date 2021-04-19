@@ -21,6 +21,10 @@ class Scope
 {
 private:
     inline static std::size_t NEXT_ID{0ull};
+    inline static std::unordered_map<std::size_t
+        , Scope*> SCOPE_MAP{};
+    inline static std::unordered_map<std::size_t
+        , std::shared_ptr<IDENTIFIER::Identifier>> IDENTIFIER_MAP{};
 
 public:
     using PairType = std::pair<std::shared_ptr<IDENTIFIER::Identifier>
@@ -36,6 +40,11 @@ public:
         , std::shared_ptr<IDENTIFIER::Identifier>>;
     using Array = std::array<Map
         , NUM_NAMESPACE>;
+
+    inline static auto &scopeMap()
+        {return SCOPE_MAP;}
+    inline static auto &identifierMap()
+        {return IDENTIFIER_MAP;}
 
     Scope(Scope*
         , ScopeTag);
@@ -60,11 +69,10 @@ public:
         {return mId;}
     ScopeTag scopeTag() const noexcept
         {return mScopeTag;}
-
-private:
     Map &map(NamespaceTag tag)
         {return mArr[static_cast<std::size_t>(tag)];}
 
+private:
     std::size_t mId;
     Scope *mParent;
     std::vector<Scope*> mChildren;

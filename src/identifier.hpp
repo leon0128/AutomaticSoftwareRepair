@@ -6,6 +6,7 @@
 #include <variant>
 #include <iostream>
 #include <memory>
+#include <unordered_map>
 
 #include "type.hpp"
 
@@ -33,6 +34,9 @@ class Label;
 
 template<class DerivedType, class BaseTypePtr>
 std::shared_ptr<DerivedType> dynamicPointerCast(BaseTypePtr&&);
+
+bool isSameType(const std::shared_ptr<Identifier>&
+    , const std::shared_ptr<Identifier>&);
 
 class StorageClass
 {

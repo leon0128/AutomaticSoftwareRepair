@@ -5,6 +5,9 @@
 #include <functional>
 #include <utility>
 #include <string>
+#include <memory>
+
+#include "representation.hpp"
 
 class Analyzer;
 
@@ -46,8 +49,40 @@ private:
         , Representation&);
     std::size_t select(const Scores&) const;
 
+    bool selectBlock(std::vector<std::size_t>&
+        , bool isPool);
+    bool selectAlternativeIdentifier(std::vector<std::size_t> &ids
+        , Block::Element&
+        , std::size_t);
+    bool getBlockElement(Block::Element&
+        , std::size_t &scopeId
+        , const std::vector<std::size_t> &pos
+        , bool isPool) const;
+    bool getBlock(const std::vector<std::size_t> &pos
+        , Block*&) const;
+    
+    std::shared_ptr<Block> createBlock(const Representation&) const;
+    bool operate(const Operation&
+        , Block*) const;
+    bool operateAdd(const Operation&
+        , Block*) const;
+    bool operateSub(const Operation&
+        , Block*) const;
+    bool operateSwap(const Operation&
+        , Block*) const;
+
+    bool createRandomRepresentation(Representation&);
+    bool createRandomOperation(Operation&);
+
+    bool invalidVariantError(const std::string&) const;
     bool openError(const std::string&) const;
     bool compileError(const std::string&) const;
+    bool statementSelectionError(const std::string&) const;
+    bool elementNotFoundError(const std::string&) const;
+    bool invalidElementError(const std::string&) const;
+    bool invalidStatementError(const std::string&) const;
+    bool reachedFailureLimit(const std::string&) const;
+    bool notSupportedError(const std::string&) const;
 
     std::reference_wrapper<const Analyzer> mSrcAnalyzer;
     std::reference_wrapper<const std::vector<Analyzer>> mAnalyzerPool;

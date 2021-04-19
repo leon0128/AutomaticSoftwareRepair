@@ -3,6 +3,12 @@
 namespace IDENTIFIER
 {
 
+bool isSameType(const std::shared_ptr<Identifier> &lhs
+    , const std::shared_ptr<Identifier> &rhs)
+{
+    return true;
+}
+
 Identifier::Identifier(DerivedTag tag
     , const std::string &str)
     : mTag{tag}

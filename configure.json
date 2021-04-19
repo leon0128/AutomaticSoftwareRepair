@@ -18,8 +18,10 @@
     "negative_test_weight": 10,
     "goal_score": 11,
 
+    "failure_limit": 10,
+
     "pop_size": 10,
-    "max_gen": 10,
+    "max_gen": 2,
     "num_elite": 1,
     "tournament_size": 2,
     

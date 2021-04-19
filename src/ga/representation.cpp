@@ -63,7 +63,8 @@ void Representation::print() const
     std::cout << std::flush;
 }
 
-Block *createBlock(const TOKEN::TranslationUnit *tu)
+Block *createBlock(const TOKEN::TranslationUnit *tu
+    , std::size_t scopeId)
 {
     std::vector<TOKEN::Declaration*> decls;
     std::vector<Block::Element> elems;
@@ -73,13 +74,21 @@ Block *createBlock(const TOKEN::TranslationUnit *tu)
         if(std::holds_alternative<TOKEN::Declaration*>(ed->var))
             decls.push_back(std::get<TOKEN::Declaration*>(ed->var)->copy());
         else if(std::holds_alternative<TOKEN::FunctionDefinition*>(ed->var))
-            elems.emplace_back(std::get<TOKEN::FunctionDefinition*>(ed->var)->copy(), createBlock(std::get<TOKEN::FunctionDefinition*>(ed->var)->cs));
+        {
+            const auto &fd{std::get<TOKEN::FunctionDefinition*>(ed->var)};
+            elems.emplace_back(fd->copy()
+                , createBlock(fd->cs
+                    , fd->scopeId));
+        }
     }
 
-    return new Block(std::move(decls), std::move(elems));
+    return new Block(scopeId
+        , std::move(decls)
+        , std::move(elems));
 }
 
-Block *createBlock(const TOKEN::CompoundStatement *cs)
+Block *createBlock(const TOKEN::CompoundStatement *cs
+    , std::size_t scopeId)
 {
     std::vector<TOKEN::Declaration*> decls;
     std::vector<Block::Element> elems;
@@ -95,7 +104,9 @@ Block *createBlock(const TOKEN::CompoundStatement *cs)
         }
     }
 
-    return new Block(std::move(decls), std::move(elems));
+    return new Block(scopeId
+        , std::move(decls)
+        , std::move(elems));
 }
 
 Block *createBlock(const TOKEN::LabeledStatement *ls)
@@ -109,47 +120,66 @@ Block *createBlock(const TOKEN::LabeledStatement *ls)
         s = std::get<TOKEN::LabeledStatement::Sce_s>(ls->var).s;
     else if(std::holds_alternative<TOKEN::LabeledStatement::Ss>(ls->var))
         s = std::get<TOKEN::LabeledStatement::Ss>(ls->var).s;
+    else
+        return nullptr;
 
-    if(s != nullptr)
-        elems.emplace_back(createElement(s));
+    elems.emplace_back(createElement(s));
     
-    return new Block(std::vector<TOKEN::Declaration*>(), std::move(elems));
+    return new Block(s->scopeId
+        , std::vector<TOKEN::Declaration*>()
+        , std::move(elems));
 }
 
-Block *createBlock(const TOKEN::SelectionStatement *ss)
+Block *createBlock(const TOKEN::SelectionStatement *ss
+    , std::size_t scopeId)
 {
-    Block *block = new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>());
+    Block *block = new Block(scopeId
+        , std::vector<TOKEN::Declaration*>()
+        , std::vector<Block::Element>());
 
     if(std::holds_alternative<TOKEN::SelectionStatement::Si_e_s>(ss->var))
     {
         auto &&s = std::get<TOKEN::SelectionStatement::Si_e_s>(ss->var);
         Block *b = nullptr;
         if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
-            b = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var));
+            b = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var)
+                , s.s->scopeId);
         else
         {
-            b = new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>());
+            b = new Block(s.s->scopeId
+                , std::vector<TOKEN::Declaration*>()
+                , std::vector<Block::Element>());
             b->elems.emplace_back(createElement(s.s));
         }
-        block->elems.emplace_back(static_cast<TOKEN::Statement*>(nullptr), b);
-        block->elems.emplace_back(static_cast<TOKEN::Statement*>(nullptr), new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>()));
+        block->elems.emplace_back(static_cast<TOKEN::Statement*>(nullptr)
+            , b);
+        block->elems.emplace_back(static_cast<TOKEN::Statement*>(nullptr)
+            , new Block(scopeId
+                , std::vector<TOKEN::Declaration*>()
+                , std::vector<Block::Element>()));
     }
     else if(std::holds_alternative<TOKEN::SelectionStatement::Si_e_s_s>(ss->var))
     {
         auto &&s = std::get<TOKEN::SelectionStatement::Si_e_s_s>(ss->var);
         Block *ifb = nullptr, *elseb = nullptr;
         if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s0->var))
-            ifb = createBlock(std::get<TOKEN::CompoundStatement*>(s.s0->var));
+            ifb = createBlock(std::get<TOKEN::CompoundStatement*>(s.s0->var)
+                , s.s0->scopeId);
         else
         {
-            ifb = new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>());
+            ifb = new Block(s.s0->scopeId
+                , std::vector<TOKEN::Declaration*>()
+                , std::vector<Block::Element>());
             ifb->elems.emplace_back(createElement(std::get<TOKEN::SelectionStatement::Si_e_s_s>(ss->var).s0));
         }
         if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s1->var))
-            elseb = createBlock(std::get<TOKEN::CompoundStatement*>(s.s1->var));
+            elseb = createBlock(std::get<TOKEN::CompoundStatement*>(s.s1->var)
+                , s.s1->scopeId);
         else
         {
-            elseb = new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>());
+            elseb = new Block(s.s1->scopeId
+                , std::vector<TOKEN::Declaration*>()
+                , std::vector<Block::Element>());
             elseb->elems.emplace_back(createElement(std::get<TOKEN::SelectionStatement::Si_e_s_s>(ss->var).s1));
         }
         block->elems.emplace_back(static_cast<TOKEN::Statement*>(nullptr), ifb);
@@ -161,7 +191,8 @@ Block *createBlock(const TOKEN::SelectionStatement *ss)
         if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
         {
             delete block;
-            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var));
+            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var)
+                , s.s->scopeId);
         }
         else
             block->elems.emplace_back(createElement(s.s));
@@ -172,7 +203,9 @@ Block *createBlock(const TOKEN::SelectionStatement *ss)
 
 Block *createBlock(const TOKEN::IterationStatement *is)
 {
-    Block *block = new Block(std::vector<TOKEN::Declaration*>(), std::vector<Block::Element>());
+    Block *block = new Block(0ull
+        , std::vector<TOKEN::Declaration*>()
+        , std::vector<Block::Element>());
 
     if(std::holds_alternative<TOKEN::IterationStatement::Sw_e_s>(is->var))
     {
@@ -180,10 +213,14 @@ Block *createBlock(const TOKEN::IterationStatement *is)
         if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
         {
             delete block;
-            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var));
+            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var)
+                , s.s->scopeId);
         }
         else
+        {
             block->elems.emplace_back(createElement(s.s));
+            block->scopeId = s.s->scopeId;
+        }
     }
     else if(std::holds_alternative<TOKEN::IterationStatement::Sd_s_e>(is->var))
     {
@@ -191,11 +228,14 @@ Block *createBlock(const TOKEN::IterationStatement *is)
         if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
         {
             delete block;
-            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var));
+            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var)
+                , s.s->scopeId);
         }
         else
+        {
             block->elems.emplace_back(createElement(s.s));
-
+            block->scopeId = s.s->scopeId;
+        }
     }
     else if(std::holds_alternative<TOKEN::IterationStatement::Sf_e_e_e_s>(is->var))
     {
@@ -203,10 +243,14 @@ Block *createBlock(const TOKEN::IterationStatement *is)
         if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
         {
             delete block;
-            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var));
+            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var)
+                , s.s->scopeId);
         }
         else
+        {
             block->elems.emplace_back(createElement(s.s));
+            block->scopeId = s.s->scopeId;
+        }
     }
     else if(std::holds_alternative<TOKEN::IterationStatement::Sf_d_e_e_s>(is->var))
     {
@@ -214,10 +258,14 @@ Block *createBlock(const TOKEN::IterationStatement *is)
         if(std::holds_alternative<TOKEN::CompoundStatement*>(s.s->var))
         {
             delete block;
-            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var));
+            block = createBlock(std::get<TOKEN::CompoundStatement*>(s.s->var)
+                , s.s->scopeId);
         }
         else
+        {
             block->elems.emplace_back(createElement(s.s));
+            block->scopeId = s.s->scopeId;
+        }
     }
 
     return block;
@@ -230,11 +278,13 @@ Block::Element createElement(const TOKEN::Statement *s)
     if(std::holds_alternative<TOKEN::LabeledStatement*>(s->var))
         ret.second = createBlock(std::get<TOKEN::LabeledStatement*>(s->var));
     else if(std::holds_alternative<TOKEN::CompoundStatement*>(s->var))
-        ret.second = createBlock(std::get<TOKEN::CompoundStatement*>(s->var));
+        ret.second = createBlock(std::get<TOKEN::CompoundStatement*>(s->var)
+            , s->scopeId);
     else if(std::holds_alternative<TOKEN::ExpressionStatement*>(s->var))
         ;
     else if(std::holds_alternative<TOKEN::SelectionStatement*>(s->var))
-        ret.second = createBlock(std::get<TOKEN::SelectionStatement*>(s->var));
+        ret.second = createBlock(std::get<TOKEN::SelectionStatement*>(s->var)
+            , s->scopeId);
     else if(std::holds_alternative<TOKEN::IterationStatement*>(s->var))
         ret.second = createBlock(std::get<TOKEN::IterationStatement*>(s->var));
     else if(std::holds_alternative<TOKEN::JumpStatement*>(s->var))
@@ -412,7 +462,8 @@ Block::~Block()
 
 Block *Block::copy() const
 {
-    Block *ret = new Block(std::vector<TOKEN::Declaration*>()
+    Block *ret = new Block(scopeId
+        , std::vector<TOKEN::Declaration*>()
         , std::vector<Element>());
 
     for(auto &&d : decls)
@@ -423,57 +474,6 @@ Block *Block::copy() const
             , e.second != nullptr ? e.second->copy() : nullptr);
     
     return ret;
-}
-
-Representation createRandomRep(const Block *block
-    , std::size_t num)
-{
-    static auto selectStat = [&](std::vector<std::size_t> &q, const Block *b)
-    {
-        while(b != nullptr)
-        {
-            if(b->elems.empty())
-                break;
-            else
-            {
-                std::size_t idx = RAND.random<std::size_t>(b->elems.size());
-                if(idx != b->elems.size())
-                {
-                    q.push_back(idx);
-                    b = b->elems[idx].second;
-                }
-                else
-                    break;
-            }
-        }
-    };
-
-    Representation rep;
-    rep.block = block;
-
-    for(std::size_t i = 0; i < num; i++)
-    {   
-        Operation op;
-        op.tag = selectOpTag();
-
-        switch(op.tag)
-        {
-            case(OpTag::ADD):
-            case(OpTag::SWAP):
-                selectStat(op.src, block);
-                selectStat(op.dst, block);
-                break;
-            case(OpTag::SUB):
-                selectStat(op.dst, block);
-                break;
-            
-            default:;
-        }
-        
-        rep.ops.push_back(std::move(op));
-    }
-
-    return rep;
 }
 
 OpTag selectOpTag(OpTag def)

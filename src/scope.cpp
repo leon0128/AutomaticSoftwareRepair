@@ -14,12 +14,17 @@ Scope::Scope(Scope *parent
     , mScopeTag{tag}
     , mArr{Map{}, Map{}, Map{}, Map{}}
 {
+    SCOPE_MAP.emplace(mId
+        , this);
 }
 
 Scope::~Scope()
 {
     for(auto &&s : mChildren)
+    {
+        SCOPE_MAP.erase(s->id());
         delete s;
+    }
 }
 
 Scope *Scope::addChild(ScopeTag tag)
@@ -60,6 +65,9 @@ Scope::ReturnType Scope::addIdentifier(const std::shared_ptr<IDENTIFIER::Identif
             << std::endl;
         return {std::nullopt};
     }
+
+    IDENTIFIER_MAP.emplace(id->id()
+        , id);
 
     return {PairType{iter->second, scope->id()}};
 }

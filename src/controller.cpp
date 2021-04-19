@@ -59,7 +59,7 @@ bool Controller::initialize()
         Configure::RESULT_FILENAME
             = ptree.get<decltype(Configure::RESULT_FILENAME)>("result_filename");
         Configure::COMPILER
-            = ptree.get<decltype(Configure::COMPILER)>("result_filename");
+            = ptree.get<decltype(Configure::COMPILER)>("compiler");
         Configure::TEST_SCRIPT
             = ptree.get<decltype(Configure::TEST_SCRIPT)>("test_script");
         Configure::TEST_FILENAME
@@ -80,6 +80,8 @@ bool Controller::initialize()
             = ptree.get<decltype(Configure::NEGATIVE_TEST_WEIGHT)>("negative_test_weight");
         Configure::GOAL_SCORE
             = ptree.get<decltype(Configure::GOAL_SCORE)>("goal_score");
+        Configure::FAILURE_LIMIT
+            = ptree.get<decltype(Configure::FAILURE_LIMIT)>("failure_limit");
         Configure::POP_SIZE
             = ptree.get<decltype(Configure::POP_SIZE)>("pop_size");
         Configure::MAX_GEN
@@ -113,6 +115,8 @@ bool Controller::initialize()
     else if(Configure::TOURNAMENT_SIZE <= 0
         || Configure::TOURNAMENT_SIZE > Configure::POP_SIZE)
         return initConfigureError("TOURNAMENT_SIZE <= 0 || TOURNAMENT_SIZE > POP_SIZE");
+    else if(Configure::POOL.empty())
+        return initConfigureError("POOL is empty");
 
     return true;
 }

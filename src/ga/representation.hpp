@@ -38,12 +38,15 @@ struct Block
     using FunctionOrStatement = std::variant<TOKEN::FunctionDefinition*, TOKEN::Statement*>;
     using Element = std::pair<FunctionOrStatement, Block*>;
 
+    std::size_t scopeId;
+
     std::vector<TOKEN::Declaration*> decls;
     std::vector<Element> elems;
 
     template<class Decls, class Elems>
-    Block(Decls &&d, Elems &&e)
-        : decls(d)
+    Block(std::size_t id, Decls &&d, Elems &&e)
+        : scopeId{id}
+        , decls(d)
         , elems(e){}
     ~Block();
 
@@ -54,12 +57,8 @@ struct Operation
 {
     std::vector<std::size_t> src;
     std::vector<std::size_t> dst;
-    OpTag tag;
-
-    Operation()
-        : src()
-        , dst()
-        , tag(OpTag::ADD){}
+    std::vector<std::size_t> ids;
+    OpTag tag{OpTag::ADD};
 };
 
 struct Representation
@@ -75,10 +74,13 @@ struct Representation
     void print() const;
 };
 
-extern Block *createBlock(const TOKEN::TranslationUnit*);
-extern Block *createBlock(const TOKEN::CompoundStatement*);
+extern Block *createBlock(const TOKEN::TranslationUnit*
+    , std::size_t scopeId);
+extern Block *createBlock(const TOKEN::CompoundStatement*
+    , std::size_t scopeId);
 extern Block *createBlock(const TOKEN::LabeledStatement*);
-extern Block *createBlock(const TOKEN::SelectionStatement*);
+extern Block *createBlock(const TOKEN::SelectionStatement*
+    , std::size_t scopeId);
 extern Block *createBlock(const TOKEN::IterationStatement*);
 extern Block::Element createElement(const TOKEN::Statement*);
 extern bool manipulateAdd(const Block *srcBlock
@@ -93,8 +95,8 @@ extern bool manipulateSwap(Block *dstBlock
 
 extern Block *createBlock(const Representation&);
 
-extern Representation createRandomRep(const Block*
-    , std::size_t num = 1);
+extern Representation createRandomRep(const std::vector<const Block*>&
+    , std::size_t num = 1ull);
 extern OpTag selectOpTag(OpTag def = OpTag::ADD);
 extern TOKEN::TranslationUnit *createTranslationUnit(const Block*);
 extern TOKEN::CompoundStatement *createCompoundStatement(const Block*);

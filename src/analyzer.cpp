@@ -147,7 +147,7 @@ bool Analyzer::analyze(const TOKEN::TranslationUnit *tu)
     return true;
 }
 
-bool Analyzer::analyze(const TOKEN::FunctionDefinition *fd)
+bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
 {
     using Id = TOKEN::Identifier;
 
@@ -216,7 +216,8 @@ bool Analyzer::analyze(const TOKEN::FunctionDefinition *fd)
         identifier->var.emplace<Id::Id>(idPtr->first->id(), idPtr->second);
     }
 
-    if(!analyze(fd->cs))
+    if(!analyze(fd->cs
+        , fd->scopeId))
         return false;
 
     flag(FlagTag::IS_FUNCTION, oldIsFunction);
@@ -384,11 +385,14 @@ bool Analyzer::analyze(const TOKEN::Declaration *d)
     return true;
 }
 
-bool Analyzer::analyze(const TOKEN::CompoundStatement *cs)
+bool Analyzer::analyze(const TOKEN::CompoundStatement *cs
+    , std::size_t &scopeId)
 {
     if(flag(FlagTag::IS_CREATING_BLOCK))
         mScope = mScope->addChild(SCOPE::Scope::ScopeTag::BLOCK);
     
+    scopeId = mScope->id();
+
     bool oldIsCreatingBlock{flag(FlagTag::IS_CREATING_BLOCK, true)};
 
     if(bool(cs->bil))
@@ -418,35 +422,41 @@ bool Analyzer::analyze(const TOKEN::CompoundStatement *cs)
     return true;
 }
 
-bool Analyzer::analyze(const TOKEN::Statement *s)
+bool Analyzer::analyze(TOKEN::Statement *s)
 {
     if(std::holds_alternative<TOKEN::LabeledStatement*>(s->var))
     {
+        s->scopeId = mScope->id();
         if(!analyze(std::get<TOKEN::LabeledStatement*>(s->var)))
             return false;
     }
     else if(std::holds_alternative<TOKEN::CompoundStatement*>(s->var))
     {
-        if(!analyze(std::get<TOKEN::CompoundStatement*>(s->var)))
+        if(!analyze(std::get<TOKEN::CompoundStatement*>(s->var)
+            , s->scopeId))
             return false;
     }
     else if(std::holds_alternative<TOKEN::ExpressionStatement*>(s->var))
     {
+        s->scopeId = mScope->id();
         if(!analyze(std::get<TOKEN::ExpressionStatement*>(s->var)))
             return false;
     }
     else if(std::holds_alternative<TOKEN::SelectionStatement*>(s->var))
     {
+        s->scopeId = mScope->id();
         if(!analyze(std::get<TOKEN::SelectionStatement*>(s->var)))
             return false;
     }
     else if(std::holds_alternative<TOKEN::IterationStatement*>(s->var))
     {
+        s->scopeId = mScope->id();
         if(!analyze(std::get<TOKEN::IterationStatement*>(s->var)))
             return false;
     }
     else if(std::holds_alternative<TOKEN::JumpStatement*>(s->var))
     {
+        s->scopeId = mScope->id();
         if(!analyze(std::get<TOKEN::JumpStatement*>(s->var)))
             return false;
     }
