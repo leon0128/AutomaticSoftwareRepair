@@ -32,6 +32,8 @@ class Enum;
 class Typedef;
 class Label;
 
+bool notSupportedError(const std::string&);
+
 template<class DerivedType, class BaseTypePtr>
 std::shared_ptr<DerivedType> dynamicPointerCast(BaseTypePtr&&);
 

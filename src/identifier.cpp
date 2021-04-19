@@ -1,11 +1,40 @@
+#include <iostream>
+
 #include "identifier.hpp"
 
 namespace IDENTIFIER
 {
 
+bool notSupportedError(const std::string &msg)
+{
+    std::cerr << "Identifier error:\n"
+        "    what: not supported.\n"
+        "    ---: " << msg
+        << std::endl;
+    return false;
+}
+
 bool isSameType(const std::shared_ptr<Identifier> &lhs
     , const std::shared_ptr<Identifier> &rhs)
 {
+    using DTag = Identifier::DerivedTag;
+
+    if(lhs->derivedTag() != rhs->derivedTag())
+        return false;
+    
+    switch(lhs->derivedTag())
+    {
+        case(DTag::OBJECT):
+            return TYPE::equalTo(std::dynamic_pointer_cast<Object>(lhs)->type()
+                , std::dynamic_pointer_cast<Object>(rhs)->type());
+        case(DTag::FUNCTION):
+            return TYPE::equalTo(std::dynamic_pointer_cast<Function>(lhs)->type()
+                , std::dynamic_pointer_cast<Function>(rhs)->type());
+
+        default:
+            return notSupportedError("isSameType");
+    }
+
     return true;
 }
 

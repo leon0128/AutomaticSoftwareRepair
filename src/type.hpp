@@ -38,8 +38,30 @@ class IdInfo;
 class StructInfo;
 class EnumInfo;
 
-extern bool equalTo(const TYPE::Type&
-    , const TYPE::Type&);
+extern bool equalTo(const Type&
+    , const Type&);
+bool equalTo(const Base&
+    , const Base&);
+bool equalTo(const Function&
+    , const Function&);
+bool equalTo(const Array&
+    , const Array&);
+bool equalTo(const Pointer&
+    , const Pointer&);
+bool equalTo(const Enum&
+    , const Enum&);
+bool equalTo(const Struct&
+    , const Struct&);
+bool equalTo(const Bitfield&
+    , const Bitfield&);
+bool equalTo(const Typedef&
+    , const Typedef&);
+bool equalTo(const Lvalue&
+    , const Lvalue&);
+bool equalTo(const Initializer&
+    , const Initializer&);
+
+bool notSupportedError(const std::string&);
 
 class Qualifiers
 {
