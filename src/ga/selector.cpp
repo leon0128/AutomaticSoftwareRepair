@@ -150,7 +150,7 @@ bool Selector::convert(TOKEN::Identifier *identifier)
     using namespace TOKEN;
 
     if(mIdx >= mCIds.get().size())
-        return false;
+        return lackIdError();
     
     if(!std::holds_alternative<Identifier::Id>(identifier->var))
         return invalidVariantError("TOKEN::Identifier");
@@ -167,7 +167,6 @@ bool Selector::select(TOKEN::Identifier *identifier)
 
     if(mIsSelection)
     {
-
         if(!std::holds_alternative<TI::Id>(identifier->var))
             return invalidVariantError("TOKEN::Identifier");
 

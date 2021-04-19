@@ -392,11 +392,11 @@ bool Controller::operateAdd(const Operation &op
         , op.src
         , true))
         return false;
-    
+
     if(!std::holds_alternative<TOKEN::Statement*>(addedElement.first))
         return invalidVariantError("Block::Element");
     
-    auto *&statement{std::get<TOKEN::Statement*>(addedElement.first)};
+    auto &&statement{std::get<TOKEN::Statement*>(addedElement.first)};
     statement = statement->copy();
 
     Selector selector;
@@ -425,7 +425,7 @@ bool Controller::operateSub(const Operation &op
         , block))
         return false;
     
-    if(block->elems.size() >= op.dst.back())
+    if(block->elems.size() <= op.dst.back())
         return invalidElementError("Controller::operateSub");
 
     std::visit([](auto &&p){delete p;}
@@ -488,6 +488,12 @@ bool Controller::createRandomOperation(Operation &op)
                     , op.src
                     , true))
                     break;
+                Block::Element tmp;
+                if(!getBlockElement(tmp
+                    , scopeId
+                    , op.dst
+                    , false))
+                    return false;
                 if(!selectAlternativeIdentifier(op.ids
                     , element
                     , scopeId))
