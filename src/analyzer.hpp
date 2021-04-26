@@ -65,6 +65,9 @@ public:
     SCOPE::Scope *scope() const noexcept
         {return mScope;}
 
+    inline static constexpr const TypeMap &typeMap() noexcept
+        {return TYPE_MAP;}
+
 private:
     bool analyze(const TOKEN::TranslationUnit*);
     bool analyze(TOKEN::FunctionDefinition*);

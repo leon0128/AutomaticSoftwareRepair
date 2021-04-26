@@ -10,6 +10,7 @@
 #include <memory>
 #include <set>
 #include <unordered_map>
+#include <optional>
 
 namespace TOKEN
 {
@@ -38,7 +39,10 @@ class IdInfo;
 class StructInfo;
 class EnumInfo;
 
-extern bool equalTo(const Type&
+std::optional<Type> extractType(const Typedef&);
+std::optional<Type> addQualifiers(const Type&
+    , const Qualifiers&);
+bool equalTo(const Type&
     , const Type&);
 bool equalTo(const Base&
     , const Base&);
@@ -54,14 +58,11 @@ bool equalTo(const Struct&
     , const Struct&);
 bool equalTo(const Bitfield&
     , const Bitfield&);
-bool equalTo(const Typedef&
-    , const Typedef&);
-bool equalTo(const Lvalue&
-    , const Lvalue&);
-bool equalTo(const Initializer&
-    , const Initializer&);
+bool equalTo(std::size_t
+    , std::size_t);
 
 bool notSupportedError(const std::string&);
+bool notDefinedError(const std::string&);
 
 class Qualifiers
 {

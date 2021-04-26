@@ -30,6 +30,19 @@ bool isSameType(const std::shared_ptr<Identifier> &lhs
         case(DTag::FUNCTION):
             return TYPE::equalTo(std::dynamic_pointer_cast<Function>(lhs)->type()
                 , std::dynamic_pointer_cast<Function>(rhs)->type());
+        case(DTag::TAG):
+            return TYPE::equalTo(std::dynamic_pointer_cast<Tag>(lhs)->typeId()
+                , std::dynamic_pointer_cast<Tag>(rhs)->typeId());
+        case(DTag::MEMBER):
+            return notSupportedError("Identifier::Member");
+        case(DTag::ENUM):
+            return TYPE::equalTo(std::dynamic_pointer_cast<Enum>(lhs)->typeId()
+                , std::dynamic_pointer_cast<Enum>(rhs)->typeId());
+        case(DTag::TYPEDEF):
+            return TYPE::equalTo(std::dynamic_pointer_cast<Typedef>(lhs)->type()
+                , std::dynamic_pointer_cast<Typedef>(rhs)->type());
+        case(DTag::LABEL):
+            return true;
 
         default:
             return notSupportedError("isSameType");
