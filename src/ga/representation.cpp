@@ -515,8 +515,8 @@ TOKEN::TranslationUnit *createTranslationUnit(const Block *block)
         else
         {
             std::cerr << "Representation warning:\n"
-                "    what: block of Translation-Unit should not include statement."
-                "ignored this statement.\n"
+                "    what: block of Translation-Unit should not include statement.\n"
+                "    ----: ignored this statement.\n"
                 << std::flush;
         }
     }
@@ -542,8 +542,7 @@ TOKEN::CompoundStatement *createCompoundStatement(const Block *block)
         else
         {
             std::cerr << "Representation warning:\n"
-                "    what: block of Translation-Unit should not include statement."
-                "ignored this statement.\n"
+                "    what: block has invalid type.\n"
                 << std::flush;
         }
     }

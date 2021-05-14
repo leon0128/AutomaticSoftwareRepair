@@ -44,26 +44,13 @@ bool Controller::execute(const Analyzer &source
     if(!initialize())
         return false;
 
-    std::cout << "Scope\n" << std::flush;
-    for(const auto &pair : SCOPE::Scope::scopeMap())
-    {
-        std::cout << "idx: " << pair.first << "\n"
-            "    tag: " << static_cast<int>(pair.second->scopeTag())
-            << std::endl;
-    }
-    std::cout << "Id\n" << std::endl;
-    for(const auto &pair : SCOPE::Scope::identifierMap())
-    {
-        std::cout << "idx: " << pair.first << "\n"
-            "    name: " << pair.second->str()
-            << std::endl;
-    }
-
     Representation result;
     if(!geneticAlgorithm(result))
         return false;
 
     result.print();
+    outputToFile(Configure::RESULT_FILENAME
+        , result);
 
     return true;
 }
@@ -261,13 +248,43 @@ bool Controller::selectBlock(std::vector<std::size_t> &pos
     }
     else
         block = mSrcBlock;
-    
+
+    if(block->elems.empty())
+        return statementSelectionError("block has not function");
+
+    pos.push_back(RAND.random<std::size_t>(block->elems.size()));
+    block = block->elems[pos.back()].second;
+
+    if(block->elems.empty())
+        return statementSelectionError("block has not statement");
+
+    pos.push_back(RAND.random<std::size_t>(block->elems.size()));
+    block = block->elems[pos.back()].second;
+
+    bool isStatementNull{false};
     while(block)
     {
-        if(block->elems.empty())
-            return statementSelectionError("statement is empty");
-        
-        pos.push_back(RAND.random<std::size_t>(block->elems.size()));
+        if(!block->decls.empty()
+            || isStatementNull)
+        {
+            if(block->elems.empty())
+                return statementSelectionError("block has not statement");
+
+            pos.push_back(RAND.random<std::size_t>(block->elems.size()));
+        }
+        else
+        {
+            std::size_t rand{RAND.random<std::size_t>(block->elems.size() + 1ull)};
+            if(rand < block->elems.size())
+            {
+                pos.push_back(rand);
+            }
+            else
+                break;
+        }
+
+        isStatementNull = std::visit([](auto &&p){return !p;}
+            , block->elems[pos.back()].first);
         block = block->elems[pos.back()].second;
     }
 
@@ -277,12 +294,9 @@ bool Controller::selectBlock(std::vector<std::size_t> &pos
 bool Controller::selectAlternativeIdentifier(std::vector<std::size_t> &ids
     , Block::Element &element
     , std::size_t scopeId)
-{
-    if(bool(element.second))
-        return invalidElementError("element has block");
-    
+{    
     if(!std::holds_alternative<TOKEN::Statement*>(element.first))
-        return invalidElementError("");
+        return invalidElementError("selected element has no statement");
 
     auto &&statement{std::get<TOKEN::Statement*>(element.first)};
     Selector selector;
@@ -439,7 +453,8 @@ bool Controller::operateSub(const Operation &op
 bool Controller::operateSwap(const Operation &op
     , Block *block) const
 {
-    return notSupportedError("Controller::operateSwap");
+    return operateSub(op, block)
+        && operateAdd(op, block);
 }
 
 bool Controller::createRandomRepresentation(Representation &rep)
@@ -509,13 +524,33 @@ bool Controller::createRandomOperation(Operation &op)
                 isSuccessfull = true;
                 break;
             case(OpTag::SWAP):
-                if(!selectBlock(op.src, false)
+            {
+                if(!selectBlock(op.src, true)
                     || !selectBlock(op.dst, false))
                     break;
-                
+
+                Block::Element element;
+                std::size_t scopeId{0ull};
+                if(!getBlockElement(element
+                    , scopeId
+                    , op.src
+                    , true))
+                    break;
+                Block::Element tmp;
+                if(!getBlockElement(tmp
+                    , scopeId
+                    , op.dst
+                    , false))
+                    return false;
+                if(!selectAlternativeIdentifier(op.ids
+                    , element
+                    , scopeId))
+                    break;
+
                 isSuccessfull = true;
                 break;
-            
+            }
+
             default:;
         }
 

@@ -24,21 +24,33 @@ bool Controller::execute()
     Analyzer source;
     if(!analyzeFile(Configure::SOURCE_FILENAME
         , source))
-        return false;
-
-    std::vector<Analyzer> pool;
-    for(const auto &file : Configure::POOL)
     {
-        pool.emplace_back();
-        if(!analyzeFile(file
-            , pool.back()))
+        source.finalize();
+        return false;
+    }
+
+    std::vector<Analyzer> pool{Configure::POOL.size()};
+    for(std::size_t i{0ull};
+        i < pool.size();
+        i++)
+    {
+        if(!analyzeFile(Configure::POOL[i]
+            , pool[i]))
+        {
+            for(auto &&a : pool)
+                a.finalize();
             return false;
+        }        
     }
 
     GA::Controller gaController;
     if(!gaController.execute(source
         , pool))
         return false;
+
+    source.finalize();
+    for(auto && a : pool)
+        a.finalize();
 
     return true;
 }
@@ -134,7 +146,10 @@ bool Controller::analyzeFile(const std::string &filename
     
     if(!analyzer.execute(filename
         , treeGenerator.translationUnit()))
+    {
+        treeGenerator.translationUnit(nullptr);
         return false;
+    }
 
     treeGenerator.translationUnit(nullptr);
     

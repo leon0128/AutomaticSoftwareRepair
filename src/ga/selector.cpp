@@ -204,6 +204,14 @@ bool Selector::select(const TOKEN::Statement *statement)
         return select(std::get<TOKEN::ExpressionStatement*>(statement->var));
     else if(std::holds_alternative<TOKEN::JumpStatement*>(statement->var))
         return select(std::get<TOKEN::JumpStatement*>(statement->var));
+    else if(std::holds_alternative<TOKEN::LabeledStatement*>(statement->var))
+        return select(std::get<TOKEN::LabeledStatement*>(statement->var));
+    else if(std::holds_alternative<TOKEN::CompoundStatement*>(statement->var))
+        return select(std::get<TOKEN::CompoundStatement*>(statement->var));
+    else if(std::holds_alternative<TOKEN::SelectionStatement*>(statement->var))
+        return select(std::get<TOKEN::SelectionStatement*>(statement->var));
+    else if(std::holds_alternative<TOKEN::IterationStatement*>(statement->var))
+        return select(std::get<TOKEN::IterationStatement*>(statement->var));
     else
         return invalidStatementError();
 
@@ -236,6 +244,139 @@ bool Selector::select(const TOKEN::ExpressionStatement *es)
     if(bool(es->e))
         if(!select(es->e))
             return false;
+
+    return true;
+}
+
+bool Selector::select(const TOKEN::LabeledStatement *ls)
+{
+    using LS = TOKEN::LabeledStatement;
+
+    if(std::holds_alternative<LS::Si_s>(ls->var))
+    {
+        auto &&s{std::get<LS::Si_s>(ls->var)};
+        if(!select(s.i))
+            return false;
+        
+        if(!select(s.s))
+            return false;
+    }
+    else if(std::holds_alternative<LS::Sce_s>(ls->var))
+    {
+        auto &&s{std::get<LS::Sce_s>(ls->var)};
+        if(!select(s.ce))
+            return false;
+        
+        if(!select(s.s))
+            return false;
+    }
+    else if(std::holds_alternative<LS::Ss>(ls->var))
+    {
+        auto &&s{std::get<LS::Ss>(ls->var)};
+        if(!select(s.s))
+            return false;
+    }
+
+    return true;
+}
+
+bool Selector::select(const TOKEN::CompoundStatement *cs)
+{
+    using namespace TOKEN;
+
+    if(!cs->bil)
+        return true;
+    
+    for(const auto *bi : cs->bil->seq)
+    {
+        if(std::holds_alternative<Declaration*>(bi->var))
+            return notSupportError("declaration is not supported.");
+        
+        if(std::holds_alternative<Statement*>(bi->var))
+        {
+            if(!select(std::get<Statement*>(bi->var)))
+                return false;
+        }
+    }
+
+    return true;
+}
+
+bool Selector::select(const TOKEN::SelectionStatement *ss)
+{
+    using SS = TOKEN::SelectionStatement;
+
+    if(std::holds_alternative<SS::Si_e_s>(ss->var))
+    {
+        auto &&s{std::get<SS::Si_e_s>(ss->var)};
+        if(!select(s.e))
+            return false;
+        
+        if(!select(s.s))
+            return false;
+    }
+    else if(std::holds_alternative<SS::Si_e_s_s>(ss->var))
+    {
+        auto &&s{std::get<SS::Si_e_s_s>(ss->var)};
+        if(!select(s.e))
+            return false;
+        
+        if(!select(s.s0))
+            return false;
+
+        if(!select(s.s1))
+            return false;
+    }
+    else if(std::holds_alternative<SS::Ss_e_s>(ss->var))
+    {
+        auto &&s{std::get<SS::Ss_e_s>(ss->var)};
+        if(!select(s.e))
+            return false;
+        
+        if(!select(s.s))
+            return false;
+    }
+    else
+        return invalidVariantError("SelectionStatement");
+    
+    return true;
+}
+
+bool Selector::select(const TOKEN::IterationStatement *is)
+{
+    using IS = TOKEN::IterationStatement;
+
+    if(std::holds_alternative<IS::Sw_e_s>(is->var))
+    {
+        auto &&s{std::get<IS::Sw_e_s>(is->var)};
+        if(!select(s.e))
+            return false;
+        
+        if(!select(s.s))
+            return false;
+    }
+    else if(std::holds_alternative<IS::Sd_s_e>(is->var))
+    {
+        auto &&s{std::get<IS::Sd_s_e>(is->var)};
+        if(!select(s.s))
+            return false;
+        
+        if(!select(s.e))
+            return false;
+    }
+    else if(std::holds_alternative<IS::Sf_e_e_e_s>(is->var))
+    {
+        auto &&s{std::get<IS::Sf_e_e_e_s>(is->var)};
+        if(!select(s.e0)
+            || !select(s.e1)
+            || !select(s.e2)
+            || !select(s.s))
+            return false;
+    }
+    else if(std::holds_alternative<IS::Sf_d_e_e_s>(is->var))
+        return notSupportError("\"for-statement\" which include declaration is not supported");
+    else
+        return invalidVariantError("IterationStatement");
 
     return true;
 }

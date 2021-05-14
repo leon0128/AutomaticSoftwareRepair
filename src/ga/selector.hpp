@@ -12,6 +12,10 @@ namespace TOKEN
     class Statement;
     class ExpressionStatement;
     class JumpStatement;
+    class LabeledStatement;
+    class CompoundStatement;
+    class SelectionStatement;
+    class IterationStatement;
     class Expression;
     class AssignmentExpression;
     class ConditionalExpression;
@@ -116,6 +120,10 @@ private:
     bool select(const TOKEN::Statement*);
     bool select(const TOKEN::JumpStatement*);
     bool select(const TOKEN::ExpressionStatement*);
+    bool select(const TOKEN::LabeledStatement*);
+    bool select(const TOKEN::CompoundStatement*);
+    bool select(const TOKEN::SelectionStatement*);
+    bool select(const TOKEN::IterationStatement*);
     bool select(const TOKEN::Expression*);
     bool select(const TOKEN::AssignmentExpression*);
     bool select(const TOKEN::ConditionalExpression*);

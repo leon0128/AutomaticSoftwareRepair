@@ -59,6 +59,7 @@ public:
 
     bool execute(const std::string &filename
         , TOKEN::TranslationUnit*);
+    bool finalize();
 
     TOKEN::TranslationUnit *translationUnit() const noexcept
         {return mTranslationUnit;}

@@ -104,8 +104,6 @@ Analyzer::Analyzer()
 
 Analyzer::~Analyzer()
 {
-    delete mTranslationUnit;
-    delete mScope;
 }
 
 bool Analyzer::execute(const std::string &filename
@@ -120,6 +118,14 @@ bool Analyzer::execute(const std::string &filename
     if(!analyze(tu))
         return false;
     
+    return true;
+}
+
+bool Analyzer::finalize()
+{
+    delete mTranslationUnit;
+    delete mScope;
+
     return true;
 }
 

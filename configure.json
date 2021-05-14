@@ -1,33 +1,34 @@
 {
-    "source_filename": "test.c",
+    "source_filename": "test/test.c",
     "pool":
     [
-        "test.c"
+        "test/test.c"
+        , "test/test_pool.c"
     ],
-    "result_filename": "repair.c",
+    "result_filename": "test/test_repair.c",
 
     "compiler": "gcc",
-    "test_script": "test.sh",
-    "test_filename": "__test.c",
-    "execution_name" : "test",
+    "test_script": "test/test.sh",
+    "test_filename": "test/__test.c",
+    "execution_name" : "test/__test",
     "positive_test_prefix": "p",
     "negative_test_prefix": "n",
-    "num_positive_test": 1,
+    "num_positive_test": 0,
     "num_negative_test": 1,
     "positive_test_weight": 1,
     "negative_test_weight": 10,
-    "goal_score": 11,
+    "goal_score": 10,
 
     "failure_limit": 10,
 
-    "pop_size": 10,
+    "pop_size": 20,
     "max_gen": 2,
     "num_elite": 1,
     "tournament_size": 2,
     
-    "adding_probability": 0.75,
+    "adding_probability": 0.25,
     "subtracting_probability": 0.25,
-    "swapping_probability": 0.00,
+    "swapping_probability": 0.50,
 
     "adding_new_operation_probability": 0.50,
     "concatenation_probability": 0.50
