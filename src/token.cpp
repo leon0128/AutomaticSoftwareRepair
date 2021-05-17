@@ -1760,6 +1760,8 @@ ExternalDeclaration *ExternalDeclaration::copy() const
     else if(std::holds_alternative<Declaration*>(var))
         cvar.emplace<Declaration*>(std::get<Declaration*>(var)->copy());
     
+
+
     return new ExternalDeclaration(cvar);
 }
 
@@ -1790,6 +1792,7 @@ FunctionDefinition *FunctionDefinition::copy() const
         , dl != nullptr ? dl->copy() : nullptr
         , cs->copy())};
     ret->scopeId = scopeId;
+    ret->statementId = statementId;
     return ret;
 }
 
@@ -1846,7 +1849,10 @@ Declaration *Declaration::copy() const
         cvar.emplace<Ssad>(s.sad->copy());
     }
 
-    return new Declaration(cvar);
+    auto &&ret{new Declaration{cvar}};
+    ret->statementId = statementId;
+
+    return ret;
 }
 
 std::string &Declaration::str(std::string &res, std::size_t &indent) const
@@ -3543,6 +3549,7 @@ Statement *Statement::copy() const
 
     auto &&ret{new Statement(cvar)};
     ret->scopeId = scopeId;
+    ret->statementId = statementId;
 
     return ret;
 }

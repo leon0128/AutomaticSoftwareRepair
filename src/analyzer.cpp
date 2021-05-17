@@ -164,6 +164,10 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
     bool oldIsDeclarationOver{flag(FlagTag::IS_DECLARATION_OVER, false)};
     bool oldIsCreatingBlock{flag(FlagTag::IS_CREATING_BLOCK, false)};
 
+    fd->statementId = ++NEXT_STATEMENT_ID;
+    STATEMENT_MAP.emplace(fd->statementId
+        , std::shared_ptr<TOKEN::FunctionDefinition>{fd->copy()});
+
     auto &&attrsOpt{analyzeAttributes(fd->ds)};
     if(!attrsOpt)
         return false;
@@ -236,8 +240,12 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
     return true;
 }
 
-bool Analyzer::analyze(const TOKEN::Declaration *d)
+bool Analyzer::analyze(TOKEN::Declaration *d)
 {
+    d->statementId = ++NEXT_STATEMENT_ID;
+    STATEMENT_MAP.emplace(d->statementId
+        , std::shared_ptr<TOKEN::Declaration>{d->copy()});
+
     if(std::holds_alternative<TOKEN::Declaration::Sds_idl>(d->var))
     {
         auto &&s{std::get<TOKEN::Declaration::Sds_idl>(d->var)};
@@ -430,6 +438,10 @@ bool Analyzer::analyze(const TOKEN::CompoundStatement *cs
 
 bool Analyzer::analyze(TOKEN::Statement *s)
 {
+    s->statementId = ++NEXT_STATEMENT_ID;
+    STATEMENT_MAP.emplace(s->statementId
+        , std::shared_ptr<TOKEN::Statement>{s->copy()});
+
     if(std::holds_alternative<TOKEN::LabeledStatement*>(s->var))
     {
         s->scopeId = mScope->id();

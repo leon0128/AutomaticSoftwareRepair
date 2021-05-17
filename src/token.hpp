@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include <limits>
 #include <utility>
 #include <string>
 #include <array>
@@ -1158,6 +1159,7 @@ struct FunctionDefinition
     CompoundStatement *cs;
 
     std::size_t scopeId;
+    std::size_t statementId;
 
     constexpr FunctionDefinition(DeclarationSpecifiers *inds = nullptr
         , Declarator *ind = nullptr
@@ -1167,7 +1169,8 @@ struct FunctionDefinition
         , d(ind)
         , dl(indl)
         , cs(incs)
-        , scopeId{0ull}{}
+        , scopeId{0ull}
+        , statementId{0ull}{}
     ~FunctionDefinition();
 
     FunctionDefinition *copy() const;
@@ -1197,10 +1200,12 @@ struct Declaration
         , Ssad>;
 
     Var var;
+    std::size_t statementId;
     
     template<class ...Args>
     Declaration(Args &&...args)
-        : var(std::forward<Args>(args)...){}
+        : var(std::forward<Args>(args)...)
+        , statementId{0ull}{}
     ~Declaration();
 
     Declaration *copy() const;
@@ -2043,11 +2048,13 @@ struct Statement
     // scope-id is block scope id for that sub-statement,
     // otherwise scope-id is current scope id.
     std::size_t scopeId;
+    std::size_t statementId;
 
     template<class ...Args>
     Statement(Args &&...args)
         : var(std::forward<Args>(args)...)
-        , scopeId{0ull}{}
+        , scopeId{0ull}
+        , statementId{0ull}{}
     ~Statement();
 
     Statement *copy() const;
