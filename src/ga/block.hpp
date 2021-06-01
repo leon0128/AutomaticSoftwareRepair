@@ -5,6 +5,10 @@
 #include <string>
 #include <utility>
 #include <limits>
+#include <optional>
+#include <unordered_map>
+#include <functional>
+#include <memory>
 
 namespace TOKEN
 {
@@ -21,14 +25,18 @@ namespace TOKEN
 namespace GA
 {
 
+class Representation;
+class Operation;
 class Block;
 
 class Block
 {
+private:
+    class Index;
+
 public:
     static Block *createBlock(const TOKEN::TranslationUnit*
         , std::size_t scopeId);
-    static TOKEN::TranslationUnit *createTranslationUnit(const Block*);
 
 private:
     static Block *createBlock(const TOKEN::CompoundStatement*
@@ -52,6 +60,43 @@ public:
     ~Block();
 
     Block *copy() const;
+    TOKEN::TranslationUnit *createTranslationUnit() const;
+    std::shared_ptr<Block> createBlock(const Representation&) const;
+
+private:
+    static bool operateAdd(const Operation&
+        , Block*
+        , Block::Index&);
+    static bool operateSub(const Operation&
+        , Block*
+        , Block::Index&);
+    static bool operateRep(const Operation&
+        , Block*
+        , Block::Index&);
+    static bool selectBlockAndIndex(const Operation&
+        , Block*&
+        , std::reference_wrapper<Block::Index>&);
+
+    static bool notFoundStatementError(const std::string&);
+    static bool noHasDstError();
+
+    TOKEN::CompoundStatement *createCompoundStatement() const;
+    TOKEN::Statement *createStatement(const std::pair<std::size_t, Block*>&) const;
+    TOKEN::Statement *createStatement() const;
+};
+
+class Block::Index
+{
+public:
+    std::vector<
+        std::pair<
+            std::pair<std::size_t
+                , std::size_t>
+            , std::optional<Index>>> indices;
+
+    decltype(indices)::iterator find(std::size_t);
+
+    static std::optional<Index> createIndex(const Block*);
 };
 
 }

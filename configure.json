@@ -2,8 +2,8 @@
     "source_filename": "test/test.c",
     "pool":
     [
-        "test/test.c"
-        , "test/test_pool.c"
+        "test/test.c",
+        "test/test_pool.c"
     ],
     "result_filename": "test/test_repair.c",
 

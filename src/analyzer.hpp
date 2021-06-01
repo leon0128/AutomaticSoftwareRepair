@@ -73,6 +73,10 @@ public:
     SCOPE::Scope *scope() const noexcept
         {return mScope;}
 
+    static std::size_t addStatement(const StatementMap::mapped_type&);
+
+    inline static constexpr const IdMap &idMap() noexcept
+        {return ID_MAP;}
     inline static constexpr const TypeMap &typeMap() noexcept
         {return TYPE_MAP;}
     inline static const StatementMap &statementMap() noexcept

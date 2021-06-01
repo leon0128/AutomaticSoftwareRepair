@@ -1,6 +1,6 @@
 CXX = g++-10
 CXXFLAGS = -std=c++17 -w -g3
-PROGRAM = Repair
+PROGRAM = asr
 DIR = src
 OBJS = $(patsubst %.cpp, %.o, $(wildcard $(DIR)/*.cpp)) $(patsubst %.cpp, %.o, $(wildcard $(DIR)/*/*.cpp))
 

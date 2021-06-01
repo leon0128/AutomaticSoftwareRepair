@@ -129,6 +129,13 @@ bool Analyzer::finalize()
     return true;
 }
 
+std::size_t Analyzer::addStatement(const Analyzer::StatementMap::mapped_type &value)
+{
+    auto &&pair{STATEMENT_MAP.emplace(NEXT_STATEMENT_ID++
+        , value)};
+    return pair.first->first;
+}
+
 bool Analyzer::analyze(const TOKEN::TranslationUnit *tu)
 {
     mScope = new SCOPE::Scope(mScope
@@ -164,9 +171,7 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
     bool oldIsDeclarationOver{flag(FlagTag::IS_DECLARATION_OVER, false)};
     bool oldIsCreatingBlock{flag(FlagTag::IS_CREATING_BLOCK, false)};
 
-    fd->statementId = ++NEXT_STATEMENT_ID;
-    STATEMENT_MAP.emplace(fd->statementId
-        , std::shared_ptr<TOKEN::FunctionDefinition>{fd->copy()});
+    fd->statementId = NEXT_STATEMENT_ID++;
 
     auto &&attrsOpt{analyzeAttributes(fd->ds)};
     if(!attrsOpt)
@@ -230,6 +235,9 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
         , fd->scopeId))
         return false;
 
+    STATEMENT_MAP.emplace(fd->statementId
+        , std::shared_ptr<TOKEN::FunctionDefinition>{fd->copy()});
+
     flag(FlagTag::IS_FUNCTION, oldIsFunction);
     flag(FlagTag::IS_DECLARATION_OVER, oldIsDeclarationOver);
     flag(FlagTag::IS_CREATING_BLOCK, oldIsCreatingBlock);
@@ -242,9 +250,7 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
 
 bool Analyzer::analyze(TOKEN::Declaration *d)
 {
-    d->statementId = ++NEXT_STATEMENT_ID;
-    STATEMENT_MAP.emplace(d->statementId
-        , std::shared_ptr<TOKEN::Declaration>{d->copy()});
+    d->statementId = NEXT_STATEMENT_ID++;
 
     if(std::holds_alternative<TOKEN::Declaration::Sds_idl>(d->var))
     {
@@ -395,6 +401,9 @@ bool Analyzer::analyze(TOKEN::Declaration *d)
         ;
     else
         variantError("Declaration");
+
+    STATEMENT_MAP.emplace(d->statementId
+        , std::shared_ptr<TOKEN::Declaration>{d->copy()});
     
     return true;
 }
@@ -438,9 +447,7 @@ bool Analyzer::analyze(const TOKEN::CompoundStatement *cs
 
 bool Analyzer::analyze(TOKEN::Statement *s)
 {
-    s->statementId = ++NEXT_STATEMENT_ID;
-    STATEMENT_MAP.emplace(s->statementId
-        , std::shared_ptr<TOKEN::Statement>{s->copy()});
+    s->statementId = NEXT_STATEMENT_ID++;
 
     if(std::holds_alternative<TOKEN::LabeledStatement*>(s->var))
     {
@@ -480,6 +487,9 @@ bool Analyzer::analyze(TOKEN::Statement *s)
     }
     else
         variantError("Statement");
+
+    STATEMENT_MAP.emplace(s->statementId
+        , std::shared_ptr<TOKEN::Statement>{s->copy()});
     
     return true;
 }
@@ -2482,6 +2492,7 @@ void Analyzer::deleteIdentifierElement(TOKEN::Identifier *identifier)
             else if(std::holds_alternative<Digit*>(e))
                 delete std::get<Digit*>(e);
         }
+        std::get<Id::Seq>(identifier->var).clear();
     }
 }
 
