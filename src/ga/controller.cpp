@@ -71,6 +71,9 @@ bool Controller::initialize()
             return false;
     }
 
+    if(!Operation::initialize(mSrcAnalyzer.get().translationUnit()))
+        return false;
+
     return true;
 }
 

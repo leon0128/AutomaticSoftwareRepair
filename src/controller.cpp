@@ -65,6 +65,9 @@ bool Controller::initialize()
 
         Configure::SOURCE_FILENAME
             = ptree.get<decltype(Configure::SOURCE_FILENAME)>("source_filename");
+        Configure::TARGET_FUNCTION_NAMES.clear();
+        for(const auto &child : ptree.get_child("target_function_names"))
+            Configure::TARGET_FUNCTION_NAMES.push_back(child.second.data());
         Configure::POOL.clear();
         for(const auto &child : ptree.get_child("pool"))
             Configure::POOL.push_back(child.second.data());

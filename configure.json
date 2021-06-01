@@ -1,5 +1,9 @@
 {
     "source_filename": "test/test.c",
+    "target_function_names":
+    [
+        "func"
+    ],
     "pool":
     [
         "test/test.c",
@@ -17,12 +21,12 @@
     "num_negative_test": 1,
     "positive_test_weight": 1,
     "negative_test_weight": 10,
-    "goal_score": 10,
+    "goal_score": 100,
 
     "failure_limit": 10,
 
-    "pop_size": 20,
-    "max_gen": 2,
+    "pop_size": 40,
+    "max_gen": 4,
     "num_elite": 1,
     "tournament_size": 2,
     

@@ -10,6 +10,8 @@
 
 namespace TOKEN
 {
+    class TranslationUnit;
+    class FunctionDefinition;
     class Statement;
 }
 
@@ -30,6 +32,7 @@ private:
                 , std::vector<std::size_t>>
             , std::size_t>> NEW_STATEMENT_IDS{};
     inline static std::unordered_set<std::size_t> CREATED_STATEMENT_IDS{};
+    inline static std::vector<std::size_t> SELECTABLE_FUNCTION_IDS{};
 
 public:
     enum class Tag : unsigned char;
@@ -38,6 +41,8 @@ public:
     std::vector<std::size_t> src;
     std::vector<std::size_t> dst;
     std::vector<std::size_t> ids;
+
+    static bool initialize(const TOKEN::TranslationUnit *src);
 
     static std::optional<Operation> createRandomOp(const Block *src
         , const std::vector<const Block*> &pool);
@@ -61,13 +66,15 @@ private:
     static bool selectAlternativeIds(const std::vector<const Block*>&
         , const Block*
         , Operation&);
+    static std::optional<std::size_t> selectFunctionPos(const Block*);
 
     static std::optional<std::size_t> getSrcStatementId(const std::vector<const Block*>&
         , const std::vector<std::size_t>&);
     static std::optional<std::size_t> getScopeId(const Block*
         , const std::vector<std::size_t>&);
-    
+
     static std::shared_ptr<TOKEN::Statement> getStatement(std::size_t);
+    static std::size_t getFunctionName(const TOKEN::Declarator*);
 
     static bool tagError();
     static bool noHasFunctionError();
@@ -77,6 +84,7 @@ private:
     static bool notFoundStatementError(std::size_t);
     static bool notFoundStatementError(const std::string&);
     static bool notCreatedOperationError();
+    static bool notFoundTargetFunction(const std::string&);
 };
 
 enum class Operation::Tag : unsigned char

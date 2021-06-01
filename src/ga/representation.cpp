@@ -2,8 +2,8 @@
 #include <limits>
 #include <algorithm>
 
+#include "../identifier.hpp"
 #include "../token.hpp"
-
 #include "../random.hpp"
 #include "../configure.hpp"
 #include "../analyzer.hpp"
@@ -13,6 +13,40 @@
 
 namespace GA
 {
+
+bool Operation::initialize(const TOKEN::TranslationUnit *tu)
+{
+    using namespace TOKEN;
+
+    std::vector<std::string> functionNames;
+    for(const auto *ed : tu->seq)
+    {
+        if(std::holds_alternative<FunctionDefinition*>(ed->var))
+        {
+            const auto *fd{std::get<FunctionDefinition*>(ed->var)};
+            functionNames.push_back(Analyzer::idMap().at(getFunctionName(fd->d))->str());
+        }
+    }
+
+    for(const auto &target : Configure::TARGET_FUNCTION_NAMES)
+    {
+        std::size_t i{0ull};
+        for(;
+            i < functionNames.size();
+            i++)
+        {
+            if(functionNames[i] == target)
+                break;
+        }
+
+        if(i != functionNames.size())
+            SELECTABLE_FUNCTION_IDS.push_back(i);
+        else
+            return notFoundTargetFunction(target);
+    }
+
+    return true;
+}
 
 std::optional<Operation> Operation::createRandomOp(const Block *srcBlock
     , const std::vector<const Block*> &blockPool)
@@ -101,10 +135,11 @@ std::optional<Operation> Operation::createRandomOp(const Block *srcBlock
 bool Operation::selectSubDstPos(const Block *block
     , std::vector<std::size_t> &pos)
 {
-    if(block->stats.empty())
-        return noHasFunctionError();
-    
-    pos.push_back(RAND.random(block->stats.size()));
+    if(auto &&idOpt{selectFunctionPos(block)};
+        bool(idOpt))
+        pos.push_back(idOpt.value());
+    else
+        return false;
 
     bool isIfStatement{false};
     while(block = block->stats[pos.back()].second)
@@ -147,10 +182,11 @@ bool Operation::selectSubDstPos(const Block *block
 bool Operation::selectAddDstPos(const Block *block
     , std::vector<std::size_t> &pos)
 {
-    if(block->stats.empty())
-        return noHasFunctionError();
-    
-    pos.push_back(RAND.random(block->stats.size()));
+    if(auto &&idOpt{selectFunctionPos(block)};
+        bool(idOpt))
+        pos.push_back(idOpt.value());
+    else
+        return false;
 
     bool isIfStatement{false};
     while(block = block->stats[pos.back()].second)
@@ -237,10 +273,12 @@ bool Operation::selectAddSrcPos(const std::vector<const Block*> &pool
 bool Operation::selectRepDstPos(const Block *block
     , std::vector<std::size_t> &pos)
 {
-    if(block->stats.empty())
-        return noHasFunctionError();
-    
-    pos.push_back(RAND.random(block->stats.size()));
+    if(auto &&idOpt{selectFunctionPos(block)};
+        bool(idOpt))
+        pos.push_back(idOpt.value());
+    else
+        return false;
+
     block = block->stats[pos.back()].second;
     if(block->stats.empty())
         return noHasStatement();
@@ -402,6 +440,20 @@ bool Operation::selectAlternativeIds(const std::vector<const Block*> &pool
     return true;
 }
 
+std::optional<std::size_t> Operation::selectFunctionPos(const Block *block)
+{
+    if(block->stats.empty())
+    {
+        noHasFunctionError();
+        return {std::nullopt};
+    }
+
+    if(SELECTABLE_FUNCTION_IDS.empty())
+        return {RAND.random(block->stats.size())};
+    else
+        return {SELECTABLE_FUNCTION_IDS[RAND.random(SELECTABLE_FUNCTION_IDS.size())]};
+}
+
 std::optional<std::size_t> Operation::getSrcStatementId(const std::vector<const Block*> &pool
     , const std::vector<std::size_t> &pos)
 {
@@ -454,6 +506,17 @@ std::shared_ptr<TOKEN::Statement> Operation::getStatement(std::size_t id)
     }
 
     return std::get<std::shared_ptr<TOKEN::Statement>>(iter->second);
+}
+
+std::size_t Operation::getFunctionName(const TOKEN::Declarator *declarator)
+{
+    using namespace TOKEN;
+    using DD = DirectDeclarator;
+
+    if(std::holds_alternative<DD::Si>(declarator->dd->seq.front()))
+        return std::get<Identifier::Id>(std::get<DD::Si>(declarator->dd->seq.front()).i->var).first;
+    else
+        return getFunctionName(std::get<DD::Sd>(declarator->dd->seq.front()).d);
 }
 
 bool Operation::tagError()
@@ -521,6 +584,15 @@ bool Operation::notCreatedOperationError()
     std::cerr << "GA::Operation error:\n"
         "    what: failed to create operation.\n"
         << std::flush;
+    return false;
+}
+
+bool Operation::notFoundTargetFunction(const std::string &name)
+{
+    std::cerr << "GA::Operation error:\n"
+        "    what: failed to find target function name.\n"
+        "    function name: " << name
+        << std::endl;
     return false;
 }
 

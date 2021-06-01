@@ -8,6 +8,7 @@ class Configure
 {
 public:
     inline static std::string SOURCE_FILENAME{"test.c"};
+    inline static std::vector<std::string> TARGET_FUNCTION_NAMES{};
     inline static std::vector<std::string>
         POOL{"test.c"
             , "test2.c"
