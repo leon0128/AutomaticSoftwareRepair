@@ -2,7 +2,7 @@
     "source_filename": "test/test.c",
     "target_function_names":
     [
-        "func"
+        "max"
     ],
     "pool":
     [
@@ -21,7 +21,7 @@
     "num_negative_test": 1,
     "positive_test_weight": 1,
     "negative_test_weight": 10,
-    "goal_score": 100,
+    "goal_score": 10,
 
     "failure_limit": 10,
 

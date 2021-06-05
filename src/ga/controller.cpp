@@ -219,12 +219,14 @@ std::optional<Representation> Controller::manipulate(const std::vector<Represent
         if(!opt)
             return {std::nullopt};
 
-        if(!rep.merge(opt.value()))
+        if(!rep.merge(mSrcBlock
+            , opt.value()))
             return {std::nullopt};
     }
     else
     {
-        if(!rep.merge(reps[select(scores)]))
+        if(!rep.merge(mSrcBlock
+            , reps[select(scores)]))
             return {std::nullopt};
     }
 

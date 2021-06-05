@@ -4085,7 +4085,7 @@ std::string &UnaryOperator::str(std::string &res, std::size_t &indent) const
             res.push_back('~');
             break;
         case(Tag::NOT):
-            res.push_back('~');
+            res.push_back('!');
             break;
         
         default:;

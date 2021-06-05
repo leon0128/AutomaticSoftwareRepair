@@ -37,6 +37,8 @@ private:
 public:
     static Block *createBlock(const TOKEN::TranslationUnit*
         , std::size_t scopeId);
+    static bool deleteInvalidOp(const Block*
+        , Representation&);
 
 private:
     static Block *createBlock(const TOKEN::CompoundStatement*
@@ -49,6 +51,7 @@ private:
     static std::pair<std::size_t, Block*> createPair(const TOKEN::Statement*);
 
     static bool variantError(const std::string &className);
+    static bool deleteWarning(const Operation&);
 
 public:
     std::size_t scopeId{std::numeric_limits<std::size_t>::max()};
@@ -77,7 +80,7 @@ private:
         , Block*&
         , std::reference_wrapper<Block::Index>&);
 
-    static bool notFoundStatementError(const std::string&);
+    static bool notFoundStatementError(const Operation&);
     static bool noHasDstError();
 
     TOKEN::CompoundStatement *createCompoundStatement() const;

@@ -38,6 +38,47 @@ Block *Block::createBlock(const TOKEN::TranslationUnit *tu
     return block;
 }
 
+bool Block::deleteInvalidOp(const Block *block
+    , Representation &rep)
+{
+    std::shared_ptr<Block> tmpBlock{block->copy()};
+    auto &&idxOpt{Index::createIndex(tmpBlock.get())};
+    if(!idxOpt)
+        return false;
+
+    for(std::size_t i{0ull};
+        i < rep.ops.size();
+        i++)
+    {
+        decltype(operateAdd) *operateFunc{nullptr};
+
+        switch(rep.ops[i].tag)
+        {
+            case(Operation::Tag::ADD):
+                operateFunc = &operateAdd;
+                break;
+            case(Operation::Tag::SUB):
+                operateFunc = &operateSub;
+                break;
+            case(Operation::Tag::REP):
+                operateFunc = &operateRep;
+                break;
+        }
+
+        if(!operateFunc(rep.ops[i]
+            , tmpBlock.get()
+            , idxOpt.value()))
+        {
+            deleteWarning(rep.ops[i]);
+
+            rep.ops.erase(rep.ops.begin() + i);
+            i--;
+        }
+    }
+
+    return true;
+}
+
 Block *Block::createBlock(const TOKEN::CompoundStatement *cs
     , std::size_t scopeId)
 {
@@ -210,6 +251,17 @@ bool Block::variantError(const std::string &className)
     return false;
 }
 
+bool Block::deleteWarning(const Operation &op)
+{
+    std::cerr << "GA::Block warning:\n"
+        "    what: delete GA::Operation from GA::Representation.\n"
+        "    op: ";
+    op.print();
+    std::cout << std::endl;
+
+    return false;
+}
+
 Block::~Block()
 {
     for(auto &&p : stats)
@@ -321,7 +373,7 @@ bool Block::operateAdd(const Operation &op
     
     auto &&idOpt{Operation::getStatementId(op)};
     if(!idOpt)
-        return notFoundStatementError("ADD");
+        return notFoundStatementError(op);
 
     if(iter != idxRef.get().indices.end())
         block->stats.insert(block->stats.begin()
@@ -352,7 +404,7 @@ bool Block::operateSub(const Operation &op
 
     auto &&iter{idxRef.get().find(op.dst.back())};
     if(iter == idxRef.get().indices.end())
-        return notFoundStatementError("SUB");
+        return notFoundStatementError(op);
     
     delete block->stats[iter->first.second].second;
     block->stats.erase(block->stats.begin() + iter->first.second);
@@ -392,7 +444,7 @@ bool Block::selectBlockAndIndex(const Operation &op
     {
         auto &&iter{idxRef.get().find(op.dst[i])};
         if(iter == idxRef.get().indices.end())
-            return notFoundStatementError("Block::selectBlockAndIndex()");
+            return notFoundStatementError(op);
     
         block = block->stats[iter->first.second].second;
         idxRef = std::ref(iter->second.value());
@@ -401,12 +453,13 @@ bool Block::selectBlockAndIndex(const Operation &op
     return true;
 }
 
-bool Block::notFoundStatementError(const std::string &op)
+bool Block::notFoundStatementError(const Operation &op)
 {
     std::cerr << "GA::Block error:\n"
         "    what: failed to find statement to operate.\n"
-        "    op: " << op
-        << std::endl;
+        "    op: ";
+    op.print();
+    std::cout << std::endl;
     return false;
 }
 

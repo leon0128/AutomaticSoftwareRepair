@@ -14,6 +14,57 @@
 namespace GA
 {
 
+void Operation::print() const
+{
+    auto &&printVec{[](const std::vector<std::size_t> &vec)
+        -> void
+        {
+            std::cout << "{";
+            if(!vec.empty())
+            {
+                for(std::size_t i{0ull};
+                    i + 1 < vec.size();
+                    i++)
+                    std::cout << vec[i]
+                        << ",";
+                
+                std::cout << vec.back();
+            }
+
+            std::cout << "}";
+        }};
+
+    std::cout << "{tag:";
+    switch(tag)
+    {
+        case(Operation::Tag::ADD):
+            std::cout << "ADD,"
+                "src:";
+            printVec(src);
+            std::cout << ",dst:";
+            printVec(dst);
+            std::cout << ",ids:";
+            printVec(ids);
+            break;
+        case(Operation::Tag::SUB):
+            std::cout << "SUB,"
+                "dst:";
+            printVec(dst);
+            break;
+        case(Operation::Tag::REP):
+            std::cout << "REP,"
+                "src:";
+            printVec(src);
+            std::cout << ",dst:";
+            printVec(dst);
+            std::cout << ",ids:";
+            printVec(ids);
+            break;
+    }
+    std::cout << "}"
+        << std::flush;
+}
+
 bool Operation::initialize(const TOKEN::TranslationUnit *tu)
 {
     using namespace TOKEN;
@@ -596,68 +647,22 @@ bool Operation::notFoundTargetFunction(const std::string &name)
     return false;
 }
 
-bool Representation::merge(const Representation &other)
+bool Representation::merge(const Block *src
+    , const Representation &other)
 {
     ops.insert(ops.end()
         , other.ops.begin()
         , other.ops.end());
-    
+
+    if(!Block::deleteInvalidOp(src
+        , *this))
+        return false;
+
     return true;
 }
 
 void Representation::print() const
 {
-    auto &&printVec{[](const std::vector<std::size_t> &vec)
-        -> void
-        {
-            std::cout << "{";
-            if(!vec.empty())
-            {
-                for(std::size_t i{0ull};
-                    i + 1 < vec.size();
-                    i++)
-                    std::cout << vec[i]
-                        << ",";
-                
-                std::cout << vec.back();
-            }
-
-            std::cout << "}";
-        }};
-
-    auto &&printOp{[&](const Operation &op)
-        -> void
-        {
-            std::cout << "{";
-            switch(op.tag)
-            {
-                case(Operation::Tag::ADD):
-                    std::cout << "(add),"
-                        "src:";
-                    printVec(op.src);
-                    std::cout << ",dst:";
-                    printVec(op.dst);
-                    std::cout << ",ids:";
-                    printVec(op.ids);
-                    break;
-                case(Operation::Tag::SUB):
-                    std::cout << "(sub),"
-                        "dst:";
-                    printVec(op.dst);
-                    break;
-                case(Operation::Tag::REP):
-                    std::cout << "(rep),"
-                        "src:";
-                    printVec(op.src);
-                    std::cout << ",dst:";
-                    printVec(op.dst);
-                    std::cout << ",ids:";
-                    printVec(op.ids);
-                    break;
-            }
-            std::cout << "}";
-        }};
-
     std::cout << "Rep:{";
     if(!ops.empty())
     {
@@ -665,10 +670,10 @@ void Representation::print() const
             i + 1 < ops.size();
             i++)
         {
-            printOp(ops[i]);
+            ops[i].print();
             std::cout << ",";
         }
-        printOp(ops.back());
+        ops.back().print();
     }
     std::cout << "}\n"
         << std::flush;

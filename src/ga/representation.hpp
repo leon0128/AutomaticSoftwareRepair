@@ -42,6 +42,8 @@ public:
     std::vector<std::size_t> dst;
     std::vector<std::size_t> ids;
 
+    void print() const;
+
     static bool initialize(const TOKEN::TranslationUnit *src);
 
     static std::optional<Operation> createRandomOp(const Block *src
@@ -99,7 +101,8 @@ class Representation
 public:
     std::vector<Operation> ops;
 
-    bool merge(const Representation&);
+    bool merge(const Block*
+        , const Representation&);
     void print() const;
 
     static std::optional<Representation> createRandomRep(const Block *src
