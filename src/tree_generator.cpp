@@ -956,12 +956,12 @@ TOKEN::Identifier *TreeGenerator::tokIdentifier()
 
 TOKEN::BlockItem *TreeGenerator::tokBlockItem()
 {
-    if(TOKEN::Declaration *d = tokDeclaration();
-        d != nullptr)
-        return new TOKEN::BlockItem(d);
-    else if(TOKEN::Statement *s = tokStatement();
-        s != nullptr)
-        return new TOKEN::BlockItem(s);
+    if(auto *s{tokStatement()};
+        bool(s))
+        return new TOKEN::BlockItem{s};
+    else if(auto *d{tokDeclaration()};
+        bool(d))
+        return new TOKEN::BlockItem{d};
     else
         return nullptr;
 }
