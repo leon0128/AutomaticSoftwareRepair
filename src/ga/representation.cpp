@@ -218,7 +218,7 @@ bool Operation::selectSubDstPos(const Block *block
             else
             {
                 if(block->stats.empty())
-                    return noHasStatement();
+                    return noHasStatement("selectSubDstPos()");
                 
                 pos.push_back(RAND.random(block->stats.size()));
             }
@@ -286,7 +286,7 @@ bool Operation::selectAddSrcPos(const std::vector<const Block*> &pool
     pos.push_back(RAND.random(block->stats.size()));
     block = block->stats[pos.back()].second;
     if(block->stats.empty())
-        return noHasStatement();
+        return noHasStatement("selectAddSrcPos()");
     pos.push_back(RAND.random(block->stats.size()));
 
     bool isIfStatement{false};
@@ -332,7 +332,7 @@ bool Operation::selectRepDstPos(const Block *block
 
     block = block->stats[pos.back()].second;
     if(block->stats.empty())
-        return noHasStatement();
+        return noHasStatement("selectRepDstPos");
     pos.push_back(RAND.random(block->stats.size()));
 
     bool isIfStatement{false};
@@ -389,7 +389,7 @@ bool Operation::selectRepSrcPos(const std::vector<const Block*> &pool
     pos.push_back(RAND.random(block->stats.size()));
     block = block->stats[pos.back()].second;
     if(block->stats.empty())
-        return noHasStatement();
+        return noHasStatement("selectRepSrcPos()");
     pos.push_back(RAND.random(block->stats.size()));
 
     bool isIfStatement{false};
@@ -586,11 +586,12 @@ bool Operation::noHasFunctionError()
     return false;
 }
 
-bool Operation::noHasStatement()
+bool Operation::noHasStatement(const std::string &func)
 {
     std::cerr << "GA::Operation error:\n"
         "    what: Block has no statement.\n"
-        << std::flush;
+        "    caller: " << func
+        << std::endl;
     return false;
 }
 

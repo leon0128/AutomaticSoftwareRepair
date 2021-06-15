@@ -80,7 +80,7 @@ private:
 
     static bool tagError();
     static bool noHasFunctionError();
-    static bool noHasStatement();
+    static bool noHasStatement(const std::string&);
     static bool positionError(const std::string&);
     static bool variantError(const std::string&);
     static bool notFoundStatementError(std::size_t);
