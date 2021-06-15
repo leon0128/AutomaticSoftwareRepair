@@ -32,12 +32,14 @@ public:
 
 private:
     bool initialize();
-    bool geneticAlgorithm(Representation &result);
+    // return.first : genetic algorithm is successed.
+    // return.second : result is found.
+    std::pair<bool, bool> geneticAlgorithm(Representation &result);
     int fitness(const Representation&) const;
     bool outputToFile(const std::string &filename
         , const Representation&) const;
     bool compile(const std::string &filename) const;
-    bool evaluate(const std::string &prefix
+    int evaluate(const std::string &prefix
         , std::size_t number
         , int weight) const;
 

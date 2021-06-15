@@ -2,7 +2,7 @@
     "source_filename": "test/test.c",
     "target_function_names":
     [
-        "max"
+        "getValue"
     ],
     "pool":
     [
@@ -25,7 +25,7 @@
 
     "failure_limit": 10,
 
-    "pop_size": 40,
+    "pop_size": 100,
     "max_gen": 4,
     "num_elite": 1,
     "tournament_size": 2,

@@ -44,16 +44,21 @@ bool Controller::execute(const Analyzer &src
         return false;
 
     Representation result;
-    if(!geneticAlgorithm(result))
+    auto &&[isSuccessfull, isFoundResult]{geneticAlgorithm(result)};
+    if(!isSuccessfull)
         return false;
     
+    if(isFoundResult)
+        std::cout << "result is found.\n";
+    else
+        std::cout << "result is not found.\n";
+    std::cout << std::flush;
+
     std::cout << "Result:\n"
         "    ";
     result.print();
     outputToFile(Configure::RESULT_FILENAME
         , result);
-
-    debugInfo();
 
     return true;
 }
@@ -77,7 +82,7 @@ bool Controller::initialize()
     return true;
 }
 
-bool Controller::geneticAlgorithm(Representation &result)
+std::pair<bool, bool> Controller::geneticAlgorithm(Representation &result)
 {
     std::vector<Representation> reps;
     for(std::size_t i{0ull};
@@ -89,9 +94,10 @@ bool Controller::geneticAlgorithm(Representation &result)
             bool(opt))
             reps.push_back(std::move(opt.value()));
         else
-            return false;
+            return {false, false};
     }
 
+    bool isFoundResult{false};
     for(std::size_t gen{0ull};
         gen < Configure::MAX_GEN;
         gen++)
@@ -102,9 +108,20 @@ bool Controller::geneticAlgorithm(Representation &result)
         for(std::size_t i{0ull};
             i < reps.size();
             i++)
+        {
             scores.emplace_back(fitness(reps[i])
                 , i);
-        
+            if(scores.back().first >= Configure::GOAL_SCORE)
+            {
+                result = reps[i];
+                isFoundResult = true;
+                break;
+            }
+        }
+
+        if(isFoundResult)
+            break;
+
         std::sort(scores.begin()
             , scores.end()
             , [](const auto &lhs
@@ -112,7 +129,7 @@ bool Controller::geneticAlgorithm(Representation &result)
                 {return lhs.first > rhs.first;});
         
         result = reps[scores.front().second];
-        if(scores.front().first >= Configure::GOAL_SCORE)
+        if(gen + 1ull == Configure::MAX_GEN)
             break;
         
         for(std::size_t i{0ull};
@@ -129,13 +146,13 @@ bool Controller::geneticAlgorithm(Representation &result)
                 bool(opt))
                 nextReps.push_back(std::move(opt.value()));
             else
-                return false;
+                return {false, false};
         }
 
         reps.swap(nextReps);
     }
 
-    return true;
+    return {true, isFoundResult};
 }
 
 int Controller::fitness(const Representation &rep) const
@@ -187,7 +204,7 @@ bool Controller::compile(const std::string &filename) const
     return true;
 }
 
-bool Controller::evaluate(const std::string &prefix
+int Controller::evaluate(const std::string &prefix
     , std::size_t number
     , int weight) const
 {
@@ -199,7 +216,8 @@ bool Controller::evaluate(const std::string &prefix
         if(SYSTEM::system("sh"
             , Configure::TEST_SCRIPT
             , std::string{"./"} + Configure::EXECUTION_NAME
-            , prefix + std::to_string(i))
+            , prefix + std::to_string(i)
+            , "> /dev/null 2>&1")
             == 0)
             score += weight;
     }
