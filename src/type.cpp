@@ -141,7 +141,7 @@ bool equalTo(const Pointer &lhs
         , std::any_cast<Type>(rhs.refType)))
         return false;
     
-    if(lhs.quals.flags == rhs.quals.flags)
+    if(lhs.quals.flags != rhs.quals.flags)
         return false;
     
     return true;
