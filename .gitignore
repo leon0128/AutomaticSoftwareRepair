@@ -34,3 +34,6 @@ test.c
 *.app
 cil
 Repair
+asr
+test/
+output.log
