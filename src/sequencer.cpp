@@ -3,7 +3,7 @@
 #include <limits>
 #include <filesystem>
 
-#include "path.hpp"
+#include "utility/file.hpp"
 #include "token.hpp"
 #include "tokenizer.hpp"
 #include "sequencer.hpp"
@@ -47,8 +47,8 @@ bool Sequencer::openFile(std::string &src)
         return false;
     }
 
-    src = PATH::read(path);
-    return true;
+    return PATH::read(path
+        , src);
 }
 
 bool Sequencer::sequencenize(const std::string &src)

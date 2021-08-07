@@ -3,7 +3,8 @@
 PROGRAMS           = asr
 ## source direcory
 SOURCE_DIRECTORIES = ./src/ \
-	./src/ga/
+	./src/ga/ \
+	./src/utility/
 
 # compiler settings
 ## recommending CXX (cpp compiler)

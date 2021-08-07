@@ -199,7 +199,7 @@ bool Operation::selectSubDstPos(const Block *block
             && block->stats.front().first == std::numeric_limits<std::size_t>::max())
         {
             isIfStatement = true;
-            std::size_t idx{RAND.random(block->stats.size()) + 1ull};
+            std::size_t idx{RAND.random(block->stats.size() + 1ull)};
             if(idx >= block->stats.size())
                 break;
             else
@@ -209,7 +209,7 @@ bool Operation::selectSubDstPos(const Block *block
         {
             if(!isIfStatement && pos.size() != 1ull)
             {
-                std::size_t idx{RAND.random(block->stats.size()) + 1ull};
+                std::size_t idx{RAND.random(block->stats.size() + 1ull)};
                 if(idx >= block->stats.size())
                     break;
                 else
@@ -470,23 +470,15 @@ bool Operation::selectAlternativeIds(const std::vector<const Block*> &pool
         , statement.get()
         , op.ids))
         return false;
-    
-    for(const auto &outerPair : NEW_STATEMENT_IDS)
-    {
-        if(outerPair.first == std::make_pair(op.src, op.ids))
-            return true;
-    }
 
     std::shared_ptr<TOKEN::Statement> newStatement{statement->copy()};
     if(!selector.execute(op.ids
         , newStatement.get()))
         return false;
 
-    auto &&id{Analyzer::addStatement(std::move(newStatement))};
-    NEW_STATEMENT_IDS.emplace_back(std::make_pair(op.src
-        , op.ids)
-        , id);
-    CREATED_STATEMENT_IDS.emplace(id);
+    auto &&statId{divideStatement(newStatement.get()
+        , scopeId.value())};
+    op.createdStatId = statId.value();
 
     return true;
 }
@@ -503,6 +495,143 @@ std::optional<std::size_t> Operation::selectFunctionPos(const Block *block)
         return {RAND.random(block->stats.size())};
     else
         return {SELECTABLE_FUNCTION_IDS[RAND.random(SELECTABLE_FUNCTION_IDS.size())]};
+}
+
+std::optional<std::size_t> Operation::divideStatement(TOKEN::Statement *statement
+    , std::size_t scopeId)
+{
+    using namespace TOKEN;
+    
+    using LS = LabeledStatement;
+    using CS = CompoundStatement;
+    using ES = ExpressionStatement;
+    using SS = SelectionStatement;
+    using IS = IterationStatement;
+    using JS = JumpStatement;
+
+    if(std::holds_alternative<LS*>(statement->var))
+    {
+        auto *ls{std::get<LS*>(statement->var)};
+        Statement *subStat{nullptr};
+        if(std::holds_alternative<LS::Si_s>(ls->var))
+            subStat = std::get<LS::Si_s>(ls->var).s;
+        else if(std::holds_alternative<LS::Sce_s>(ls->var))
+            subStat = std::get<LS::Sce_s>(ls->var).s;
+        else if(std::holds_alternative<LS::Ss>(ls->var))
+            subStat = std::get<LS::Ss>(ls->var).s;
+        else
+        {
+            variantError("LabeledStatement");
+            return {std::nullopt};
+        }
+
+        auto &&subId{divideStatement(subStat
+            , scopeId)};
+    }
+    else if(std::holds_alternative<CS*>(statement->var))
+    {
+        auto *cs{std::get<CS*>(statement->var)};
+        if(bool{cs->bil})
+        {
+            for(auto *bi : cs->bil->seq)
+            {
+                if(std::holds_alternative<Declaration*>(bi->var))
+                {
+                    auto *subDec{std::get<Declaration*>(bi->var)};
+                    auto &&subId{Analyzer::addStatement(std::shared_ptr<Declaration>{subDec->copy()})};
+                    subDec->statementId = subId;
+                }
+                else if(std::holds_alternative<Statement*>(bi->var))
+                {
+                    auto *subStat{std::get<Statement*>(bi->var)};
+                    auto &&subId{divideStatement(subStat
+                        , scopeId)};
+                }
+                else
+                {
+                    variantError("BlockItem");
+                    return {std::nullopt};
+                }
+            }
+        }
+    }
+    else if(std::holds_alternative<ES*>(statement->var))
+        ;
+    else if(std::holds_alternative<SS*>(statement->var))
+    {
+        auto *ss{std::get<SS*>(statement->var)};
+        if(std::holds_alternative<SS::Si_e_s>(ss->var))
+        {
+            auto &&s{std::get<SS::Si_e_s>(ss->var)};
+            divideStatement(s.s
+                , scopeId);
+        }
+        else if(std::holds_alternative<SS::Si_e_s_s>(ss->var))
+        {
+            auto &&s{std::get<SS::Si_e_s_s>(ss->var)};
+            divideStatement(s.s0
+                , scopeId);
+            divideStatement(s.s1
+                , scopeId);
+        }
+        else if(std::holds_alternative<SS::Ss_e_s>(ss->var))
+        {
+            auto &&s{std::get<SS::Ss_e_s>(ss->var)};
+            divideStatement(s.s
+                , scopeId);
+        }
+        else
+        {
+            variantError("SelectionStatement");
+            return {std::nullopt};
+        }
+    }
+    else if(std::holds_alternative<IS*>(statement->var))
+    {
+        auto &&is{std::get<IS*>(statement->var)};
+        if(std::holds_alternative<IS::Sw_e_s>(is->var))
+        {
+            auto &&s{std::get<IS::Sw_e_s>(is->var)};
+            divideStatement(s.s
+                , scopeId);
+        }
+        else if(std::holds_alternative<IS::Sd_s_e>(is->var))
+        {
+            auto &&s{std::get<IS::Sd_s_e>(is->var)};
+            divideStatement(s.s
+                , scopeId);
+        }
+        else if(std::holds_alternative<IS::Sf_e_e_e_s>(is->var))
+        {
+            auto &&s{std::get<IS::Sf_e_e_e_s>(is->var)};
+            divideStatement(s.s
+                , scopeId);
+        }
+        else if(std::holds_alternative<IS::Sf_d_e_e_s>(is->var))
+        {
+            auto &&s{std::get<IS::Sf_d_e_e_s>(is->var)};
+            divideStatement(s.s
+                , scopeId);
+        }
+        else
+        {
+            variantError("IterationStatement");
+            return {std::nullopt};
+        }
+    }
+    else if(std::holds_alternative<JS*>(statement->var))
+        ;
+    else
+    {
+        variantError("Statement");
+        return {std::nullopt};
+    }
+
+    std::size_t statId{Analyzer::addStatement(std::shared_ptr<Statement>(statement->copy()))};
+    statement->statementId = statId;
+    statement->scopeId = scopeId;
+
+    return {statId};
 }
 
 std::optional<std::size_t> Operation::getSrcStatementId(const std::vector<const Block*> &pool

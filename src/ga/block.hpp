@@ -66,6 +66,8 @@ public:
     TOKEN::TranslationUnit *createTranslationUnit() const;
     std::shared_ptr<Block> createBlock(const Representation&) const;
 
+    void print() const;
+
 private:
     static bool operateAdd(const Operation&
         , Block*

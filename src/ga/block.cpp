@@ -5,6 +5,7 @@
 #include <functional>
 #include <algorithm>
 
+#include "../utility/output.hpp"
 #include "../token.hpp"
 #include "../analyzer.hpp"
 #include "representation.hpp"
@@ -85,7 +86,7 @@ Block *Block::createBlock(const TOKEN::CompoundStatement *cs
     using namespace TOKEN;
 
     Block *block{new Block{scopeId}};
-    
+
     if(bool(cs->bil))
     {
         for(const auto *bi : cs->bil->seq)
@@ -107,8 +108,6 @@ Block *Block::createBlock(const TOKEN::LabeledStatement *ls)
     using namespace TOKEN;
     using LS = LabeledStatement;
 
-    Block *block{new Block{}};
-
     const Statement *statement{nullptr};
     if(std::holds_alternative<LS::Si_s>(ls->var))
         statement = std::get<LS::Si_s>(ls->var).s;
@@ -122,10 +121,7 @@ Block *Block::createBlock(const TOKEN::LabeledStatement *ls)
         return nullptr;
     }
 
-    block->scopeId = statement->scopeId;
-    block->stats.push_back(createPair(statement));
-
-    return block;
+    return createBlock(statement);
 }
 
 Block *Block::createBlock(const TOKEN::SelectionStatement *ss
@@ -300,21 +296,16 @@ TOKEN::TranslationUnit *Block::createTranslationUnit() const
     for(auto &&pair : stats)
     {
         auto &&ptr{std::get<std::shared_ptr<FunctionDefinition>>(Analyzer::statementMap().at(pair.first))};
-        if(!Operation::isCreatedStatement(pair.first))
-        {
-            auto *fd{new FunctionDefinition{ptr->ds->copy()
-                , ptr->d->copy()
-                , ptr->dl
-                    ? ptr->dl->copy()
-                    : nullptr
-                , pair.second->createCompoundStatement()}};
-            fd->scopeId = ptr->scopeId;
-            fd->statementId = ptr->statementId;
+        auto *fd{new FunctionDefinition{ptr->ds->copy()
+            , ptr->d->copy()
+            , ptr->dl
+                ? ptr->dl->copy()
+                : nullptr
+            , pair.second->createCompoundStatement()}};
+        fd->scopeId = ptr->scopeId;
+        fd->statementId = ptr->statementId;
 
-            tu->seq.push_back(new ExternalDeclaration{fd});
-        }
-        else
-            tu->seq.push_back(new ExternalDeclaration{ptr->copy()});
+        tu->seq.push_back(new ExternalDeclaration{fd});
     }
 
     return tu;
@@ -350,6 +341,44 @@ std::shared_ptr<Block> Block::createBlock(const Representation &rep) const
     }
 
     return std::move(newBlock);
+}
+
+void Block::print() const
+{
+    auto &&printElement{[](const std::pair<std::size_t, Block*> &pair)
+        -> void
+        {
+            std::cout << '{'
+                << pair.first;
+            if(bool{pair.second})
+            {
+                std::cout << ',';
+                pair.second->print();
+            }
+            std::cout << '}';
+        }};
+
+    std::cout << "{scopeId:"
+        << scopeId
+        << ",decls:"
+        << decls
+        << ",stats:{";
+    
+    if(!stats.empty())
+    {
+        for(std::size_t i{0ull};
+            i + 1ull < stats.size();
+            i++)
+        {
+            printElement(stats[i]);
+            std::cout << ',';
+        }
+
+        printElement(stats.back());
+    }
+    
+    std::cout << "}}"
+        << std::flush;
 }
 
 bool Block::operateAdd(const Operation &op
@@ -502,95 +531,90 @@ TOKEN::Statement *Block::createStatement(const std::pair<std::size_t, Block*> &p
     const auto &oldPtr{std::get<std::shared_ptr<Statement>>(Analyzer::statementMap().at(pair.first))};
     Statement *newStatement{nullptr};
 
-    if(!Operation::isCreatedStatement(pair.first))
+    newStatement = new Statement{std::monostate{}};
+    newStatement->scopeId = oldPtr->scopeId;
+    newStatement->statementId = oldPtr->statementId;
+    
+    if(std::holds_alternative<LS*>(oldPtr->var))
     {
-        newStatement = new Statement{std::monostate{}};
-        newStatement->scopeId = oldPtr->scopeId;
-        newStatement->statementId = oldPtr->statementId;
-        
-        if(std::holds_alternative<LS*>(oldPtr->var))
+        const auto *oldLs{std::get<LS*>(oldPtr->var)};
+        if(std::holds_alternative<LS::Si_s>(oldLs->var))
         {
-            const auto *oldLs{std::get<LS*>(oldPtr->var)};
-            if(std::holds_alternative<LS::Si_s>(oldLs->var))
-            {
-                const auto &s{std::get<LS::Si_s>(oldLs->var)};
-                newStatement->var.emplace<LS*>(new LS{LS::Si_s{s.i->copy()
-                    , pair.second->createStatement()}});
-            }
-            else if(std::holds_alternative<LS::Sce_s>(oldLs->var))
-            {
-                const auto &s{std::get<LS::Sce_s>(oldLs->var)};
-                newStatement->var.emplace<LS*>(new LS{LS::Sce_s{s.ce->copy()
-                    , pair.second->createStatement()}});
-            }
-            else if(std::holds_alternative<LS::Ss>(oldLs->var))
-                newStatement->var.emplace<LS*>(new LS{LS::Ss{pair.second->createStatement()}});
+            const auto &s{std::get<LS::Si_s>(oldLs->var)};
+            newStatement->var.emplace<LS*>(new LS{LS::Si_s{s.i->copy()
+                , pair.second->createStatement()}});
         }
-        else if(std::holds_alternative<CS*>(oldPtr->var))
-            newStatement->var.emplace<CS*>(pair.second->createCompoundStatement());
-        else if(std::holds_alternative<ES*>(oldPtr->var))
-            newStatement->var.emplace<ES*>(std::get<ES*>(oldPtr->var)->copy());
-        else if(std::holds_alternative<SS*>(oldPtr->var))
+        else if(std::holds_alternative<LS::Sce_s>(oldLs->var))
         {
-            const auto *oldSs{std::get<SS*>(oldPtr->var)};
-            if(std::holds_alternative<SS::Si_e_s>(oldSs->var))
-            {
-                const auto &s{std::get<SS::Si_e_s>(oldSs->var)};
-                newStatement->var.emplace<SS*>(new SS{SS::Si_e_s_s{s.e->copy()
-                    , pair.second->stats.front().second->createStatement()
-                    , pair.second->stats.back().second->createStatement()}});
-            }
-            else if(std::holds_alternative<SS::Si_e_s_s>(oldSs->var))
-            {
-                const auto &s{std::get<SS::Si_e_s_s>(oldSs->var)};
-                newStatement->var.emplace<SS*>(new SS{SS::Si_e_s_s{s.e->copy()
-                    , pair.second->stats.front().second->createStatement()
-                    , pair.second->stats.back().second->createStatement()}});
-            }
-            else if(std::holds_alternative<SS::Ss_e_s>(oldSs->var))
-            {
-                const auto &s{std::get<SS::Ss_e_s>(oldSs->var)};
-                newStatement->var.emplace<SS*>(new SS{SS::Ss_e_s{s.e->copy()
-                    , pair.second->createStatement()}});
-            }
+            const auto &s{std::get<LS::Sce_s>(oldLs->var)};
+            newStatement->var.emplace<LS*>(new LS{LS::Sce_s{s.ce->copy()
+                , pair.second->createStatement()}});
         }
-        else if(std::holds_alternative<IS*>(oldPtr->var))
-        {
-            const auto *oldIs{std::get<IS*>(oldPtr->var)};
-            if(std::holds_alternative<IS::Sw_e_s>(oldIs->var))
-            {
-                const auto &s{std::get<IS::Sw_e_s>(oldIs->var)};
-                newStatement->var.emplace<IS*>(new IS{IS::Sw_e_s{s.e->copy()
-                    , pair.second->createStatement()}});
-            }
-            else if(std::holds_alternative<IS::Sd_s_e>(oldIs->var))
-            {
-                const auto &s{std::get<IS::Sd_s_e>(oldIs->var)};
-                newStatement->var.emplace<IS*>(new IS{IS::Sd_s_e{pair.second->createStatement()
-                    , s.e->copy()}});
-            }
-            else if(std::holds_alternative<IS::Sf_e_e_e_s>(oldIs->var))
-            {
-                const auto &s{std::get<IS::Sf_e_e_e_s>(oldIs->var)};
-                newStatement->var.emplace<IS*>(new IS{IS::Sf_e_e_e_s{s.e0->copy()
-                    , s.e1->copy()
-                    , s.e2->copy()
-                    , pair.second->createStatement()}});
-            }
-            else if(std::holds_alternative<IS::Sf_d_e_e_s>(oldIs->var))
-            {
-                const auto &s{std::get<IS::Sf_d_e_e_s>(oldIs->var)};
-                newStatement->var.emplace<IS*>(new IS{IS::Sf_d_e_e_s{s.d->copy()
-                    , s.e0->copy()
-                    , s.e1->copy()
-                    , pair.second->createStatement()}});
-            }
-        }
-        else if(std::holds_alternative<JS*>(oldPtr->var))
-            newStatement->var.emplace<JS*>(std::get<JS*>(oldPtr->var)->copy());
+        else if(std::holds_alternative<LS::Ss>(oldLs->var))
+            newStatement->var.emplace<LS*>(new LS{LS::Ss{pair.second->createStatement()}});
     }
-    else
-        newStatement = oldPtr->copy();
+    else if(std::holds_alternative<CS*>(oldPtr->var))
+        newStatement->var.emplace<CS*>(pair.second->createCompoundStatement());
+    else if(std::holds_alternative<ES*>(oldPtr->var))
+        newStatement->var.emplace<ES*>(std::get<ES*>(oldPtr->var)->copy());
+    else if(std::holds_alternative<SS*>(oldPtr->var))
+    {
+        const auto *oldSs{std::get<SS*>(oldPtr->var)};
+        if(std::holds_alternative<SS::Si_e_s>(oldSs->var))
+        {
+            const auto &s{std::get<SS::Si_e_s>(oldSs->var)};
+            newStatement->var.emplace<SS*>(new SS{SS::Si_e_s_s{s.e->copy()
+                , pair.second->stats.front().second->createStatement()
+                , pair.second->stats.back().second->createStatement()}});
+        }
+        else if(std::holds_alternative<SS::Si_e_s_s>(oldSs->var))
+        {
+            const auto &s{std::get<SS::Si_e_s_s>(oldSs->var)};
+            newStatement->var.emplace<SS*>(new SS{SS::Si_e_s_s{s.e->copy()
+                , pair.second->stats.front().second->createStatement()
+                , pair.second->stats.back().second->createStatement()}});
+        }
+        else if(std::holds_alternative<SS::Ss_e_s>(oldSs->var))
+        {
+            const auto &s{std::get<SS::Ss_e_s>(oldSs->var)};
+            newStatement->var.emplace<SS*>(new SS{SS::Ss_e_s{s.e->copy()
+                , pair.second->createStatement()}});
+        }
+    }
+    else if(std::holds_alternative<IS*>(oldPtr->var))
+    {
+        const auto *oldIs{std::get<IS*>(oldPtr->var)};
+        if(std::holds_alternative<IS::Sw_e_s>(oldIs->var))
+        {
+            const auto &s{std::get<IS::Sw_e_s>(oldIs->var)};
+            newStatement->var.emplace<IS*>(new IS{IS::Sw_e_s{s.e->copy()
+                , pair.second->createStatement()}});
+        }
+        else if(std::holds_alternative<IS::Sd_s_e>(oldIs->var))
+        {
+            const auto &s{std::get<IS::Sd_s_e>(oldIs->var)};
+            newStatement->var.emplace<IS*>(new IS{IS::Sd_s_e{pair.second->createStatement()
+                , s.e->copy()}});
+        }
+        else if(std::holds_alternative<IS::Sf_e_e_e_s>(oldIs->var))
+        {
+            const auto &s{std::get<IS::Sf_e_e_e_s>(oldIs->var)};
+            newStatement->var.emplace<IS*>(new IS{IS::Sf_e_e_e_s{s.e0->copy()
+                , s.e1->copy()
+                , s.e2->copy()
+                , pair.second->createStatement()}});
+        }
+        else if(std::holds_alternative<IS::Sf_d_e_e_s>(oldIs->var))
+        {
+            const auto &s{std::get<IS::Sf_d_e_e_s>(oldIs->var)};
+            newStatement->var.emplace<IS*>(new IS{IS::Sf_d_e_e_s{s.d->copy()
+                , s.e0->copy()
+                , s.e1->copy()
+                , pair.second->createStatement()}});
+        }
+    }
+    else if(std::holds_alternative<JS*>(oldPtr->var))
+        newStatement->var.emplace<JS*>(std::get<JS*>(oldPtr->var)->copy());
 
     return newStatement;
 }

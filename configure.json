@@ -2,12 +2,10 @@
     "source_filename": "test/test.c",
     "target_function_names":
     [
-        "getValue"
     ],
     "pool":
     [
-        "test/test.c",
-        "test/test_pool.c"
+        "test/test.c"
     ],
     "result_filename": "test/test_repair.c",
 
@@ -21,7 +19,7 @@
     "num_negative_test": 1,
     "positive_test_weight": 1,
     "negative_test_weight": 10,
-    "goal_score": 10,
+    "goal_score": 0,
 
     "failure_limit": 10,
 

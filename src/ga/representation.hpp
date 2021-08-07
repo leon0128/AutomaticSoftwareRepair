@@ -41,6 +41,7 @@ public:
     std::vector<std::size_t> src;
     std::vector<std::size_t> dst;
     std::vector<std::size_t> ids;
+    std::size_t createdStatId{0ull};
 
     void print() const;
 
@@ -69,6 +70,9 @@ private:
         , const Block*
         , Operation&);
     static std::optional<std::size_t> selectFunctionPos(const Block*);
+
+    static std::optional<std::size_t> divideStatement(TOKEN::Statement*
+        , std::size_t scopeId);
 
     static std::optional<std::size_t> getSrcStatementId(const std::vector<const Block*>&
         , const std::vector<std::size_t>&);
