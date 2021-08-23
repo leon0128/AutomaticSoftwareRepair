@@ -131,9 +131,20 @@ bool Analyzer::finalize()
 
 std::size_t Analyzer::addStatement(const Analyzer::StatementMap::mapped_type &value)
 {
-    auto &&pair{STATEMENT_MAP.emplace(NEXT_STATEMENT_ID++
+    using namespace TOKEN;
+
+    std::size_t statId{NEXT_STATEMENT_ID++};
+
+    if(std::holds_alternative<std::shared_ptr<Declaration>>(value))
+        std::get<std::shared_ptr<Declaration>>(value)->statementId = statId;
+    else if(std::holds_alternative<std::shared_ptr<FunctionDefinition>>(value))
+        std::get<std::shared_ptr<FunctionDefinition>>(value)->statementId = statId;
+    else if(std::holds_alternative<std::shared_ptr<Statement>>(value))
+        std::get<std::shared_ptr<Statement>>(value)->statementId = statId;
+
+    auto &&pair{STATEMENT_MAP.emplace(statId
         , value)};
-    return pair.first->first;
+    return statId;
 }
 
 bool Analyzer::analyze(const TOKEN::TranslationUnit *tu)
@@ -637,13 +648,16 @@ bool Analyzer::analyze(const TOKEN::IterationStatement *is)
     else if(std::holds_alternative<IS::Sf_e_e_e_s>(is->var))
     {
         auto &&s{std::get<IS::Sf_e_e_e_s>(is->var)};
-        if(!analyze(s.e0))
+        if(s.e0
+            && !analyze(s.e0))
             return false;
         
-        if(!analyze(s.e1))
+        if(s.e1
+            && !analyze(s.e1))
             return false;
         
-        if(!analyze(s.e2))
+        if(s.e2
+            && !analyze(s.e2))
             return false;
         
         if(!analyze(s.s))
@@ -655,10 +669,12 @@ bool Analyzer::analyze(const TOKEN::IterationStatement *is)
         if(!analyze(s.d))
             return false;
         
-        if(!analyze(s.e0))
+        if(s.e0
+            && !analyze(s.e0))
             return false;
         
-        if(!analyze(s.e1))
+        if(s.e1
+            && !analyze(s.e1))
             return false;
         
         if(!analyze(s.s))

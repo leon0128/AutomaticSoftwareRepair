@@ -1805,7 +1805,6 @@ TOKEN::IterationStatement *TreeGenerator::tokIterationStatement()
 
     if(TOKEN::IterationStatement::Sd_s_e s;
         isMatch(TOKEN::Keyword::Tag::DO)
-            && isMatch(TOKEN::Punctuator::Tag::L_PARENTHESIS)
             && (s.s = tokStatement()) != nullptr
             && isMatch(TOKEN::Keyword::Tag::WHILE)
             && isMatch(TOKEN::Punctuator::Tag::L_PARENTHESIS)
