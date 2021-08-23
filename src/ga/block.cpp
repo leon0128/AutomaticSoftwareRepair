@@ -1,5 +1,6 @@
 #include <iostream>
 #include <limits>
+#include <utility>
 
 #include "../analyzer.hpp"
 #include "block.hpp"
@@ -170,7 +171,7 @@ Block::Block(const TOKEN::LabeledStatement *ls)
     else
         variantError("LabeledStatement");
 
-    *this = *(Block{subStat}.copy());
+    move(Block{subStat});
 }
 
 Block::Block(const TOKEN::SelectionStatement *ss
@@ -208,7 +209,7 @@ Block::Block(const TOKEN::SelectionStatement *ss
                 , new Block{scopeId}));
     }
     else if(std::holds_alternative<SS::Ss_e_s>(ss->var))
-        *this = *(Block{std::get<SS::Ss_e_s>(ss->var).s}.copy());
+        move(Block{std::get<SS::Ss_e_s>(ss->var).s});
     else
         variantError("SelectionStatement");
 }
@@ -233,8 +234,8 @@ Block::Block(const TOKEN::IterationStatement *is)
         subStat = std::get<IS::Sf_d_e_e_s>(is->var).s;
     else
         variantError("IterationStatement");
-    
-    *this = *(Block{subStat}.copy());
+
+    move(Block{subStat});
 }
 
 Block::Block(const TOKEN::Statement *statement)
@@ -249,8 +250,8 @@ Block::Block(const TOKEN::Statement *statement)
     else
     {
         if(std::holds_alternative<CompoundStatement*>(statement->var))
-            *this = *(Block{std::get<CompoundStatement*>(statement->var)
-                , statement->scopeId}.copy());
+            move(Block{std::get<CompoundStatement*>(statement->var)
+                , statement->scopeId});
         else
             mStats.push_back(createStatPair(statement));
     }
@@ -429,6 +430,13 @@ TOKEN::Statement *Block::createStatement() const
         statement = new Statement{createCompoundStatement()};
     
     return statement;
+}
+
+void Block::move(Block &&other)
+{
+    mScopeId = other.mScopeId;
+    mDecls = std::move(other.mDecls);
+    mStats = std::move(other.mStats);
 }
 
 bool Block::variantError(const std::string &className) const

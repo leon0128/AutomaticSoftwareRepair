@@ -76,6 +76,8 @@ private:
     TOKEN::Statement *createStatement(const StatPair&) const;
     TOKEN::Statement *createStatement() const;
 
+    void move(Block &&other);
+
     bool variantError(const std::string &className) const;
     bool nullptrError(const std::string &className) const;
 };
