@@ -1,108 +1,86 @@
 #ifndef GA_BLOCK_HPP
 #define GA_BLOCK_HPP
 
-#include <vector>
 #include <string>
+#include <vector>
 #include <utility>
-#include <limits>
-#include <optional>
-#include <unordered_map>
-#include <functional>
-#include <memory>
 
-namespace TOKEN
-{
-    class TranslationUnit;
-    class CompoundStatement;
-    class LabeledStatement;
-    class ExpressionStatement;
-    class SelectionStatement;
-    class IterationStatement;
-    class JumpStatement;
-    class Statement;
-}
+#include "../token.hpp"
 
 namespace GA
 {
 
-class Representation;
-class Operation;
+namespace BLOCK
+{
+
 class Block;
+
+}
+
+using StatPair = std::pair<std::size_t, BLOCK::Block*>;
+
+namespace BLOCK
+{
 
 class Block
 {
 private:
-    class Index;
+    std::size_t mScopeId;
+    std::vector<std::size_t> mDecls;
+    std::vector<StatPair> mStats;
 
 public:
-    static Block *createBlock(const TOKEN::TranslationUnit*
-        , std::size_t scopeId);
-    static bool deleteInvalidOp(const Block*
-        , Representation&);
-
-private:
-    static Block *createBlock(const TOKEN::CompoundStatement*
-        , std::size_t scopeId);
-    static Block *createBlock(const TOKEN::LabeledStatement*);
-    static Block *createBlock(const TOKEN::SelectionStatement*
-        , std::size_t scopeId);
-    static Block *createBlock(const TOKEN::IterationStatement*);
-    static Block *createBlock(const TOKEN::Statement*);
-    static std::pair<std::size_t, Block*> createPair(const TOKEN::Statement*);
-
-    static bool variantError(const std::string &className);
-    static bool deleteWarning(const Operation&);
-
-public:
-    std::size_t scopeId{std::numeric_limits<std::size_t>::max()};
-
-    std::vector<std::size_t> decls;
-    std::vector<std::pair<std::size_t
-        , Block*>> stats;
-
+    Block();
     ~Block();
+    
+    Block(const TOKEN::TranslationUnit*
+        , std::size_t scopeId);
+
+    // if block has 2 sub-block which represents if-part and else-part each other,
+    // function returns true, elsewise, function returns false.
+    bool isIfBlock() const;
+
+    bool add(const std::vector<std::size_t> &pos
+        , std::size_t statId);
+    bool subtract(const std::vector<std::size_t> &pos);
+    bool replace(const std::vector<std::size_t> &pos
+        , std::size_t statId);
+
+    TOKEN::TranslationUnit *createTranslationUnit() const;
 
     Block *copy() const;
-    TOKEN::TranslationUnit *createTranslationUnit() const;
-    std::shared_ptr<Block> createBlock(const Representation&) const;
 
-    void print() const;
+    std::size_t scopeId() const noexcept
+        {return mScopeId;}
+    const auto &decls() const noexcept
+        {return mDecls;}
+    const auto &stats() const noexcept
+        {return mStats;}
 
 private:
-    static bool operateAdd(const Operation&
-        , Block*
-        , Block::Index&);
-    static bool operateSub(const Operation&
-        , Block*
-        , Block::Index&);
-    static bool operateRep(const Operation&
-        , Block*
-        , Block::Index&);
-    static bool selectBlockAndIndex(const Operation&
-        , Block*&
-        , std::reference_wrapper<Block::Index>&);
+    Block(const TOKEN::CompoundStatement*
+        , std::size_t scopeId);
+    Block(const TOKEN::LabeledStatement*);
+    Block(const TOKEN::SelectionStatement*
+        , std::size_t scopeId);
+    Block(const TOKEN::IterationStatement*);
+    Block(const TOKEN::Statement*);
+    Block(std::size_t scopeId);
 
-    static bool notFoundStatementError(const Operation&);
-    static bool noHasDstError();
+    // use pos[0], pos[1], ... , pos[size - 2]
+    Block *getBlock(const std::vector<std::size_t> &pos);
+
+    StatPair createStatPair(const TOKEN::Statement*);
 
     TOKEN::CompoundStatement *createCompoundStatement() const;
-    TOKEN::Statement *createStatement(const std::pair<std::size_t, Block*>&) const;
+    TOKEN::Statement *createStatement(const StatPair&) const;
     TOKEN::Statement *createStatement() const;
+
+    bool variantError(const std::string &className) const;
+    bool nullptrError(const std::string &className) const;
 };
 
-class Block::Index
-{
-public:
-    std::vector<
-        std::pair<
-            std::pair<std::size_t
-                , std::size_t>
-            , std::optional<Index>>> indices;
-
-    decltype(indices)::iterator find(std::size_t);
-
-    static std::optional<Index> createIndex(const Block*);
-};
+}
 
 }
 

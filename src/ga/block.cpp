@@ -1,284 +1,89 @@
-#include <utility>
 #include <iostream>
 #include <limits>
-#include <memory>
-#include <functional>
-#include <algorithm>
 
-#include "../utility/output.hpp"
-#include "../token.hpp"
 #include "../analyzer.hpp"
-#include "representation.hpp"
 #include "block.hpp"
 
-namespace GA
+namespace GA::BLOCK
 {
 
-Block *Block::createBlock(const TOKEN::TranslationUnit *tu
-    , std::size_t scopeId)
+Block::Block()
+    : mScopeId{std::numeric_limits<std::size_t>::max()}
+    , mDecls{}
+    , mStats{}
 {
-    using namespace TOKEN;
-
-    Block *block{new Block{scopeId}};
-
-    for(const auto *ed : tu->seq)
-    {
-        if(std::holds_alternative<Declaration*>(ed->var))
-            block->decls.push_back(std::get<Declaration*>(ed->var)->statementId);
-        else if(std::holds_alternative<FunctionDefinition*>(ed->var))
-        {
-            const auto *fd{std::get<FunctionDefinition*>(ed->var)};
-            block->stats.emplace_back(fd->statementId
-                , createBlock(fd->cs
-                    , fd->scopeId));
-        }
-        else
-            variantError("TOKEN::ExternalDeclaration");
-    }
-
-    return block;
-}
-
-bool Block::deleteInvalidOp(const Block *block
-    , Representation &rep)
-{
-    std::shared_ptr<Block> tmpBlock{block->copy()};
-    auto &&idxOpt{Index::createIndex(tmpBlock.get())};
-    if(!idxOpt)
-        return false;
-
-    for(std::size_t i{0ull};
-        i < rep.ops.size();
-        i++)
-    {
-        decltype(operateAdd) *operateFunc{nullptr};
-
-        switch(rep.ops[i].tag)
-        {
-            case(Operation::Tag::ADD):
-                operateFunc = &operateAdd;
-                break;
-            case(Operation::Tag::SUB):
-                operateFunc = &operateSub;
-                break;
-            case(Operation::Tag::REP):
-                operateFunc = &operateRep;
-                break;
-        }
-
-        if(!operateFunc(rep.ops[i]
-            , tmpBlock.get()
-            , idxOpt.value()))
-        {
-            deleteWarning(rep.ops[i]);
-
-            rep.ops.erase(rep.ops.begin() + i);
-            i--;
-        }
-    }
-
-    return true;
-}
-
-Block *Block::createBlock(const TOKEN::CompoundStatement *cs
-    , std::size_t scopeId)
-{
-    using namespace TOKEN;
-
-    Block *block{new Block{scopeId}};
-
-    if(bool(cs->bil))
-    {
-        for(const auto *bi : cs->bil->seq)
-        {
-            if(std::holds_alternative<Declaration*>(bi->var))
-                block->decls.push_back(std::get<Declaration*>(bi->var)->statementId);
-            else if(std::holds_alternative<Statement*>(bi->var))
-                block->stats.push_back(createPair(std::get<Statement*>(bi->var)));
-            else
-                variantError("TOKEN::BlockItem");
-        }
-    }
-
-    return block;
-}
-
-Block *Block::createBlock(const TOKEN::LabeledStatement *ls)
-{
-    using namespace TOKEN;
-    using LS = LabeledStatement;
-
-    const Statement *statement{nullptr};
-    if(std::holds_alternative<LS::Si_s>(ls->var))
-        statement = std::get<LS::Si_s>(ls->var).s;
-    else if(std::holds_alternative<LS::Sce_s>(ls->var))
-        statement = std::get<LS::Sce_s>(ls->var).s;
-    else if(std::holds_alternative<LS::Ss>(ls->var))
-        statement = std::get<LS::Ss>(ls->var).s;
-    else
-    {
-        variantError("TOKEN::LabeledStatement");
-        return nullptr;
-    }
-
-    return createBlock(statement);
-}
-
-Block *Block::createBlock(const TOKEN::SelectionStatement *ss
-    , std::size_t scopeId)
-{
-    using namespace TOKEN;
-    using SS = SelectionStatement;
-
-    Block *block{nullptr};
-
-    if(std::holds_alternative<SS::Si_e_s>(ss->var)
-        || std::holds_alternative<SS::Si_e_s_s>(ss->var))
-    {
-        block = new Block{scopeId};
-
-        const Statement *ifStatement{nullptr};
-        const Statement *elseStatement{nullptr};
-        if(std::holds_alternative<SS::Si_e_s>(ss->var))
-            ifStatement = std::get<SS::Si_e_s>(ss->var).s;
-        else
-        {
-            const auto &s{std::get<SS::Si_e_s_s>(ss->var)};
-            ifStatement = s.s0;
-            elseStatement = s.s1;
-        }
-
-        block->stats.push_back(ifStatement
-            ? std::make_pair(std::numeric_limits<std::size_t>::max()
-                , createBlock(ifStatement))
-            : std::make_pair(std::numeric_limits<std::size_t>::max()
-                , new Block{scopeId}));
-        block->stats.push_back(elseStatement
-            ? std::make_pair(std::numeric_limits<std::size_t>::max()
-                , createBlock(elseStatement))
-            : std::make_pair(std::numeric_limits<std::size_t>::max()
-                , new Block{scopeId}));
-    }
-    else if(std::holds_alternative<SS::Ss_e_s>(ss->var))
-        block = createBlock(std::get<SS::Ss_e_s>(ss->var).s);
-    else
-        variantError("TOKEN::SelectionStatement");
-    
-    return block;
-}
-
-Block *Block::createBlock(const TOKEN::IterationStatement *is)
-{
-    using namespace TOKEN;
-    using IS = IterationStatement;
-
-    Block *block{nullptr};
-
-    const Statement *statement;
-    if(std::holds_alternative<IS::Sw_e_s>(is->var))
-        statement = std::get<IS::Sw_e_s>(is->var).s;
-    else if(std::holds_alternative<IS::Sd_s_e>(is->var))
-        statement = std::get<IS::Sd_s_e>(is->var).s;
-    else if(std::holds_alternative<IS::Sf_e_e_e_s>(is->var))
-        statement = std::get<IS::Sf_e_e_e_s>(is->var).s;
-    else if(std::holds_alternative<IS::Sf_d_e_e_s>(is->var))
-        statement = std::get<IS::Sf_d_e_e_s>(is->var).s;
-    else
-    {
-        variantError("TOKEN::IterationStatement");
-        return nullptr;
-    }
-
-    block = createBlock(statement);
-
-    return block;
-}
-
-Block *Block::createBlock(const TOKEN::Statement *statement)
-{
-    using namespace TOKEN;
-
-    Block *block{nullptr};
-
-    if(std::holds_alternative<CompoundStatement*>(statement->var))
-        block = createBlock(std::get<CompoundStatement*>(statement->var)
-            , statement->scopeId);
-    else
-    {
-        block = new Block{statement->scopeId};
-        block->stats.push_back(createPair(statement));
-    }
-
-    return block;
-}
-
-std::pair<std::size_t, Block*> Block::createPair(const TOKEN::Statement *statement)
-{
-    using namespace TOKEN;
-
-    std::pair<std::size_t, Block*> ret{statement->statementId, nullptr};
-
-    if(std::holds_alternative<LabeledStatement*>(statement->var))
-        ret.second = createBlock(std::get<LabeledStatement*>(statement->var));
-    else if(std::holds_alternative<CompoundStatement*>(statement->var))
-        ret.second = createBlock(std::get<CompoundStatement*>(statement->var)
-            , statement->scopeId);
-    else if(std::holds_alternative<ExpressionStatement*>(statement->var))
-        ;
-    else if(std::holds_alternative<SelectionStatement*>(statement->var))
-        ret.second = createBlock(std::get<SelectionStatement*>(statement->var)
-            , statement->scopeId);
-    else if(std::holds_alternative<IterationStatement*>(statement->var))
-        ret.second = createBlock(std::get<IterationStatement*>(statement->var));
-    else if(std::holds_alternative<JumpStatement*>(statement->var))
-        ;
-    else
-        variantError("TOKEN::Statement");
-
-    return ret;
-}
-
-bool Block::variantError(const std::string &className)
-{
-    std::cerr << "GA::Block error:\n"
-        "    what: std::variant type has unexpected type.\n"
-        "    class: " << className
-        << std::endl;
-    return false;
-}
-
-bool Block::deleteWarning(const Operation &op)
-{
-    std::cerr << "GA::Block warning:\n"
-        "    what: delete GA::Operation from GA::Representation.\n"
-        "    op: ";
-    op.print();
-    std::cout << std::endl;
-
-    return false;
 }
 
 Block::~Block()
 {
-    for(auto &&p : stats)
-        delete p.second;
+    for(auto &&statPair : mStats)
+        delete statPair.second;
 }
 
-Block *Block::copy() const
+Block::Block(const TOKEN::TranslationUnit *tu
+    , std::size_t scopeId)
+    : mScopeId{scopeId}
+    , mDecls{}
+    , mStats{}
 {
-    std::vector<std::size_t> d{decls};
-    std::vector<std::pair<std::size_t
-        , Block*>> s{stats};
+    using namespace TOKEN;
 
-    for(auto &&p : s)
+    for(const auto *ed : tu->seq)
     {
-        if(bool(p.second))
-            p.second = p.second->copy();
+        if(std::holds_alternative<Declaration*>(ed->var))
+            mDecls.push_back(std::get<Declaration*>(ed->var)->statementId);
+        else if(std::holds_alternative<FunctionDefinition*>(ed->var))
+        {
+            const auto *fd{std::get<FunctionDefinition*>(ed->var)};
+            mStats.emplace_back(fd->statementId
+                , new Block(fd->cs
+                    , fd->scopeId));
+        }
+        else
+            variantError("ExternalDeclaration");
     }
-    
-    return new Block{scopeId
-        , std::move(d)
-        , std::move(s)};
+}
+
+bool Block::isIfBlock() const
+{
+    return !mStats.empty()
+        && mStats.front().first == std::numeric_limits<std::size_t>::max();
+}
+
+bool Block::add(const std::vector<std::size_t> &pos
+    , std::size_t statId)
+{
+    using namespace TOKEN;
+
+    Block *block{getBlock(pos)};
+
+    block->mStats.insert(block->mStats.begin() + pos.back()
+        , createStatPair(std::get<std::shared_ptr<Statement>>(Analyzer::statementMap().at(statId)).get()));
+
+    return true;
+}
+
+bool Block::subtract(const std::vector<std::size_t> &pos)
+{
+    Block *block{getBlock(pos)};
+
+    delete block->mStats.at(pos.back()).second;
+    block->mStats.erase(block->mStats.begin() + pos.back());
+
+    return true;
+}
+
+bool Block::replace(const std::vector<std::size_t> &pos
+    , std::size_t statId)
+{
+    using namespace TOKEN;
+
+    Block *block{getBlock(pos)};
+
+    delete block->mStats.at(pos.back()).second;
+    block->mStats.at(pos.back()) = createStatPair(std::get<std::shared_ptr<Statement>>(Analyzer::statementMap().at(statId)).get());
+
+    return true;
 }
 
 TOKEN::TranslationUnit *Block::createTranslationUnit() const
@@ -287,217 +92,212 @@ TOKEN::TranslationUnit *Block::createTranslationUnit() const
 
     auto *tu{new TranslationUnit{decltype(TranslationUnit::seq){}}};
 
-    for(auto &&id : decls)
-    {
-        auto &&ptr{std::get<std::shared_ptr<Declaration>>(Analyzer::statementMap().at(id))};
-        tu->seq.push_back(new ExternalDeclaration{ptr->copy()});
-    }
+    for(const auto &id : mDecls)
+        tu->seq.push_back(new ExternalDeclaration{std::get<std::shared_ptr<Declaration>>(Analyzer::statementMap().at(id))->copy()});
 
-    for(auto &&pair : stats)
+    for(const auto &pair : mStats)
     {
-        auto &&ptr{std::get<std::shared_ptr<FunctionDefinition>>(Analyzer::statementMap().at(pair.first))};
-        auto *fd{new FunctionDefinition{ptr->ds->copy()
-            , ptr->d->copy()
-            , ptr->dl
-                ? ptr->dl->copy()
+        auto &&oldfd{std::get<std::shared_ptr<FunctionDefinition>>(Analyzer::statementMap().at(pair.first))};
+        auto *fd{new FunctionDefinition{oldfd->ds->copy()
+            , oldfd->d->copy()
+            , oldfd->dl
+                ? oldfd->dl->copy()
                 : nullptr
             , pair.second->createCompoundStatement()}};
-        fd->scopeId = ptr->scopeId;
-        fd->statementId = ptr->statementId;
-
+        fd->scopeId = oldfd->scopeId;
+        fd->statementId = oldfd->statementId;
+    
         tu->seq.push_back(new ExternalDeclaration{fd});
     }
 
     return tu;
 }
 
-std::shared_ptr<Block> Block::createBlock(const Representation &rep) const
+Block *Block::copy() const
 {
-    std::shared_ptr<Block> newBlock{copy()};
-    auto &&idxOpt{Index::createIndex(newBlock.get())};
-    if(!idxOpt)
-        return {nullptr};
+    Block *block{new Block{}};
+    block->mScopeId = mScopeId;
+    block->mDecls = mDecls;
 
-    for(const auto &op : rep.ops)
+    for(const auto &pair : mStats)
     {
-        switch(op.tag)
-        {
-            case(Operation::Tag::ADD):
-                operateAdd(op
-                    , newBlock.get()
-                    , idxOpt.value());
-                break;
-            case(Operation::Tag::SUB):
-                operateSub(op
-                    , newBlock.get()
-                    , idxOpt.value());
-                break;
-            case(Operation::Tag::REP):
-                operateRep(op
-                    , newBlock.get()
-                    , idxOpt.value());
-                break;
-        }
+        block->mStats.emplace_back(pair.first
+            , pair.second
+                ? pair.second->copy()
+                : nullptr);
     }
 
-    return std::move(newBlock);
+    return block;
 }
 
-void Block::print() const
+Block::Block(const TOKEN::CompoundStatement *cs
+    , std::size_t scopeId)
+    : mScopeId{scopeId}
+    , mDecls{}
+    , mStats{}
 {
-    auto &&printElement{[](const std::pair<std::size_t, Block*> &pair)
-        -> void
-        {
-            std::cout << '{'
-                << pair.first;
-            if(bool{pair.second})
-            {
-                std::cout << ',';
-                pair.second->print();
-            }
-            std::cout << '}';
-        }};
+    using namespace TOKEN;
 
-    std::cout << "{scopeId:"
-        << scopeId
-        << ",decls:"
-        << decls
-        << ",stats:{";
-    
-    if(!stats.empty())
+    if(bool{cs->bil})
     {
-        for(std::size_t i{0ull};
-            i + 1ull < stats.size();
-            i++)
+        for(const auto *bi : cs->bil->seq)
         {
-            printElement(stats[i]);
-            std::cout << ',';
+            if(std::holds_alternative<Declaration*>(bi->var))
+                mDecls.push_back(std::get<Declaration*>(bi->var)->statementId);
+            else if(std::holds_alternative<Statement*>(bi->var))
+                mStats.push_back(createStatPair(std::get<Statement*>(bi->var)));
+            else
+                variantError("BlockItem");
         }
-
-        printElement(stats.back());
     }
-    
-    std::cout << "}}"
-        << std::flush;
 }
 
-bool Block::operateAdd(const Operation &op
-    , Block *block
-    , Block::Index &index)
+Block::Block(const TOKEN::LabeledStatement *ls)
+    : mScopeId{std::numeric_limits<std::size_t>::max()}
+    , mDecls{}
+    , mStats{}
 {
-    std::reference_wrapper<Index> idxRef{index};
-    if(!selectBlockAndIndex(op
-        , block
-        , idxRef))
-        return false;
+    using namespace TOKEN;
+    using LS = LabeledStatement;
 
-    auto &&iter{idxRef.get().indices.begin()};
-    for(;
-        iter != idxRef.get().indices.end();
-        iter++)
-    {
-        if(iter->first.second >= op.dst.back())
-            break;
-    }
-    
-    auto &&idOpt{Operation::getStatementId(op)};
-    if(!idOpt)
-        return notFoundStatementError(op);
-
-    if(iter != idxRef.get().indices.end())
-        block->stats.insert(block->stats.begin()
-            + iter->first.second
-            , std::make_pair(idOpt.value()
-                , static_cast<Block*>(nullptr)));
+    const Statement *subStat{nullptr};
+    if(std::holds_alternative<LS::Si_s>(ls->var))
+        subStat = std::get<LS::Si_s>(ls->var).s;
+    else if(std::holds_alternative<LS::Sce_s>(ls->var))
+        subStat = std::get<LS::Sce_s>(ls->var).s;
+    else if(std::holds_alternative<LS::Ss>(ls->var))
+        subStat = std::get<LS::Ss>(ls->var).s;
     else
-        block->stats.emplace_back(idOpt.value()
-            , nullptr);
+        variantError("LabeledStatement");
 
-    for(;
-        iter != idxRef.get().indices.end();
-        iter++)
-        iter->first.second++;
-    
-    return true;
+    *this = *(Block{subStat}.copy());
 }
 
-bool Block::operateSub(const Operation &op
-    , Block *block
-    , Block::Index &index)
+Block::Block(const TOKEN::SelectionStatement *ss
+    , std::size_t scopeId)
+    : mScopeId{scopeId}
+    , mDecls{}
+    , mStats{}
 {
-    std::reference_wrapper<Index> idxRef{index};
-    if(!selectBlockAndIndex(op
-        , block
-        , idxRef))
-        return false;
+    using namespace TOKEN;
+    using SS = SelectionStatement;
 
-    auto &&iter{idxRef.get().find(op.dst.back())};
-    if(iter == idxRef.get().indices.end())
-        return notFoundStatementError(op);
-    
-    delete block->stats[iter->first.second].second;
-    block->stats.erase(block->stats.begin() + iter->first.second);
-
-    for(;
-        iter != idxRef.get().indices.end();
-        iter++)
-        iter->first.second--;
-    
-    idxRef.get().indices.erase(iter);
-
-    return true;
-}
-
-bool Block::operateRep(const Operation &op
-    , Block *block
-    , Block::Index &index)
-{
-    return operateSub(op
-        , block
-        , index)
-        | operateAdd(op
-            , block
-            , index);
-}
-
-bool Block::selectBlockAndIndex(const Operation &op
-    , Block *&block
-    , std::reference_wrapper<Block::Index> &idxRef)
-{
-    if(op.dst.empty())
-        return noHasDstError();
-
-    for(std::size_t i{0ull};
-        i + 1ull < op.dst.size();
-        i++)
+    if(std::holds_alternative<SS::Si_e_s>(ss->var)
+        || std::holds_alternative<SS::Si_e_s_s>(ss->var))
     {
-        auto &&iter{idxRef.get().find(op.dst[i])};
-        if(iter == idxRef.get().indices.end())
-            return notFoundStatementError(op);
-    
-        block = block->stats[iter->first.second].second;
-        idxRef = std::ref(iter->second.value());
+        const Statement *ifStat{nullptr};
+        const Statement *elseStat{nullptr};
+
+        if(std::holds_alternative<SS::Si_e_s>(ss->var))
+            ifStat = std::get<SS::Si_e_s>(ss->var).s;
+        else
+        {
+            ifStat = std::get<SS::Si_e_s_s>(ss->var).s0;
+            elseStat = std::get<SS::Si_e_s_s>(ss->var).s1;
+        }
+
+        mStats.push_back(ifStat
+            ? std::make_pair(std::numeric_limits<std::size_t>::max()
+                , new Block{ifStat})
+            : std::make_pair(std::numeric_limits<std::size_t>::max()
+                , new Block{scopeId}));
+        mStats.push_back(elseStat
+            ? std::make_pair(std::numeric_limits<std::size_t>::max()
+                , new Block{elseStat})
+            : std::make_pair(std::numeric_limits<std::size_t>::max()
+                , new Block{scopeId}));
     }
-
-    return true;
+    else if(std::holds_alternative<SS::Ss_e_s>(ss->var))
+        *this = *(Block{std::get<SS::Ss_e_s>(ss->var).s}.copy());
+    else
+        variantError("SelectionStatement");
 }
 
-bool Block::notFoundStatementError(const Operation &op)
+Block::Block(const TOKEN::IterationStatement *is)
+    : mScopeId{std::numeric_limits<std::size_t>::max()}
+    , mDecls{}
+    , mStats{}
 {
-    std::cerr << "GA::Block error:\n"
-        "    what: failed to find statement to operate.\n"
-        "    op: ";
-    op.print();
-    std::cout << std::endl;
-    return false;
+    using namespace TOKEN;
+    using IS = IterationStatement;
+
+    const Statement *subStat{nullptr};
+
+    if(std::holds_alternative<IS::Sw_e_s>(is->var))
+        subStat = std::get<IS::Sw_e_s>(is->var).s;
+    else if(std::holds_alternative<IS::Sd_s_e>(is->var))
+        subStat = std::get<IS::Sd_s_e>(is->var).s;
+    else if(std::holds_alternative<IS::Sf_e_e_e_s>(is->var))
+        subStat = std::get<IS::Sf_e_e_e_s>(is->var).s;
+    else if(std::holds_alternative<IS::Sf_d_e_e_s>(is->var))
+        subStat = std::get<IS::Sf_d_e_e_s>(is->var).s;
+    else
+        variantError("IterationStatement");
+    
+    *this = *(Block{subStat}.copy());
 }
 
-bool Block::noHasDstError()
+Block::Block(const TOKEN::Statement *statement)
+    : mScopeId{statement->scopeId}
+    , mDecls{}
+    , mStats{}
 {
-    std::cerr << "GA::Block error:\n"
-        "    what: Operation::dst shall have destination position.\n"
-        << std::flush;
-    return false;
+    using namespace TOKEN;
+
+    if(!statement)
+        nullptrError("Statement");
+    else
+    {
+        if(std::holds_alternative<CompoundStatement*>(statement->var))
+            *this = *(Block{std::get<CompoundStatement*>(statement->var)
+                , statement->scopeId}.copy());
+        else
+            mStats.push_back(createStatPair(statement));
+    }
+}
+
+Block::Block(std::size_t scopeId)
+    : mScopeId{scopeId}
+    , mDecls{}
+    , mStats{}
+{
+}
+
+Block *Block::getBlock(const std::vector<std::size_t> &pos)
+{
+    Block *block{this};
+    for(std::size_t i{0ull};
+        i + 1ull < pos.size();
+        i++)
+        block = block->mStats.at(pos[i]).second;
+    
+    return block;
+}
+
+StatPair Block::createStatPair(const TOKEN::Statement *statement)
+{
+    using namespace TOKEN;
+
+    StatPair statPair{statement->statementId
+        , nullptr};
+    
+    if(std::holds_alternative<LabeledStatement*>(statement->var))
+        statPair.second = new Block{std::get<LabeledStatement*>(statement->var)};
+    else if(std::holds_alternative<CompoundStatement*>(statement->var))
+        statPair.second = new Block{std::get<CompoundStatement*>(statement->var)
+            , statement->scopeId};
+    else if(std::holds_alternative<SelectionStatement*>(statement->var))
+        statPair.second = new Block{std::get<SelectionStatement*>(statement->var)
+            , statement->scopeId};
+    else if(std::holds_alternative<IterationStatement*>(statement->var))
+        statPair.second = new Block{std::get<IterationStatement*>(statement->var)};
+    else if(std::holds_alternative<ExpressionStatement*>(statement->var)
+        || std::holds_alternative<JumpStatement*>(statement->var))
+        ;
+    else
+        variantError("Statement");
+    
+    return statPair;
 }
 
 TOKEN::CompoundStatement *Block::createCompoundStatement() const
@@ -505,20 +305,16 @@ TOKEN::CompoundStatement *Block::createCompoundStatement() const
     using namespace TOKEN;
 
     auto *cs{new CompoundStatement{new BlockItemList{decltype(BlockItemList::seq){}}}};
+    for(const auto &id : mDecls)
+        cs->bil->seq.push_back(new BlockItem{std::get<std::shared_ptr<Declaration>>(Analyzer::statementMap().at(id))->copy()});
 
-    for(auto &&id : decls)
-    {
-        auto &&ptr{std::get<std::shared_ptr<Declaration>>(Analyzer::statementMap().at(id))};
-        cs->bil->seq.push_back(new BlockItem{ptr->copy()});
-    }
-
-    for(auto &&pair : stats)
+    for(const auto &pair : mStats)
         cs->bil->seq.push_back(new BlockItem{createStatement(pair)});
 
     return cs;
 }
 
-TOKEN::Statement *Block::createStatement(const std::pair<std::size_t, Block*> &pair) const
+TOKEN::Statement *Block::createStatement(const StatPair &pair) const
 {
     using namespace TOKEN;
     using LS = LabeledStatement;
@@ -564,15 +360,15 @@ TOKEN::Statement *Block::createStatement(const std::pair<std::size_t, Block*> &p
         {
             const auto &s{std::get<SS::Si_e_s>(oldSs->var)};
             newStatement->var.emplace<SS*>(new SS{SS::Si_e_s_s{s.e->copy()
-                , pair.second->stats.front().second->createStatement()
-                , pair.second->stats.back().second->createStatement()}});
+                , pair.second->mStats.front().second->createStatement()
+                , pair.second->mStats.back().second->createStatement()}});
         }
         else if(std::holds_alternative<SS::Si_e_s_s>(oldSs->var))
         {
             const auto &s{std::get<SS::Si_e_s_s>(oldSs->var)};
             newStatement->var.emplace<SS*>(new SS{SS::Si_e_s_s{s.e->copy()
-                , pair.second->stats.front().second->createStatement()
-                , pair.second->stats.back().second->createStatement()}});
+                , pair.second->mStats.front().second->createStatement()
+                , pair.second->mStats.back().second->createStatement()}});
         }
         else if(std::holds_alternative<SS::Ss_e_s>(oldSs->var))
         {
@@ -599,17 +395,17 @@ TOKEN::Statement *Block::createStatement(const std::pair<std::size_t, Block*> &p
         else if(std::holds_alternative<IS::Sf_e_e_e_s>(oldIs->var))
         {
             const auto &s{std::get<IS::Sf_e_e_e_s>(oldIs->var)};
-            newStatement->var.emplace<IS*>(new IS{IS::Sf_e_e_e_s{s.e0->copy()
-                , s.e1->copy()
-                , s.e2->copy()
+            newStatement->var.emplace<IS*>(new IS{IS::Sf_e_e_e_s{s.e0 ? s.e0->copy() : nullptr
+                , s.e1 ? s.e1->copy() : nullptr
+                , s.e2 ? s.e2->copy() : nullptr
                 , pair.second->createStatement()}});
         }
         else if(std::holds_alternative<IS::Sf_d_e_e_s>(oldIs->var))
         {
             const auto &s{std::get<IS::Sf_d_e_e_s>(oldIs->var)};
             newStatement->var.emplace<IS*>(new IS{IS::Sf_d_e_e_s{s.d->copy()
-                , s.e0->copy()
-                , s.e1->copy()
+                , s.e0 ? s.e0->copy() : nullptr
+                , s.e1 ? s.e1->copy() : nullptr
                 , pair.second->createStatement()}});
         }
     }
@@ -625,45 +421,30 @@ TOKEN::Statement *Block::createStatement() const
 
     Statement *statement{nullptr};
 
-    if(decls.empty() && stats.empty())
+    if(mDecls.empty() && mStats.empty())
         statement = new Statement{new ExpressionStatement{}};
-    else if(decls.empty() && stats.size() == 1)
-        statement = createStatement(stats.front());
+    else if(mDecls.empty() && mStats.size() == 1)
+        statement = createStatement(mStats.front());
     else
         statement = new Statement{createCompoundStatement()};
     
     return statement;
 }
 
-decltype(Block::Index::indices)::iterator Block::Index::find(std::size_t idx)
+bool Block::variantError(const std::string &className) const
 {
-    auto &&iter{indices.begin()};
-    for(;
-        iter != indices.end();
-        iter++)
-    {
-        if(iter->first.first == idx)
-            break;
-    }
-
-    return iter;
+    std::cerr << "Block::variantError()\n"
+        "    className: " << className
+        << std::endl;
+    return false;
 }
 
-std::optional<Block::Index> Block::Index::createIndex(const Block *block)
+bool Block::nullptrError(const std::string &className) const
 {
-    Index index;
-
-    for(std::size_t i{0ull};
-        i < block->stats.size();
-        i++)
-    {
-        index.indices.emplace_back(std::make_pair(i, i)
-            , block->stats[i].second
-                ? createIndex(block->stats[i].second)
-                : std::nullopt);
-    }
-
-    return {std::move(index)};
+    std::cerr << "Block::nullptrError()\n"
+        "    className: " << className
+        << std::endl;
+    return false;
 }
 
 }

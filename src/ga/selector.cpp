@@ -370,9 +370,12 @@ bool Selector::select(const TOKEN::IterationStatement *is)
     else if(std::holds_alternative<IS::Sf_e_e_e_s>(is->var))
     {
         auto &&s{std::get<IS::Sf_e_e_e_s>(is->var)};
-        if(!select(s.e0)
-            || !select(s.e1)
-            || !select(s.e2)
+        if(s.e0 &&
+            !select(s.e0)
+            || s.e1
+                && !select(s.e1)
+            || s.e2
+                && !select(s.e2)
             || !select(s.s))
             return false;
     }
