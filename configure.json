@@ -5,26 +5,27 @@
     ],
     "pool":
     [
-        "test/test.c"
+        "test/test.c",
+        "test/test_pool.c"
     ],
     "result_filename": "test/test_repair.c",
 
     "compiler": "gcc",
     "test_script": "test/test.sh",
     "test_filename": "test/__test.c",
-    "execution_name" : "test/__test",
+    "execution_name" : "./test/__test",
     "positive_test_prefix": "p",
     "negative_test_prefix": "n",
     "num_positive_test": 0,
     "num_negative_test": 1,
     "positive_test_weight": 1,
     "negative_test_weight": 10,
-    "goal_score": 0,
+    "goal_score": 100,
 
-    "failure_limit": 10,
+    "failure_limit": 100,
 
     "pop_size": 100,
-    "max_gen": 4,
+    "max_gen": 3,
     "num_elite": 1,
     "tournament_size": 2,
     
