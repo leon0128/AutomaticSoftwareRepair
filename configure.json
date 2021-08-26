@@ -25,7 +25,7 @@
     "failure_limit": 100,
 
     "pop_size": 100,
-    "max_gen": 3,
+    "max_gen": 100,
     "num_elite": 1,
     "tournament_size": 2,
     
