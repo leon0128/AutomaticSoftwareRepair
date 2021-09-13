@@ -13,6 +13,8 @@ private:
 
 public:
     Controller();
+    Controller(const Controller&) = delete;
+    Controller(Controller&&) = delete;
 
     bool execute();
 
@@ -21,7 +23,7 @@ private:
     bool analyzeFile(const std::string &filename
         , Analyzer&);
     
-    bool initConfigureError(const std::string&) const;
+    bool initConfigureError(const std::string &what) const;
     
 };
 
