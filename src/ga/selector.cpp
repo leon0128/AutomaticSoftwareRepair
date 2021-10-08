@@ -1,6 +1,7 @@
 #include <unordered_set>
 #include <iostream>
 #include <limits>
+#include <algorithm>
 
 #include "../random.hpp"
 #include "../scope.hpp"
@@ -12,11 +13,13 @@ namespace GA
 {
 
 Selector::Selector()
-    : mIsSelection{true}
+    : mIsSelection{false}
+    , mIsFittable{false}
     , mScopeId{std::numeric_limits<decltype(mScopeId)>::max()}
     , mIds{std::ref(INIT_VALUE)}
     , mIdx{0ull}
     , mCIds{std::cref(INIT_VALUE)}
+    , mIsFittables{}
 {
 }
 
@@ -29,6 +32,7 @@ bool Selector::execute(std::size_t scopeId
     , std::vector<std::size_t> &ids)
 {
     mIsSelection = true;
+    mIsFittable = false;
 
     if(!clear())
         return clearError();
@@ -46,6 +50,7 @@ bool Selector::execute(const std::vector<std::size_t> &ids
     , const TOKEN::Statement *statement)
 {
     mIsSelection = false;
+    mIsFittable = false;
     
     if(!clear())
         return clearError();
@@ -62,6 +67,25 @@ bool Selector::execute(const std::vector<std::size_t> &ids
     return true;
 }
 
+bool Selector::isFittable(std::size_t scopeId
+    , const TOKEN::Statement *statement)
+{
+    mIsSelection = false;
+    mIsFittable = true;
+
+    if(!clear())
+        return clearError();
+
+    mScopeId = scopeId;
+
+    if(!select(statement))
+        return false;
+    
+    return std::all_of(mIsFittables.cbegin()
+        , mIsFittables.cend()
+        , [](auto &&b){return b;});
+}
+
 bool Selector::clear()
 {
     mScopeId = std::numeric_limits<decltype(mScopeId)>::max();
@@ -69,6 +93,8 @@ bool Selector::clear()
 
     mIdx = 0ull;
     mCIds = std::cref(INIT_VALUE);
+
+    mIsFittables.clear();
 
     return true;
 }
@@ -191,6 +217,25 @@ bool Selector::select(TOKEN::Identifier *identifier)
             return false;
         
         mIds.get().push_back(result);
+    }
+    else if(mIsFittable)
+    {
+        if(!std::holds_alternative<TI::Id>(identifier->var))
+            return invalidVariantError("TOKEN::Identifier");
+        
+        const auto &idPair{std::get<TI::Id>(identifier->var)};
+        const auto &idPtr{SCOPE::Scope::identifierMap().at(idPair.first)};
+
+        std::vector<std::size_t> idList;
+        if(!getVisibleIdentifierList(idPtr
+            , idList))
+            return false;
+        
+        if(!getSameTypeIdentifier(idPtr
+            , idList))
+            return false;
+        
+        mIsFittables.push_back(!idList.empty());
     }
     else
     {

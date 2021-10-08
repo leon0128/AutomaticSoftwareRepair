@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <unordered_map>
 
 namespace GA
 {
@@ -43,8 +44,20 @@ private:
                     std::size_t>>> SELECTABLE_SOURCE_POOL_AND_FUNCTION_INDICES;
     static std::vector<std::size_t> SELECTABLE_DESTINATION_INDICES;
 
+    // key: scope-id
+    // value: array of selectable statement-id
+    static std::unordered_map<std::size_t
+        , std::vector<std::size_t>> SELECTABLE_STATEMENT_MAP;
+
 public:
     static bool initialize(const Pool &pool
+        , const BLOCK::Block*);
+
+private:
+    static bool initializeSelectableStatement(const Pool &pool
+        , const BLOCK::Block*);
+    static void insertScopeId(const BLOCK::Block*);
+    static bool insertStatementId(std::size_t scopeId
         , const BLOCK::Block*);
 
 private:
@@ -52,7 +65,8 @@ private:
     std::vector<std::size_t> mSrc; // for addition and replacement
     std::vector<std::size_t> mDst; // for addition, deletion and replacement
     std::vector<std::size_t> mIds; // for addition and replacement
-    std::size_t mStatId; // for alternative statement id
+    std::size_t mSrcId; // source statement id, for addition and replacement
+    std::size_t mStatId; // alternative statement id, for addition and replacement
 
 public:
     Operation();
@@ -70,6 +84,8 @@ public:
         {return mDst;}
     const std::vector<std::size_t> &ids() const noexcept
         {return mIds;}
+    std::size_t srcId() const noexcept
+        {return mSrcId;}
     std::size_t statId() const noexcept
         {return mStatId;}
 
@@ -89,9 +105,13 @@ private:
     // mDst[1] ... .
     bool selectDestinationStatement(const BLOCK::Block*
         , bool isAddition);
-    // mIds[0] ... .
+    // mStatId and mIds[0] ... .
     bool selectAlternativeIdentifier(const Pool&
         , const BLOCK::Block*);
+    // mSrcId
+    bool selectSourceStatement(const BLOCK::Block*);
+    // mStatId and mIds[0] ...
+    bool selectAlternativeIdentifier(const BLOCK::Block*);
 
     void clear();
 

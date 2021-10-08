@@ -71,6 +71,12 @@ private:
     Block *getBlock(const std::vector<std::size_t> &pos);
 
     StatPair createStatPair(const TOKEN::Statement*);
+    // sub-block has argument's scope-id
+    StatPair createStatPair(const TOKEN::Statement*
+        , std::size_t scopeId);
+
+    // change scope-id
+    void changeScopeId(std::size_t);
 
     TOKEN::CompoundStatement *createCompoundStatement() const;
     TOKEN::Statement *createStatement(const StatPair&) const;

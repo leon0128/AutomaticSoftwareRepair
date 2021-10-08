@@ -99,6 +99,11 @@ public:
     bool execute(const std::vector<std::size_t>&
         , const TOKEN::Statement*);
 
+    // if statement fits to scope, this return true.
+    // otherwise, this return false.
+    bool isFittable(std::size_t scopeId
+        , const TOKEN::Statement*);
+
 private:
     bool clear();
 
@@ -189,12 +194,15 @@ private:
     bool unusedIdError() const;
 
     bool mIsSelection;
+    bool mIsFittable;
 
     std::size_t mScopeId;
     std::reference_wrapper<std::vector<std::size_t>> mIds;
 
     std::size_t mIdx;
     std::reference_wrapper<const std::vector<std::size_t>> mCIds;
+
+    std::vector<bool> mIsFittables;
 };
 
 }

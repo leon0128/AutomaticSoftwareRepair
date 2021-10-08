@@ -1,7 +1,9 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric>
+#include <limits>
 
+#include "../utility/output.hpp"
 #include "../utility/random.hpp"
 #include "../configure.hpp"
 #include "../analyzer.hpp"
@@ -20,6 +22,8 @@ std::vector<
                 std::size_t>>> Operation::SELECTABLE_SOURCE_POOL_AND_FUNCTION_INDICES{};
 
 std::vector<std::size_t> Operation::SELECTABLE_DESTINATION_INDICES{};
+
+decltype(Operation::SELECTABLE_STATEMENT_MAP) Operation::SELECTABLE_STATEMENT_MAP{};
 
 Tag selectTag()
 {
@@ -93,6 +97,71 @@ bool Operation::initialize(const Pool &pool
             SELECTABLE_SOURCE_POOL_AND_FUNCTION_INDICES.pop_back();
     }
 
+    if(!initializeSelectableStatement(pool
+        , block))
+        return false;
+    
+    std::cout << SELECTABLE_STATEMENT_MAP
+        << std::endl;
+
+    return true;
+}
+
+bool Operation::initializeSelectableStatement(const Pool &pool
+    , const BLOCK::Block *block)
+{
+    insertScopeId(block);
+
+    for(const auto &pair : SELECTABLE_STATEMENT_MAP)
+    {
+        for(const auto *b : pool)
+        {
+            if(!insertStatementId(pair.first
+                , b))
+                return false;
+        }
+    }
+        
+    return true;
+}
+
+void Operation::insertScopeId(const BLOCK::Block *block)
+{
+    if(SELECTABLE_STATEMENT_MAP.find(block->scopeId()) == SELECTABLE_STATEMENT_MAP.end())
+        SELECTABLE_STATEMENT_MAP.emplace(block->scopeId()
+            , std::vector<std::size_t>{});
+
+    for(const auto &pair : block->stats())
+    {
+        if(bool{pair.second})
+            insertScopeId(pair.second);
+    }
+}
+
+bool Operation::insertStatementId(std::size_t scopeId
+    , const BLOCK::Block *block)
+{
+    Selector selector;
+
+    for(const auto &pair : block->stats())
+    {
+        if(pair.first != std::numeric_limits<decltype(pair.first)>::max())
+        {
+            auto &&var{Analyzer::statementMap().at(pair.first)};
+            if(std::holds_alternative<std::shared_ptr<TOKEN::Statement>>(var))
+            {
+                auto &&statement{std::get<std::shared_ptr<TOKEN::Statement>>(var)};
+                if(selector.isFittable(scopeId
+                    , statement.get()))
+                    SELECTABLE_STATEMENT_MAP.at(scopeId).push_back(statement->statementId);
+            }
+        }
+
+        if(bool{pair.second})
+            insertStatementId(scopeId
+                , pair.second);
+    }
+
     return true;
 }
 
@@ -101,6 +170,7 @@ Operation::Operation()
     , mSrc{}
     , mDst{}
     , mIds{}
+    , mSrcId{std::numeric_limits<std::size_t>::max()}
     , mStatId{std::numeric_limits<std::size_t>::max()}
 {
 }
@@ -120,6 +190,7 @@ Operation::Operation(const Pool &pool
     , mSrc{}
     , mDst{}
     , mIds{}
+    , mSrcId{std::numeric_limits<std::size_t>::max()}
     , mStatId{std::numeric_limits<std::size_t>::max()}
 {
     switch(tag)
@@ -149,13 +220,11 @@ Operation::Operation(const Pool &pool
 bool Operation::selectAdditionalPosition(const Pool &pool
     , const BLOCK::Block *srcBlock)
 {
-    if(!selectSourcePoolAndFunction()
-        || !selectSourceStatement(pool)
-        || !selectDestinationFunction()
+    if(!selectDestinationFunction()
         || !selectDestinationStatement(srcBlock
             , true)
-        || !selectAlternativeIdentifier(pool
-            , srcBlock))
+        || !selectSourceStatement(srcBlock)
+        || !selectAlternativeIdentifier(srcBlock))
     {
         clear();
         return false;
@@ -180,13 +249,11 @@ bool Operation::selectSubtractionalPosition(const BLOCK::Block *srcBlock)
 bool Operation::selectReplacingPosition(const Pool &pool
     , const BLOCK::Block *srcBlock)
 {
-    if(!selectSourcePoolAndFunction()
-        || !selectSourceStatement(pool)
-        || !selectDestinationFunction()
+    if(!selectDestinationFunction()
         || !selectDestinationStatement(srcBlock
             , false)
-        || !selectAlternativeIdentifier(pool
-            , srcBlock))
+        || !selectSourceStatement(srcBlock)
+        || !selectAlternativeIdentifier(srcBlock))
     {
         clear();
         return false;
@@ -373,6 +440,45 @@ bool Operation::selectAlternativeIdentifier(const Pool &pool
         return false;
 
     mStatId = statId.value();
+    return true;
+}
+
+bool Operation::selectSourceStatement(const BLOCK::Block *block)
+{
+    auto &&scopeId{getScopeId(block)};
+    std::cout << scopeId
+        << std::endl;
+    auto &&ids{SELECTABLE_STATEMENT_MAP.at(scopeId)};
+
+    if(ids.empty())
+        return selectionError("no have statement that is addable to destination position.");
+
+    mSrcId = ids.at(RANDOM::RAND(ids.size()));
+    
+    return true;
+}
+
+bool Operation::selectAlternativeIdentifier(const BLOCK::Block *block)
+{
+    auto &&scopeId{getScopeId(block)};
+
+    std::shared_ptr<TOKEN::Statement> statement{std::get<std::shared_ptr<TOKEN::Statement>>(Analyzer::statementMap().at(mSrcId))->copy()};
+
+    Selector selector;
+    if(!selector.execute(scopeId
+        , statement.get()
+        , mIds))
+        return false;
+    if(!selector.execute(mIds
+        , statement.get()))
+        return false;
+    
+    std::optional<std::size_t> statId;
+    if(!(statId = Register::execute(statement.get())))
+        return false;
+    
+    mStatId = statId.value();
+
     return true;
 }
 

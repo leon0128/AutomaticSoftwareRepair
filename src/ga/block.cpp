@@ -59,7 +59,8 @@ bool Block::add(const std::vector<std::size_t> &pos
     Block *block{getBlock(pos)};
 
     block->mStats.insert(block->mStats.begin() + pos.back()
-        , createStatPair(std::get<std::shared_ptr<Statement>>(Analyzer::statementMap().at(statId)).get()));
+        , createStatPair(std::get<std::shared_ptr<Statement>>(Analyzer::statementMap().at(statId)).get()
+            , block->scopeId()));
 
     return true;
 }
@@ -82,7 +83,8 @@ bool Block::replace(const std::vector<std::size_t> &pos
     Block *block{getBlock(pos)};
 
     delete block->mStats.at(pos.back()).second;
-    block->mStats.at(pos.back()) = createStatPair(std::get<std::shared_ptr<Statement>>(Analyzer::statementMap().at(statId)).get());
+    block->mStats.at(pos.back()) = createStatPair(std::get<std::shared_ptr<Statement>>(Analyzer::statementMap().at(statId)).get()
+        , block->scopeId());
 
     return true;
 }
@@ -299,6 +301,27 @@ StatPair Block::createStatPair(const TOKEN::Statement *statement)
         variantError("Statement");
     
     return statPair;
+}
+
+StatPair Block::createStatPair(const TOKEN::Statement *statement
+    , std::size_t scopeId)
+{
+    auto &&statPair{createStatPair(statement)};
+    if(bool{statPair.second})
+        statPair.second->changeScopeId(scopeId);
+    
+    return statPair;
+}
+
+void Block::changeScopeId(std::size_t scopeId)
+{
+    mScopeId = scopeId;
+
+    for(auto &&pair : mStats)
+    {
+        if(bool{pair.second})
+            pair.second->changeScopeId(scopeId);
+    }
 }
 
 TOKEN::CompoundStatement *Block::createCompoundStatement() const

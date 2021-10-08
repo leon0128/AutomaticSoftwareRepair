@@ -58,6 +58,7 @@ private:
     Representation(const BLOCK::Block*
         , const std::vector<const OPERATION::Operation*>&);
 
+    // update block, apply mOps.back()
     bool updateBlock();
 
     bool creationError(const std::string &what) const;
