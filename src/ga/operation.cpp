@@ -100,9 +100,6 @@ bool Operation::initialize(const Pool &pool
     if(!initializeSelectableStatement(pool
         , block))
         return false;
-    
-    std::cout << SELECTABLE_STATEMENT_MAP
-        << std::endl;
 
     return true;
 }
@@ -446,8 +443,6 @@ bool Operation::selectAlternativeIdentifier(const Pool &pool
 bool Operation::selectSourceStatement(const BLOCK::Block *block)
 {
     auto &&scopeId{getScopeId(block)};
-    std::cout << scopeId
-        << std::endl;
     auto &&ids{SELECTABLE_STATEMENT_MAP.at(scopeId)};
 
     if(ids.empty())
