@@ -7,6 +7,7 @@
 
 #include "ga/controller.hpp"
 #include "analyzer.hpp"
+#include "divider.hpp"
 #include "tree_generator.hpp"
 #include "sequencer.hpp"
 #include "configure.hpp"
@@ -146,6 +147,9 @@ bool Controller::analyzeFile(const std::string &filename
     TreeGenerator treeGenerator{filename, sequencer.seq()};
     if(!treeGenerator.execute())
         return false;
+
+    if(!Divider::execute(treeGenerator.translationUnit()))
+        return false;
     
     if(!analyzer.execute(filename
         , treeGenerator.translationUnit()))
@@ -165,5 +169,6 @@ bool Controller::initConfigureError(const std::string &message) const
         "    what: failed to initialize configure value.\n"
         "    diag: " << message
         << std::endl;
+
     return false;
 }

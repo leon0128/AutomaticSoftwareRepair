@@ -774,6 +774,8 @@ bool Analyzer::analyze(const TOKEN::InitializerList *il)
             }
         }
     }
+
+    return true;
 }
 
 bool Analyzer::analyze(const TOKEN::ConstantExpression *cs)
