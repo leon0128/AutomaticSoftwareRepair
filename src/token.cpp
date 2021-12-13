@@ -3932,6 +3932,11 @@ PostfixExpression::~PostfixExpression()
         }
         else if(std::holds_alternative<Sp_i>(v))
         {
+            auto &&s = std::get<Sp_i>(v);
+            delete s.i;
+        }
+        else if(std::holds_alternative<Sa_i>(v))
+        {
             auto &&s = std::get<Sa_i>(v);
             delete s.i;
         }

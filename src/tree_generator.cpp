@@ -1026,22 +1026,32 @@ TOKEN::SpecifierQualifierList *TreeGenerator::tokSpecifierQualifierList()
 {
     std::vector<TOKEN::SpecifierQualifierList::Var> seq;
 
+    bool hasTypeSpecifier{false};
     while(true)
     {
-        if(TOKEN::TypeSpecifier *ts = tokTypeSpecifier();
-            ts != nullptr)
+        TOKEN::TypeSpecifier *ts{nullptr};
+        TOKEN::TypeQualifier *tq{nullptr};
+        if(ts = tokTypeSpecifier())
         {
+            hasTypeSpecifier = true;
             seq.emplace_back(ts);
-            continue;
         }
-        else if(TOKEN::TypeQualifier *tq = tokTypeQualifier();
-            tq != nullptr)
-        {
+        else if(tq = tokTypeQualifier())
             seq.emplace_back(tq);
-            continue;
-        }
         else
             break;
+
+        if(hasTypeSpecifier)
+        {
+            std::size_t preIdx{mIdx};
+            if(auto *sdl{tokStructDeclaratorList()};
+                bool{sdl})
+            {
+                delete sdl;
+                mIdx = preIdx;
+                break;
+            }
+        }
     }
 
     if(!seq.empty())

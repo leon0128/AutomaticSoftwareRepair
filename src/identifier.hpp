@@ -99,7 +99,7 @@ public:
     Identifier(DerivedTag
         , const std::string&);
 
-    virtual const std::string &key() const
+    virtual std::string key() const
         {return mStr;}
 
     DerivedTag derivedTag() const noexcept
@@ -220,7 +220,7 @@ public:
     Member(const std::string&
         , std::size_t);
 
-    const std::string &key() const noexcept override
+    std::string key() const override
         {return std::to_string(typeId()) + '.' + str();}
 
     std::size_t typeId() const noexcept

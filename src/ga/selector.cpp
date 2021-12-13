@@ -792,13 +792,13 @@ bool Selector::select(const TOKEN::PostfixExpression *pe)
         }
         else if(std::holds_alternative<PE::Sp_i>(v))
         {
-            if(!select(std::get<PE::Sp_i>(v).i))
-                return false;
+            // if(!select(std::get<PE::Sp_i>(v).i))
+            //     return false;
         }
         else if(std::holds_alternative<PE::Sa_i>(v))
         {
-            if(!select(std::get<PE::Sa_i>(v).i))
-                return false;
+            // if(!select(std::get<PE::Sa_i>(v).i))
+            //     return false;
         }
         else if(std::holds_alternative<PE::Si>(v)
             || std::holds_alternative<PE::Sd>(v))

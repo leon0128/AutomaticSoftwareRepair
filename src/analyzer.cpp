@@ -1177,17 +1177,9 @@ bool Analyzer::analyze(const TOKEN::PostfixExpression *pe)
 
         }
         else if(std::holds_alternative<PE::Si>(v))
-        {
-            const auto &s{std::get<PE::Si>(v)};
-
-
-        }
+            ;
         else if(std::holds_alternative<PE::Sd>(v))
-        {
-            const auto &s{std::get<PE::Sd>(v)};
-
-
-        }
+            ;
         else if(std::holds_alternative<PE::Stn_il>(v))
         {
             const auto &s{std::get<PE::Stn_il>(v)};
