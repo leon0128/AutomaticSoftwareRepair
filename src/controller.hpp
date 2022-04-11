@@ -3,6 +3,8 @@
 
 #include <string>
 #include <unordered_map>
+#include <deque>
+#include <filesystem>
 
 class Analyzer;
 
@@ -16,15 +18,18 @@ public:
     Controller(const Controller&) = delete;
     Controller(Controller&&) = delete;
 
-    bool execute();
+    bool execute(int argc, char **argv);
 
 private:
-    bool initialize();
-    bool analyzeFile(const std::string &filename
-        , Analyzer&);
+    bool initialize(int argc, char **argv);
+
+    bool addAllFiles(std::deque<std::string>&
+        , const std::filesystem::path &path);
+    Analyzer *analyze(const std::string &filename);
     
     bool initConfigureError(const std::string &what) const;
-    
+    bool poolAnalyzingWarning(const std::string &what) const;
+    bool emptyPoolError() const;
 };
 
 #endif

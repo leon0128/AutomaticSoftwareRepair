@@ -55,7 +55,7 @@ private:
 };
 
 // global object
-inline extern Random RAND{};
+inline Random RAND{};
 
 }
 

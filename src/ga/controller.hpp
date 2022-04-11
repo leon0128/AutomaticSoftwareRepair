@@ -41,12 +41,12 @@ public:
     Controller();
     ~Controller();
 
-    bool execute(const Analyzer &src
-        , const std::vector<Analyzer> &pool);
+    bool execute(std::shared_ptr<Analyzer> src
+        , const std::vector<std::shared_ptr<Analyzer>> &pool);
 
 private:
-    bool initialize(const Analyzer &src
-        , const std::vector<Analyzer> &pool);
+    bool initialize(std::shared_ptr<Analyzer> src
+        , const std::vector<std::shared_ptr<Analyzer>> &pool);
     
     std::shared_ptr<REPRESENTATION::Representation> geneticAlgorithm() const;
     int fitness(const REPRESENTATION::Representation*) const;

@@ -70,7 +70,8 @@ bool TreeGenerator::execute()
 {
     mTranslationUnit = tokTranslationUnit();
 
-    if(mIdx == mSeq.size())
+    if(mIdx == mSeq.size()
+        && mTranslationUnit)
         return true;
     else
     {
@@ -1031,12 +1032,12 @@ TOKEN::SpecifierQualifierList *TreeGenerator::tokSpecifierQualifierList()
     {
         TOKEN::TypeSpecifier *ts{nullptr};
         TOKEN::TypeQualifier *tq{nullptr};
-        if(ts = tokTypeSpecifier())
+        if((ts = tokTypeSpecifier()))
         {
             hasTypeSpecifier = true;
             seq.emplace_back(ts);
         }
-        else if(tq = tokTypeQualifier())
+        else if((tq = tokTypeQualifier()))
             seq.emplace_back(tq);
         else
             break;
@@ -1235,7 +1236,7 @@ TOKEN::AssignmentOperator *TreeGenerator::tokAssignmentOperator()
     else if(isMatch(TOKEN::Punctuator::Tag::PLUS_ASSIGNMENT))
         tag = TOKEN::AssignmentOperator::Tag::ADDITION;
     else if(isMatch(TOKEN::Punctuator::Tag::MINUS_ASSIGNMENT))
-        tag = TOKEN::AssignmentOperator::Tag::SUBSTRACTION;
+        tag = TOKEN::AssignmentOperator::Tag::SUBTRACTION;
     else if(isMatch(TOKEN::Punctuator::Tag::L_SHIFT_ASSIGNMENT))
         tag = TOKEN::AssignmentOperator::Tag::LEFT_SHIFT;
     else if(isMatch(TOKEN::Punctuator::Tag::R_SHIFT_ASSIGNMENT))

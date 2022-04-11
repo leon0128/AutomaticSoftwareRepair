@@ -1,10 +1,10 @@
 #include <iostream>
 #include <utility>
+#include <memory>
+#include <filesystem>
 
-#include <boost/optional.hpp>
-#include <boost/foreach.hpp>
-#include <boost/property_tree/json_parser.hpp>
-
+#include "utility/output.hpp"
+#include "similarity/controller.hpp"
 #include "ga/controller.hpp"
 #include "analyzer.hpp"
 #include "divider.hpp"
@@ -17,150 +17,117 @@ Controller::Controller()
 {
 }
 
-bool Controller::execute()
+bool Controller::execute(int argc, char **argv)
 {
-    if(!initialize())
+    if(!initialize(argc, argv))
         return false;
 
-    Analyzer source;
-    if(!analyzeFile(Configure::SOURCE_FILENAME
-        , source))
-    {
-        source.finalize();
+    std::shared_ptr<Analyzer> source{analyze(Configure::SOURCE_FILENAME)};
+    if(!source)
         return false;
-    }
 
-    std::vector<Analyzer> pool{Configure::POOL.size()};
-    for(std::size_t i{0ull};
-        i < pool.size();
-        i++)
+    std::deque<std::string> allFiles;
+    for(const auto &path : Configure::POOL)
     {
-        if(!analyzeFile(Configure::POOL[i]
-            , pool[i]))
-        {
-            for(auto &&a : pool)
-                a.finalize();
+        if(!addAllFiles(allFiles
+            , std::filesystem::path{path}))
             return false;
-        }        
     }
+
+    std::vector<std::shared_ptr<Analyzer>> pool;
+    for(std::size_t i{0ull}; i < allFiles.size(); i++)
+    {
+        std::shared_ptr<Analyzer> analyzer{analyze(allFiles[i])};
+        if(analyzer)
+            pool.push_back(std::move(analyzer));
+        else
+            poolAnalyzingWarning("ignore this file");
+    }
+
+    if(pool.empty())
+        return emptyPoolError();
+
+    std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>> tus;
+    for(const auto &analyzer : pool)
+        tus.emplace_back(analyzer->filename(), analyzer->translationUnit());
+
+    SIM::Controller simController;
+    if(!simController.execute(tus))
+        return false;
+    
+    return true;
 
     GA::Controller gaController;
     if(!gaController.execute(source
         , pool))
         return false;
 
-    source.finalize();
-    for(auto && a : pool)
-        a.finalize();
-
     return true;
 }
 
-bool Controller::initialize()
+bool Controller::initialize(int argc, char **argv)
 {
-    try
-    {
-        boost::property_tree::ptree ptree;
-        boost::property_tree::read_json(CONFIGURE_FILENAME
-            , ptree);
-
-        Configure::SOURCE_FILENAME
-            = ptree.get<decltype(Configure::SOURCE_FILENAME)>("source_filename");
-        Configure::TARGET_FUNCTION_NAMES.clear();
-        for(const auto &child : ptree.get_child("target_function_names"))
-            Configure::TARGET_FUNCTION_NAMES.push_back(child.second.data());
-        Configure::POOL.clear();
-        for(const auto &child : ptree.get_child("pool"))
-            Configure::POOL.push_back(child.second.data());
-        Configure::RESULT_FILENAME
-            = ptree.get<decltype(Configure::RESULT_FILENAME)>("result_filename");
-        Configure::COMPILER
-            = ptree.get<decltype(Configure::COMPILER)>("compiler");
-        Configure::TEST_SCRIPT
-            = ptree.get<decltype(Configure::TEST_SCRIPT)>("test_script");
-        Configure::TEST_FILENAME
-            = ptree.get<decltype(Configure::TEST_FILENAME)>("test_filename");
-        Configure::EXECUTION_NAME
-            = ptree.get<decltype(Configure::EXECUTION_NAME)>("execution_name");
-        Configure::POSITIVE_TEST_PREFIX
-            = ptree.get<decltype(Configure::POSITIVE_TEST_PREFIX)>("positive_test_prefix");
-        Configure::NEGATIVE_TEST_PREFIX
-            = ptree.get<decltype(Configure::NEGATIVE_TEST_PREFIX)>("negative_test_prefix");
-        Configure::NUM_POSITIVE_TEST
-            = ptree.get<decltype(Configure::NUM_POSITIVE_TEST)>("num_positive_test");
-        Configure::NUM_NEGATIVE_TEST
-            = ptree.get<decltype(Configure::NUM_NEGATIVE_TEST)>("num_negative_test");
-        Configure::POSITIVE_TEST_WEIGHT
-            = ptree.get<decltype(Configure::POSITIVE_TEST_WEIGHT)>("positive_test_weight");
-        Configure::NEGATIVE_TEST_WEIGHT
-            = ptree.get<decltype(Configure::NEGATIVE_TEST_WEIGHT)>("negative_test_weight");
-        Configure::GOAL_SCORE
-            = ptree.get<decltype(Configure::GOAL_SCORE)>("goal_score");
-        Configure::FAILURE_LIMIT
-            = ptree.get<decltype(Configure::FAILURE_LIMIT)>("failure_limit");
-        Configure::POP_SIZE
-            = ptree.get<decltype(Configure::POP_SIZE)>("pop_size");
-        Configure::MAX_GEN
-            = ptree.get<decltype(Configure::MAX_GEN)>("max_gen");
-        Configure::NUM_ELITE
-            = ptree.get<decltype(Configure::NUM_ELITE)>("num_elite");
-        Configure::TOURNAMENT_SIZE
-            = ptree.get<decltype(Configure::TOURNAMENT_SIZE)>("tournament_size");
-        Configure::ADDING_PROBABILITY
-            = ptree.get<decltype(Configure::ADDING_PROBABILITY)>("adding_probability");
-        Configure::SUBTRACTING_PROBABILITY
-            = ptree.get<decltype(Configure::SUBTRACTING_PROBABILITY)>("subtracting_probability");
-        Configure::SWAPPING_PROBABILITY
-            = ptree.get<decltype(Configure::SWAPPING_PROBABILITY)>("swapping_probability");
-        Configure::ADDING_NEW_OPERATION_PROBABILITY
-            = ptree.get<decltype(Configure::ADDING_NEW_OPERATION_PROBABILITY)>("adding_new_operation_probability");
-        Configure::CONCATENATION_PROBABILITY
-            = ptree.get<decltype(Configure::CONCATENATION_PROBABILITY)>("concatenation_probability");
-    }
-    catch(const std::exception &e)
-    {
-        return initConfigureError(e.what());
-    }
-
-    if(Configure::MAX_GEN <= 0)
-        return initConfigureError("MAX_GEN <= 0");
-    else if(Configure::POP_SIZE <= 0)
-        return initConfigureError("POP_SIZE <= 0");
-    else if(Configure::POP_SIZE < Configure::NUM_ELITE)
-        return initConfigureError("POP_SIZE < NUM_ELITE");
-    else if(Configure::TOURNAMENT_SIZE <= 0
-        || Configure::TOURNAMENT_SIZE > Configure::POP_SIZE)
-        return initConfigureError("TOURNAMENT_SIZE <= 0 || TOURNAMENT_SIZE > POP_SIZE");
-    else if(Configure::POOL.empty())
-        return initConfigureError("POOL is empty");
+    if(!Configure::parseCommandLineArguments(argc, argv))
+        return false;
 
     return true;
 }
 
-bool Controller::analyzeFile(const std::string &filename
-    , Analyzer &analyzer)
+bool Controller::addAllFiles(std::deque<std::string> &files
+    , const std::filesystem::path &path)
+{   
+    auto &&status{std::filesystem::status(std::filesystem::path(path))};
+
+    switch(status.type())
+    {
+        case(std::filesystem::file_type::regular):
+        {
+            if(path.extension().string() == ".c")
+                files.push_back(path.string());
+            break;
+        }
+        case(std::filesystem::file_type::directory):
+        {
+            for(const auto &child : std::filesystem::directory_iterator{path})
+            {
+                if(!addAllFiles(files
+                    , child.path()))
+                    return false;
+            }
+            break;
+        }
+
+        default:;
+    }
+
+    return true;
+}
+
+Analyzer *Controller::analyze(const std::string &filename)
 {
     Sequencer sequencer;
     if(!sequencer.execute(filename))
-        return false;
+        return nullptr;
     
     TreeGenerator treeGenerator{filename, sequencer.seq()};
     if(!treeGenerator.execute())
-        return false;
+        return nullptr;
 
     if(!Divider::execute(treeGenerator.translationUnit()))
-        return false;
+        return nullptr;
     
-    if(!analyzer.execute(filename
+    Analyzer *analyzer{new Analyzer{}};
+    if(!analyzer->execute(filename
         , treeGenerator.translationUnit()))
     {
         treeGenerator.translationUnit(nullptr);
-        return false;
+        delete analyzer;
+        return nullptr;
     }
 
     treeGenerator.translationUnit(nullptr);
     
-    return true;
+    return analyzer;
 }
 
 bool Controller::initConfigureError(const std::string &message) const
@@ -170,5 +137,21 @@ bool Controller::initConfigureError(const std::string &message) const
         "    diag: " << message
         << std::endl;
 
+    return false;
+}
+
+bool Controller::poolAnalyzingWarning(const std::string &what) const
+{
+    std::cerr << "Controller::poolAnalyzingWarning():\n"
+        "    what: " << what
+        << std::endl;
+    return false;
+}
+
+bool Controller::emptyPoolError() const
+{
+    std::cerr << "Controller::emptyPoolError():\n"
+        "    what: pool is empty.\n"
+        << std::flush;
     return false;
 }

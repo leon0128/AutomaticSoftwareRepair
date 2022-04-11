@@ -31,8 +31,8 @@ Controller::~Controller()
         delete block;
 }
 
-bool Controller::execute(const Analyzer &srcAnalyzer
-    , const std::vector<Analyzer> &analyzerPool)
+bool Controller::execute(std::shared_ptr<Analyzer> srcAnalyzer
+    , const std::vector<std::shared_ptr<Analyzer>> &analyzerPool)
 {
     if(!initialize(srcAnalyzer
         , analyzerPool))
@@ -48,15 +48,15 @@ bool Controller::execute(const Analyzer &srcAnalyzer
     return true;
 }
 
-bool Controller::initialize(const Analyzer &src
-    , const std::vector<Analyzer> &pool)
+bool Controller::initialize(std::shared_ptr<Analyzer> src
+    , const std::vector<std::shared_ptr<Analyzer>> &pool)
 {
-    mBlock = new BLOCK::Block{src.translationUnit()
-        , src.scope()->id()};
+    mBlock = new BLOCK::Block{src->translationUnit()
+        , src->scope()->id()};
     for(const auto &analyzer : pool)
     {
-        mPool.push_back(new BLOCK::Block{analyzer.translationUnit()
-            , analyzer.scope()->id()});
+        mPool.push_back(new BLOCK::Block{analyzer->translationUnit()
+            , analyzer->scope()->id()});
     }
 
     if(!REPRESENTATION::Representation::initialize(mPool
@@ -150,7 +150,7 @@ std::shared_ptr<REPRESENTATION::Representation> Controller::geneticAlgorithm() c
         std::cout << "result is not found.\n";
     std::cout << std::flush;
 
-    return std::move(result);
+    return result;
 }
 
 int Controller::fitness(const REPRESENTATION::Representation *rep) const

@@ -8,26 +8,26 @@
 namespace SYSTEM
 {
 
-int system(const std::string &cmd);
+inline extern int system(const std::string &cmd);
 template<class Str
     , class ...Args>
-int system(Str &&str
+inline extern int system(Str &&str
     , Args &&...args);
 
 template<class Str
     , class ...Args>
-std::string command(Str &&str
+inline extern std::string command(Str &&str
     , Args &&...args);
-std::string command();
+inline extern std::string command();
 
-int system(const std::string &cmd)
+inline extern int system(const std::string &cmd)
 {
     return std::system(cmd.c_str());
 }
 
 template<class Str
     , class ...Args>
-int system(Str &&str
+inline extern int system(Str &&str
     , Args &&...args)
 {
     return std::system(command(std::forward<Str>(str)
@@ -36,7 +36,7 @@ int system(Str &&str
 
 template<class Str
     , class ...Args>
-std::string command(Str &&str
+inline extern std::string command(Str &&str
     , Args &&...args)
 {
     std::string cmd{str};
@@ -45,7 +45,7 @@ std::string command(Str &&str
     return cmd;
 }
 
-std::string command()
+inline extern std::string command()
 {
     return {};
 }

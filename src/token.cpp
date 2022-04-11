@@ -3457,7 +3457,7 @@ std::string &AssignmentOperator::str(std::string &res, std::size_t &indent) cons
         case(Tag::ADDITION):
             res += "+=";
             break;
-        case(Tag::SUBSTRACTION):
+        case(Tag::SUBTRACTION):
             res += "-=";
             break;
         case(Tag::LEFT_SHIFT):
@@ -3847,7 +3847,7 @@ DirectAbstractDeclarator *DirectAbstractDeclarator::copy() const
         }
         else if(std::holds_alternative<Sp>(v))
         {
-            auto &&s = std::get<Sp>(v);
+            // auto &&s = std::get<Sp>(v);
             cv.emplace<Sp>();
         }
         else if(std::holds_alternative<Sptl>(v))
@@ -3893,7 +3893,7 @@ std::string &DirectAbstractDeclarator::str(std::string &res, std::size_t &indent
         }
         else if(std::holds_alternative<Sp>(v))
         {
-            auto &&s = std::get<Sp>(v);
+            // auto &&s = std::get<Sp>(v);
             res += "[*]";
         }
         else if(std::holds_alternative<Sptl>(v))
@@ -3987,12 +3987,12 @@ PostfixExpression *PostfixExpression::copy() const
         }
         else if(std::holds_alternative<Si>(v))
         {
-            auto &&s = std::get<Si>(v);
+            // auto &&s = std::get<Si>(v);
             cv.emplace<Si>();
         }
         else if(std::holds_alternative<Sd>(v))
         {
-            auto &&s = std::get<Sd>(v);
+            // auto &&s = std::get<Sd>(v);
             cv.emplace<Sd>();
         }
         else if(std::holds_alternative<Stn_il>(v))

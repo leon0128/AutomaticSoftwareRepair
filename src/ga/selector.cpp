@@ -3,7 +3,7 @@
 #include <limits>
 #include <algorithm>
 
-#include "../random.hpp"
+#include "../utility/random.hpp"
 #include "../scope.hpp"
 #include "../identifier.hpp"
 #include "../token.hpp"
@@ -169,7 +169,7 @@ bool Selector::selectOne(const std::vector<std::size_t> &idList
     if(idList.empty())
         return isNotFoundIdentifier();
     
-    result = idList[RAND(idList.size())];
+    result = idList[RANDOM::RAND(idList.size())];
 
     return true;
 }
@@ -415,12 +415,12 @@ bool Selector::select(const TOKEN::IterationStatement *is)
     else if(std::holds_alternative<IS::Sf_e_e_e_s>(is->var))
     {
         auto &&s{std::get<IS::Sf_e_e_e_s>(is->var)};
-        if(s.e0 &&
-            !select(s.e0)
-            || s.e1
-                && !select(s.e1)
-            || s.e2
-                && !select(s.e2)
+        if((s.e0 &&
+            !select(s.e0))
+            || (s.e1
+                && !select(s.e1))
+            || (s.e2
+                && !select(s.e2))
             || !select(s.s))
             return false;
     }
@@ -1109,6 +1109,8 @@ bool Selector::select(const TOKEN::StructOrUnionSpecifier *sous)
     }
     else
         return invalidVariantError("StructOrUnionSpecifier");
+
+    return true;
 }
 
 bool Selector::select(const TOKEN::StructDeclarationList *sdl)

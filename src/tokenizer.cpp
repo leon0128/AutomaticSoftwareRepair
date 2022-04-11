@@ -104,8 +104,8 @@ CharacterConstant *decCharacterConstant(const std::string &src
 
     if(idx < src.size() && 
         ((src[idx] == 'L' && (tag = CharacterConstant::Tag::L, true))
-            || src[idx] == 'u' && (tag = CharacterConstant::Tag::u, true)
-            || src[idx] == 'U' && (tag = CharacterConstant::Tag::U, true)))
+            || (src[idx] == 'u' && (tag = CharacterConstant::Tag::u, true))
+            || (src[idx] == 'U' && (tag = CharacterConstant::Tag::U, true))))
         idx++;
     
     if(idx < src.size() && src[idx] == '\'' && (idx++, true))

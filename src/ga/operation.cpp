@@ -315,7 +315,7 @@ bool Operation::selectSourceStatement(const Pool &pool)
 
         wasIfBlock = block->isIfBlock();
     }
-    while(block = block->stats().at(mSrc.back()).second);
+    while((block = block->stats().at(mSrc.back()).second));
 
     return true;
 }
@@ -410,7 +410,7 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
 
         wasIfBlock = block->isIfBlock();
     }
-    while(block = block->stats().at(mDst.back()).second);
+    while((block = block->stats().at(mDst.back()).second));
 
     return true;
 }

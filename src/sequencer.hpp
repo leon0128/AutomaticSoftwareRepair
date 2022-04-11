@@ -27,6 +27,7 @@ public:
 
 private:
     bool openFile(std::string &src);
+    bool preprocess();
     bool sequencenize(const std::string &src);
     bool convertCharacter();
     bool concatenateStringLiteral();

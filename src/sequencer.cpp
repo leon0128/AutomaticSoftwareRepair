@@ -3,7 +3,9 @@
 #include <limits>
 #include <filesystem>
 
+#include "utility/system.hpp"
 #include "utility/file.hpp"
+#include "configure.hpp"
 #include "token.hpp"
 #include "tokenizer.hpp"
 #include "sequencer.hpp"
@@ -26,7 +28,8 @@ bool Sequencer::execute(const std::string &filename)
     
     std::string src;
 
-    if(!openFile(src)
+    if(!preprocess()
+        || !openFile(src)
         || !sequencenize(src)
         || !convertCharacter()
         || !concatenateStringLiteral())
@@ -37,7 +40,7 @@ bool Sequencer::execute(const std::string &filename)
 
 bool Sequencer::openFile(std::string &src)
 {
-    std::filesystem::path path(mFile);
+    std::filesystem::path path(Configure::TEST_FILENAME);
     if(!PATH::isExist(path, std::filesystem::file_type::regular))
     {
         std::cerr << "sequencer error:\n"
@@ -49,6 +52,36 @@ bool Sequencer::openFile(std::string &src)
 
     return PATH::read(path
         , src);
+}
+
+bool Sequencer::preprocess()
+{
+    std::filesystem::path path{mFile};
+    if(!PATH::isExist(path, std::filesystem::file_type::regular))
+    {
+        std::cerr << "sequencer error:\n"
+            "    what: file is not found.\n"
+            "    file: " << mFile
+            << std::endl;
+        return false;
+    }
+
+    if(SYSTEM::system(Configure::PREPROCESSOR
+        , "-P"
+        , mFile
+        , "-o"
+        , Configure::TEST_FILENAME
+        , "> /dev/null 2>&1")
+        != 0)
+    {
+        std::cerr << "Sequencer::preprocess() error:\n"
+            "    filename: " << mFile
+            << "\n    what: failed to preprocess.\n"
+            << std::flush;
+        return false;
+    }
+
+    return true;
 }
 
 bool Sequencer::sequencenize(const std::string &src)

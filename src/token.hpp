@@ -2002,7 +2002,7 @@ struct AssignmentOperator
         , DIVISION
         , REMAINDER
         , ADDITION
-        , SUBSTRACTION
+        , SUBTRACTION
         , LEFT_SHIFT
         , RIGHT_SHIFT
         , AND

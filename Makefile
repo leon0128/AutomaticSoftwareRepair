@@ -1,66 +1,66 @@
-# software settings
-## all program name
-PROGRAMS           = asr
-## source direcory
+# program settings
+## program name
+PROGRAM = asr
+## source directories
 SOURCE_DIRECTORIES = ./src/ \
 	./src/ga/ \
+	./src/similarity/ \
 	./src/utility/
 
 # compiler settings
-## recommending CXX (cpp compiler)
-RECOMMENDING_CXX  = g++-10
-# preprocessor flags
-CPPFLAGS         +=
-# compiler flags
-CXXFLAGS         += -std=c++17 -g3 -w
-
-# other settings
-## c++ source suffix
-CXX_SOURCE_SUFFIX = .cpp
-## c++ header suffix
-CXX_HEADER_SUFFIX = .hpp
-## c++ object suffix
-CXX_OBJECT_SUFFIX = .o
-## objects name
-OBJECTS = \
-	$(foreach DIR,\
-		$(SOURCE_DIRECTORIES),\
-		$(patsubst %$(CXX_SOURCE_SUFFIX),\
-			%$(CXX_OBJECT_SUFFIX),\
-			$(wildcard $(DIR)*$(CXX_SOURCE_SUFFIX))))
-## headers name
-HEADERS = \
-	$(foreach DIR,\
-		$(SOURCE_DIRECTORIES),\
-		$(wildcard $(DIR)*$(CXX_HEADER_SUFFIX)))
-
-# set CXX (c++ compiler)
-ifneq ($(strip $(shell which $(RECOMMENDING_CXX))),)
-CXX = $(RECOMMENDING_CXX)
-else ifneq ($(strip $(shell which g++-11)),)
-CXX = g++-11
-else ifneq ($(strip $(shell which g++-10)),)
+## c++ compiler
 CXX = g++-10
-else ifneq ($(strip $(shell which g++)),)
-CXX = g++
-endif
-ifneq ($(CXX), $(RECOMMENDING_CXX))
-$(warning Recommended c++ compiler is not found, so $(CXX) is used.)
-endif
+## c++ compiler flags
+CXXFLAGS = -g3 -Wall -std=c++20
+## c++ preprocessor
+CPP = g++-10 -E
+## c++ preprocessor flags
+CPPFLAGS = 
 
-# make all
+###########################################################
+## all files
+ALL_FILES = $(foreach DIR \
+	, $(SOURCE_DIRECTORIES) \
+	, $(wildcard $(DIR)*))
+
+## object files
+OBJECT_FILES = $(foreach DIR, \
+	$(SOURCE_DIRECTORIES), \
+	$(patsubst %.cpp, \
+		%.o, \
+		$(wildcard $(DIR)*.cpp)))
+
+## header files
+HEADER_FILES = $(foreach DIR, \
+	$(SOURCE_DIRECTORIES), \
+	$(wildcard $(DIR)*.hpp)))
+	
+## dependency files
+DEPENDENCY_FILES = $(foreach DIR, \
+	$(SOURCE_DIRECTORIES), \
+	$(patsubst %.cpp, \
+		%.d, \
+		$(wildcard $(DIR)*.cpp)))
+
+# all
 .PHONY: all
-all: $(PROGRAMS)
+all: $(PROGRAM)
+	rm -rf $(DEPENDENCY_FILES)
 
-# make $(PROGRAMS)
-$(PROGRAMS): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $^ -o $@ 
+# $(PROGRAM) recipe
+$(PROGRAM): $(OBJECT_FILES)
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
-# make object
-%$(CXX_OBJECT_SUFFIX): %$(CXX_SOURCE_SUFFIX) $(HEADERS)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+# dependency file recipe
+$(DEPENDENCY_FILES):
+	echo -n $(dir $@) > $@
+	$(CXX) -MM -c $(basename $@).cpp >> $@
+	echo "\t$(CXX) $(CXXFLAGS) -c $(basename $@).cpp -o $(basename $@).o" >> $@
 
 # clean
 .PHONY: clean
 clean:
-	rm -rf $(PROGRAMS) $(OBJECTS)
+	rm -rf $(PROGRAM) $(OBJECT_FILES) $(DEPENDENCY_FILES)
+
+# include dependency files
+-include $(DEPENDENCY_FILES)

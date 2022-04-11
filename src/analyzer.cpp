@@ -104,6 +104,7 @@ Analyzer::Analyzer()
 
 Analyzer::~Analyzer()
 {
+    finalize();
 }
 
 bool Analyzer::execute(const std::string &filename
@@ -142,8 +143,9 @@ std::size_t Analyzer::addStatement(const Analyzer::StatementMap::mapped_type &va
     else if(std::holds_alternative<std::shared_ptr<Statement>>(value))
         std::get<std::shared_ptr<Statement>>(value)->statementId = statId;
 
-    auto &&pair{STATEMENT_MAP.emplace(statId
-        , value)};
+    STATEMENT_MAP.emplace(statId
+        , value);
+
     return statId;
 }
 
@@ -1167,14 +1169,11 @@ bool Analyzer::analyze(const TOKEN::PostfixExpression *pe)
         }
         else if(std::holds_alternative<PE::Sp_i>(v))
         {
-            const auto &s{std::get<PE::Sp_i>(v)};
-
+            // const auto &s{std::get<PE::Sp_i>(v)};
         }
         else if(std::holds_alternative<PE::Sa_i>(v))
         {
-            const auto &s{std::get<PE::Sa_i>(v)};
-
-
+            // const auto &s{std::get<PE::Sa_i>(v)};
         }
         else if(std::holds_alternative<PE::Si>(v))
             ;
@@ -1910,6 +1909,8 @@ std::optional<TYPE::Type>
 
         return {TYPE::Type{TYPE::Enum{ePtr->typeId()}}};
     }
+
+    return {std::nullopt};
 }
 
 bool Analyzer::analyzeMember(const TOKEN::EnumeratorList *el
@@ -2413,7 +2414,7 @@ std::optional<TYPE::Type>
             }
             else if(std::holds_alternative<DAD::Sp>(*iter))
             {
-                auto &&s{std::get<DAD::Sp>(*iter)};
+                // auto &&s{std::get<DAD::Sp>(*iter)};
                 auto &&typeOpt{analyzeType(nullptr, nullptr, false, true, resultType)};
                 if(!typeOpt)
                     return {std::nullopt};

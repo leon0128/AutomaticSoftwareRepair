@@ -17,10 +17,8 @@ std::optional<std::size_t> Register::registerStatement(TOKEN::Statement *stateme
 
     using LS = LabeledStatement;
     using CS = CompoundStatement;
-    using ES = ExpressionStatement;
     using SS = SelectionStatement;
     using IS = IterationStatement;
-    using JS = JumpStatement;
 
 
     std::optional<std::size_t> subId;

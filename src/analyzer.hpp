@@ -70,6 +70,8 @@ public:
 
     TOKEN::TranslationUnit *translationUnit() const noexcept
         {return mTranslationUnit;}
+    const std::string &filename() const noexcept
+        {return mFilename;}
     SCOPE::Scope *scope() const noexcept
         {return mScope;}
 
