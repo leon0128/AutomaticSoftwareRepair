@@ -55,12 +55,15 @@ $(PROGRAM): $(OBJECT_FILES)
 $(DEPENDENCY_FILES):
 	echo -n $(dir $@) > $@
 	$(CXX) -MM -c $(basename $@).cpp >> $@
-	echo "\t$(CXX) $(CXXFLAGS) -c $(basename $@).cpp -o $(basename $@).o" >> $@
+	echo "	rm -rf $@" >> $@
+	echo "	$(CXX) $(CXXFLAGS) -c $(basename $@).cpp -o $(basename $@).o" >> $@
 
 # clean
 .PHONY: clean
 clean:
 	rm -rf $(PROGRAM) $(OBJECT_FILES) $(DEPENDENCY_FILES)
 
-# include dependency files
+## include depndency files
+ifneq ($(MAKECMDGOALS), clean)
 -include $(DEPENDENCY_FILES)
+endif
