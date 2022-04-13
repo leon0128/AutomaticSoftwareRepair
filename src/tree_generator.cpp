@@ -1046,7 +1046,7 @@ TOKEN::SpecifierQualifierList *TreeGenerator::tokSpecifierQualifierList()
         {
             std::size_t preIdx{mIdx};
             if(auto *sdl{tokStructDeclaratorList()};
-                bool{sdl})
+                sdl != nullptr)
             {
                 delete sdl;
                 mIdx = preIdx;

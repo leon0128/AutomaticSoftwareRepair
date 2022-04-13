@@ -130,7 +130,7 @@ void Operation::insertScopeId(const BLOCK::Block *block)
 
     for(const auto &pair : block->stats())
     {
-        if(bool{pair.second})
+        if(pair.second != nullptr)
             insertScopeId(pair.second);
     }
 }
@@ -154,7 +154,7 @@ bool Operation::insertStatementId(std::size_t scopeId
             }
         }
 
-        if(bool{pair.second})
+        if(pair.second != nullptr)
             insertStatementId(scopeId
                 , pair.second);
     }
