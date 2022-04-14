@@ -51,7 +51,8 @@ const std::unordered_map<Keyword::Tag, std::string> Keyword::KEYWORD_MAP
         , {Tag::IMAGINARY, "_Imaginary"}
         , {Tag::NORETURN, "_Noreturn"}
         , {Tag::STATIC_ASSERT, "_Static_assert"}
-        , {Tag::THREAD_LOCAL, "_Thread_local"}};
+        , {Tag::THREAD_LOCAL, "_Thread_local"}
+        , {Tag::ATTRIBUTE, "__attribute__"}};
 
 const std::unordered_map<Punctuator::Tag, std::string> Punctuator::PUNCTUATOR_MAP
     = {{Tag::L_SQUARE_BRACKET, "["}
@@ -5592,6 +5593,33 @@ std::string &MultiplicativeExpression::str(std::string &res, std::size_t &indent
             s.ce->str(res, indent);
         }
     }
+
+    return res;
+}
+
+Attribute::~Attribute()
+{
+    for(auto &&t : seq)
+        delete t;
+}
+
+Attribute *Attribute::copy() const
+{
+    std::vector<Token*> cseq;
+    for(auto &&t : seq)
+        cseq.push_back(t->copy());
+    
+    return new Attribute{std::move(cseq)};
+}
+
+std::string &Attribute::str(std::string &res, std::size_t &indent) const
+{
+    res += "__attribute__((";
+
+    for(auto &&t : seq)
+        t->str(res, indent);
+    
+    res += "))";
 
     return res;
 }

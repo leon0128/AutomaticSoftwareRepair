@@ -2441,6 +2441,25 @@ TOKEN::MultiplicativeExpression *TreeGenerator::tokMultiplicativeExpression()
     return new TOKEN::MultiplicativeExpression(std::move(seq));
 }
 
+TOKEN::Attribute *TreeGenerator::tokAttribute()
+{
+    using namespace TOKEN;
+
+    std::size_t pre{mIdx};
+    std::size_t numParenthesis{0ull};
+
+    if(isMatch(Keyword::Tag::ATTRIBUTE)
+        && isMatch(Punctuator::Tag::L_PARENTHESIS)
+        && isMatch(Punctuator::Tag::L_PARENTHESIS))
+    {
+        numParenthesis += 2;
+
+
+    }
+
+    return nullptr;
+}
+
 TOKEN::IntegerConstant *TreeGenerator::convIntegerConstant()
 {
     if(mIdx < mSeq.size()

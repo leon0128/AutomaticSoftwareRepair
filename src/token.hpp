@@ -135,6 +135,8 @@ class ShiftExpression;
 class AdditiveExpression;
 class MultiplicativeExpression;
 
+class Attribute;
+
 template<class T>
 extern std::string str(const T *t)
 {
@@ -180,6 +182,7 @@ struct Keyword
         , VOLATILE, WHILE, ALIGNAS, ALIGNOF
         , ATOMIC, BOOL, COMPLEX, GENERIC
         , IMAGINARY, NORETURN, STATIC_ASSERT, THREAD_LOCAL
+        , ATTRIBUTE
     };
 
     Tag tag;
@@ -3036,6 +3039,19 @@ struct MultiplicativeExpression
     ~MultiplicativeExpression();
 
     MultiplicativeExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
+};
+
+struct Attribute
+{
+    std::vector<Token*> seq;
+
+    template<class ...Args>
+    Attribute(Args &&...args)
+        : seq{std::forward<Args>(args)...}{}
+    ~Attribute();
+
+    Attribute *copy() const;
     std::string &str(std::string&, std::size_t&) const;
 };
 
