@@ -115,7 +115,7 @@ private:
     TOKEN::AdditiveExpression *tokAdditiveExpression();
     TOKEN::MultiplicativeExpression *tokMultiplicativeExpression();
 
-    TOKEN::Attribute *tokAttribute();
+    TOKEN::AttributeSpecifier *tokAttributeSpecifier();
 
     TOKEN::IntegerConstant *convIntegerConstant();
     TOKEN::FloatingConstant *convFloatingConstant();

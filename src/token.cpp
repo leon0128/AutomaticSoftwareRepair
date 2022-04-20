@@ -2647,6 +2647,7 @@ StructOrUnionSpecifier::~StructOrUnionSpecifier()
     {
         auto &&s = std::get<Ssou_i_sdl>(var);
         delete s.sou;
+        delete s.asl;
         delete s.i;
         delete s.sdl;
     }
@@ -2654,6 +2655,7 @@ StructOrUnionSpecifier::~StructOrUnionSpecifier()
     {
         auto &&s = std::get<Ssou_i>(var);
         delete s.sou;
+        delete s.asl;
         delete s.i;
     }
 }
@@ -2667,6 +2669,7 @@ StructOrUnionSpecifier *StructOrUnionSpecifier::copy() const
     {
         auto &&s = std::get<Ssou_i_sdl>(var);
         cvar.emplace<Ssou_i_sdl>(s.sou->copy()
+            , s.asl ? s.asl->copy() : nullptr
             , s.i != nullptr ? s.i->copy() : nullptr
             , s.sdl->copy());
     }
@@ -2674,6 +2677,7 @@ StructOrUnionSpecifier *StructOrUnionSpecifier::copy() const
     {
         auto &&s = std::get<Ssou_i>(var);
         cvar.emplace<Ssou_i>(s.sou->copy()
+            , s.asl ? s.asl->copy() : nullptr
             , s.i->copy());
     }
 
@@ -2688,6 +2692,11 @@ std::string &StructOrUnionSpecifier::str(std::string &res, std::size_t &indent) 
     {
         auto &&s = std::get<Ssou_i_sdl>(var);
         s.sou->str(res, indent);
+        if(s.asl != nullptr)
+        {
+            res.push_back(' ');
+            s.asl->str(res, indent);
+        }
         if(s.i != nullptr)
         {
             res.push_back(' ');
@@ -2706,6 +2715,11 @@ std::string &StructOrUnionSpecifier::str(std::string &res, std::size_t &indent) 
     {
         auto &&s = std::get<Ssou_i>(var);
         s.sou->str(res, indent);
+        if(s.asl != nullptr)
+        {
+            res.push_back(' ');
+            s.asl->str(res, indent);
+        }
         res.push_back(' ');
         s.i->str(res, indent);
     }
@@ -3528,6 +3542,8 @@ Statement::~Statement()
         delete std::get<IterationStatement*>(var);
     else if(std::holds_alternative<JumpStatement*>(var))
         delete std::get<JumpStatement*>(var);
+    else if(std::holds_alternative<AttributeStatement*>(var))
+        delete std::get<AttributeStatement*>(var);
 }
 
 Statement *Statement::copy() const
@@ -3547,6 +3563,8 @@ Statement *Statement::copy() const
         cvar.emplace<IterationStatement*>(std::get<IterationStatement*>(var)->copy());
     else if(std::holds_alternative<JumpStatement*>(var))
         cvar.emplace<JumpStatement*>(std::get<JumpStatement*>(var)->copy());
+    else if(std::holds_alternative<AttributeStatement*>(var))
+        cvar.emplace<AttributeStatement*>(std::get<AttributeStatement*>(var)->copy());
 
     auto &&ret{new Statement(cvar)};
     ret->scopeId = scopeId;
@@ -3571,6 +3589,8 @@ std::string &Statement::str(std::string &res, std::size_t &indent) const
         std::get<IterationStatement*>(var)->str(res, indent);
     else if(std::holds_alternative<JumpStatement*>(var))
         std::get<JumpStatement*>(var)->str(res, indent);
+    else if(std::holds_alternative<AttributeStatement*>(var))
+        std::get<AttributeStatement*>(var)->str(res, indent);
 
     return res;
 }
@@ -3749,11 +3769,13 @@ Enumerator::~Enumerator()
     {
         auto &&s = std::get<Sec>(var);
         delete s.ec;
+        delete s.asl;
     }
     else if(std::holds_alternative<Sec_ce>(var))
     {
         auto &&s = std::get<Sec_ce>(var);
         delete s.ec;
+        delete s.asl;
         delete s.ce;
     }
 }
@@ -3766,12 +3788,14 @@ Enumerator *Enumerator::copy() const
     else if(std::holds_alternative<Sec>(var))
     {
         auto &&s = std::get<Sec>(var);
-        cvar.emplace<Sec>(s.ec->copy());
+        cvar.emplace<Sec>(s.ec->copy()
+            , (s.asl ? s.asl->copy() : nullptr));
     }
     else if(std::holds_alternative<Sec_ce>(var))
     {
         auto &&s = std::get<Sec_ce>(var);
         cvar.emplace<Sec_ce>(s.ec->copy()
+            , s.asl ? s.asl->copy() : nullptr
             , s.ce->copy());
     }
 
@@ -3786,11 +3810,21 @@ std::string &Enumerator::str(std::string &res, std::size_t &indent) const
     {
         auto &&s = std::get<Sec>(var);
         s.ec->str(res, indent);
+        if(s.asl != nullptr)
+        {
+            res.push_back(' ');
+            s.asl->str(res, indent);
+        }
     }
     else if(std::holds_alternative<Sec_ce>(var))
     {
         auto &&s = std::get<Sec_ce>(var);
         s.ec->str(res, indent);
+        if(s.asl != nullptr)
+        {
+            res.push_back(' ');
+            s.asl->str(res, indent);
+        }
         res += " = ";
         s.ce->str(res, indent);
     }
@@ -4230,6 +4264,7 @@ LabeledStatement::~LabeledStatement()
     {
         auto &&s = std::get<Si_s>(var);
         delete s.i;
+        delete s.asl;
         delete s.s;
     }
     else if(std::holds_alternative<Sce_s>(var))
@@ -4254,6 +4289,7 @@ LabeledStatement *LabeledStatement::copy() const
     {
         auto &&s = std::get<Si_s>(var);
         cvar.emplace<Si_s>(s.i->copy()
+            , (s.asl ? s.asl->copy() : nullptr)
             , s.s->copy());
     }
     else if(std::holds_alternative<Sce_s>(var))
@@ -4281,6 +4317,8 @@ std::string &LabeledStatement::str(std::string &res, std::size_t &indent) const
         auto &&s = std::get<Si_s>(var);
         s.i->str(res, indent);
         res.push_back(':');
+        if(s.asl != nullptr)
+            s.asl->str(res, indent);
         addLine(res, indent);
         s.s->str(res, indent);
     }
@@ -5597,30 +5635,76 @@ std::string &MultiplicativeExpression::str(std::string &res, std::size_t &indent
     return res;
 }
 
-Attribute::~Attribute()
+AttributeSpecifier::~AttributeSpecifier()
 {
     for(auto &&t : seq)
         delete t;
 }
 
-Attribute *Attribute::copy() const
+AttributeSpecifier *AttributeSpecifier::copy() const
 {
     std::vector<Token*> cseq;
     for(auto &&t : seq)
         cseq.push_back(t->copy());
     
-    return new Attribute{std::move(cseq)};
+    return new AttributeSpecifier{std::move(cseq)};
 }
 
-std::string &Attribute::str(std::string &res, std::size_t &indent) const
+std::string &AttributeSpecifier::str(std::string &res, std::size_t &indent) const
 {
     res += "__attribute__((";
 
     for(auto &&t : seq)
+    {
         t->str(res, indent);
+        res.push_back(' ');
+    }
     
     res += "))";
 
+    return res;
+}
+
+AttributeSpecifierList::~AttributeSpecifierList()
+{
+    for(auto &&as : seq)
+        delete as;
+}
+
+AttributeSpecifierList *AttributeSpecifierList::copy() const
+{
+    std::vector<AttributeSpecifier*> cseq;
+    for(auto &&as : seq)
+        cseq.push_back(as->copy());
+
+    return new AttributeSpecifierList{std::move(cseq)};
+}
+
+std::string &AttributeSpecifierList::str(std::string &res, std::size_t &indent) const
+{
+    for(auto &&as : seq)
+    {
+        as->str(res, indent);
+        res.push_back(' ');
+    }
+
+    return res;
+}
+
+AttributeStatement::~AttributeStatement()
+{
+    delete asl;
+}
+
+AttributeStatement *AttributeStatement::copy() const
+{
+    return new AttributeStatement{asl->copy()};
+}
+
+std::string &AttributeStatement::str(std::string &res, std::size_t &indent) const
+{
+    asl->str(res, indent);
+    res.push_back(';');
     return res;
 }
 
