@@ -212,7 +212,7 @@ bool Configure::setDefaultValue()
                 RESULT_FILENAME = "result.c";
                 break;
             case(Tag::PREPROCESSOR):
-                PREPROCESSOR = "cpp";
+                PREPROCESSOR = "cpp -P";
                 break;
             case(Tag::COMPILER):
                 COMPILER = "gcc";
