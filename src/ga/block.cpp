@@ -141,7 +141,7 @@ Block::Block(const TOKEN::CompoundStatement *cs
 {
     using namespace TOKEN;
 
-    if(bool{cs->bil})
+    if(cs->bil != nullptr)
     {
         for(const auto *bi : cs->bil->seq)
         {
@@ -307,7 +307,7 @@ StatPair Block::createStatPair(const TOKEN::Statement *statement
     , std::size_t scopeId)
 {
     auto &&statPair{createStatPair(statement)};
-    if(bool{statPair.second})
+    if(statPair.second != nullptr)
         statPair.second->changeScopeId(scopeId);
     
     return statPair;
@@ -319,7 +319,7 @@ void Block::changeScopeId(std::size_t scopeId)
 
     for(auto &&pair : mStats)
     {
-        if(bool{pair.second})
+        if(pair.second != nullptr)
             pair.second->changeScopeId(scopeId);
     }
 }

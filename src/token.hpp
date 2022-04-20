@@ -135,6 +135,10 @@ class ShiftExpression;
 class AdditiveExpression;
 class MultiplicativeExpression;
 
+class AttributeSpecifier;
+class AttributeSpecifierList;
+class AttributeStatement;
+
 template<class T>
 extern std::string str(const T *t)
 {
@@ -180,6 +184,7 @@ struct Keyword
         , VOLATILE, WHILE, ALIGNAS, ALIGNOF
         , ATOMIC, BOOL, COMPLEX, GENERIC
         , IMAGINARY, NORETURN, STATIC_ASSERT, THREAD_LOCAL
+        , ATTRIBUTE
     };
 
     Tag tag;
@@ -1588,22 +1593,28 @@ struct StructOrUnionSpecifier
     struct Ssou_i_sdl
     {
         StructOrUnion *sou;
+        AttributeSpecifierList *asl;
         Identifier *i;
         StructDeclarationList *sdl;
         constexpr Ssou_i_sdl(StructOrUnion *insou = nullptr
+            , AttributeSpecifierList *inasl = nullptr
             , Identifier *ini = nullptr
             , StructDeclarationList *insdl = nullptr) noexcept
             : sou(insou)
+            , asl{inasl}
             , i(ini)
             , sdl(insdl){}
     };
     struct Ssou_i
     {
         StructOrUnion *sou;
+        AttributeSpecifierList *asl;
         Identifier *i;
         constexpr Ssou_i(StructOrUnion *insou = nullptr
+            , AttributeSpecifierList *inasl = nullptr
             , Identifier *ini = nullptr) noexcept
             : sou(insou)
+            , asl{inasl}
             , i(ini){}
     };
 
@@ -2041,7 +2052,8 @@ struct Statement
         , ExpressionStatement*
         , SelectionStatement*
         , IterationStatement*
-        , JumpStatement*>;
+        , JumpStatement*
+        , AttributeStatement*>;
 
     Var var;
     // if statement has sub-statement and sub-statement has block scope,
@@ -2148,16 +2160,22 @@ struct Enumerator
     struct Sec
     {
         EnumerationConstant *ec;
-        constexpr Sec(EnumerationConstant *inec = nullptr) noexcept
-            : ec(inec){}
+        AttributeSpecifierList *asl;
+        constexpr Sec(EnumerationConstant *inec = nullptr
+            , AttributeSpecifierList *inasl = nullptr) noexcept
+            : ec(inec)
+            , asl{inasl}{}
     };
     struct Sec_ce
     {
         EnumerationConstant *ec;
+        AttributeSpecifierList *asl;
         ConstantExpression *ce;
         constexpr Sec_ce(EnumerationConstant *inec = nullptr
+            , AttributeSpecifierList *inasl = nullptr
             , ConstantExpression *ince = nullptr) noexcept
             : ec(inec)
+            , asl{inasl}
             , ce(ince){}
     };
 
@@ -2392,10 +2410,13 @@ struct LabeledStatement
     struct Si_s
     {
         Identifier *i;
+        AttributeSpecifierList *asl;
         Statement *s;
         constexpr Si_s(Identifier *ini = nullptr
+            , AttributeSpecifierList *inasl = nullptr
             , Statement *ins = nullptr) noexcept
             : i(ini)
+            , asl{inasl}
             , s(ins){}
     };
     struct Sce_s
@@ -3036,6 +3057,44 @@ struct MultiplicativeExpression
     ~MultiplicativeExpression();
 
     MultiplicativeExpression *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
+};
+
+struct AttributeSpecifier
+{
+    std::vector<Token*> seq;
+
+    template<class ...Args>
+    AttributeSpecifier(Args &&...args)
+        : seq{std::forward<Args>(args)...}{}
+    ~AttributeSpecifier();
+
+    AttributeSpecifier *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
+};
+
+struct AttributeSpecifierList
+{
+    std::vector<AttributeSpecifier*> seq;
+
+    template<class ...Args>
+    AttributeSpecifierList(Args &&...args)
+        : seq{std::forward<Args>(args)...}{}
+    ~AttributeSpecifierList();
+
+    AttributeSpecifierList *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
+};
+
+struct AttributeStatement
+{
+    AttributeSpecifierList *asl;
+
+    constexpr AttributeStatement(AttributeSpecifierList *inasl = nullptr) noexcept
+        : asl{inasl}{}
+    ~AttributeStatement();
+
+    AttributeStatement *copy() const;
     std::string &str(std::string&, std::size_t&) const;
 };
 

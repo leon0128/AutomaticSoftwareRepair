@@ -32,7 +32,7 @@ bool Divider::divide(TOKEN::CompoundStatement *cs)
 {
     using namespace TOKEN;
 
-    if(bool{cs->bil})
+    if(cs->bil != nullptr)
     {
         for(std::size_t i{0ull};
             i < cs->bil->seq.size();
@@ -124,7 +124,7 @@ bool Divider::divide(TOKEN::LabeledStatement *ls)
     else if(std::holds_alternative<LS::Ss>(ls->var))
         statement = std::get<LS::Ss>(ls->var).s;
     
-    if(bool{statement})
+    if(statement != nullptr)
         return divide(statement);
     
     return true;
@@ -151,12 +151,12 @@ bool Divider::divide(TOKEN::SelectionStatement *ss)
     else if(std::holds_alternative<SS::Ss_e_s>(ss->var))
         stats.first = std::get<SS::Ss_e_s>(ss->var).s;
 
-    if(bool{stats.first})
+    if(stats.first != nullptr)
     {
         if(!divide(stats.first))
             return false;
     }
-    if(bool{stats.second})
+    if(stats.second != nullptr)
     {
         if(!divide(stats.second))
             return false;
@@ -180,7 +180,7 @@ bool Divider::divide(TOKEN::IterationStatement *is)
     else if(std::holds_alternative<IS::Sf_d_e_e_s>(is->var))
         statement = std::get<IS::Sf_d_e_e_s>(is->var).s;
     
-    if(bool{statement})
+    if(statement != nullptr)
     {
         if(!divide(statement))
             return false;

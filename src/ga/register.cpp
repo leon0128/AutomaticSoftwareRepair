@@ -45,7 +45,7 @@ std::optional<std::size_t> Register::registerStatement(TOKEN::Statement *stateme
     {
         auto *cs{std::get<CS*>(statement->var)};
 
-        if(bool{cs->bil})
+        if(cs->bil != nullptr)
         {
             for(auto *bi : cs->bil->seq)
             {
