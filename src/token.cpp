@@ -1896,6 +1896,8 @@ DeclarationSpecifiers::~DeclarationSpecifiers()
             delete std::get<FunctionSpecifier*>(v);
         else if(std::holds_alternative<AlignmentSpecifier*>(v))
             delete std::get<AlignmentSpecifier*>(v);
+        else if(std::holds_alternative<AttributeSpecifierList*>(v))
+            delete std::get<AttributeSpecifierList*>(v);
     }
 }
 
@@ -1918,7 +1920,9 @@ DeclarationSpecifiers *DeclarationSpecifiers::copy() const
             cv.emplace<FunctionSpecifier*>(std::get<FunctionSpecifier*>(v)->copy());
         else if(std::holds_alternative<AlignmentSpecifier*>(v))
             cv.emplace<AlignmentSpecifier*>(std::get<AlignmentSpecifier*>(v)->copy());
-    
+        else if(std::holds_alternative<AttributeSpecifierList*>(v))
+            cv.emplace<AttributeSpecifierList*>(std::get<AttributeSpecifierList*>(v)->copy());
+
         cseq.push_back(cv);
     }
 
@@ -1941,6 +1945,8 @@ std::string &DeclarationSpecifiers::str(std::string &res, std::size_t &indent) c
             std::get<FunctionSpecifier*>(v)->str(res, indent);
         else if(std::holds_alternative<AlignmentSpecifier*>(v))
             std::get<AlignmentSpecifier*>(v)->str(res, indent);
+        else if(std::holds_alternative<AttributeSpecifierList*>(v))
+            std::get<AttributeSpecifierList*>(v)->str(res, indent);
     };
 
     if(!seq.empty())
@@ -2555,12 +2561,16 @@ InitDeclarator::~InitDeclarator()
     else if(std::holds_alternative<Sd>(var))
     {
         auto &&s = std::get<Sd>(var);
+        delete s.asl0;
         delete s.d;
+        delete s.asl1;
     }
     else if(std::holds_alternative<Sd_i>(var))
     {
         auto &&s = std::get<Sd_i>(var);
+        delete s.asl0;
         delete s.d;
+        delete s.asl1;
         delete s.i;
     }
 }
@@ -2573,12 +2583,16 @@ InitDeclarator *InitDeclarator::copy() const
     else if(std::holds_alternative<Sd>(var))
     {
         auto &&s = std::get<Sd>(var);
-        cvar.emplace<Sd>(s.d->copy());
+        cvar.emplace<Sd>(s.asl0 ? s.asl0->copy() : nullptr
+            , s.d->copy()
+            , s.asl1 ? s.asl1->copy() : nullptr);
     }
     else if(std::holds_alternative<Sd_i>(var))
     {
         auto &&s = std::get<Sd_i>(var);
-        cvar.emplace<Sd_i>(s.d->copy()
+        cvar.emplace<Sd_i>(s.asl0 ? s.asl0->copy() : nullptr
+            , s.d->copy()
+            , s.asl1 ? s.asl1->copy() : nullptr
             , s.i->copy());
     }
 
@@ -2592,12 +2606,32 @@ std::string &InitDeclarator::str(std::string &res, std::size_t &indent) const
     else if(std::holds_alternative<Sd>(var))
     {
         auto &&s = std::get<Sd>(var);
+        if(s.asl0 != nullptr)
+        {
+            res.push_back(' ');
+            s.asl0->str(res, indent);
+        }
         s.d->str(res, indent);
+        if(s.asl1 != nullptr)
+        {
+            res.push_back(' ');
+            s.asl1->str(res, indent);
+        }
     }
     else if(std::holds_alternative<Sd_i>(var))
     {
         auto &&s = std::get<Sd_i>(var);
+        if(s.asl0 != nullptr)
+        {
+            res.push_back(' ');
+            s.asl0->str(res, indent);
+        }
         s.d->str(res, indent);
+        if(s.asl1 != nullptr)
+        {
+            res.push_back(' ');
+            s.asl1->str(res, indent);
+        }
         res += " = ";
         s.i->str(res, indent);
     }
@@ -2734,12 +2768,14 @@ EnumSpecifier::~EnumSpecifier()
     else if(std::holds_alternative<Si_el>(var))
     {
         auto &&s = std::get<Si_el>(var);
+        delete s.asl;
         delete s.i;
         delete s.el;
     }
     else if(std::holds_alternative<Si>(var))
     {
         auto &&s = std::get<Si>(var);
+        delete s.asl;
         delete s.i;
     }
 }
@@ -2752,13 +2788,15 @@ EnumSpecifier *EnumSpecifier::copy() const
     else if(std::holds_alternative<Si_el>(var))
     {
         auto &&s = std::get<Si_el>(var);
-        cvar.emplace<Si_el>(s.i != nullptr ? s.i->copy() : nullptr
+        cvar.emplace<Si_el>(s.asl ? s.asl->copy() : nullptr
+            , s.i != nullptr ? s.i->copy() : nullptr
             , s.el->copy());
     }
     else if(std::holds_alternative<Si>(var))
     {
         auto &&s = std::get<Si>(var);
-        cvar.emplace<Si>(s.i->copy());
+        cvar.emplace<Si>(s.asl ? s.asl->copy() : nullptr
+            , s.i->copy());
     }
 
     return new EnumSpecifier(cvar);
@@ -2772,6 +2810,11 @@ std::string &EnumSpecifier::str(std::string &res, std::size_t &indent) const
     else if(std::holds_alternative<Si_el>(var))
     {
         auto &&s = std::get<Si_el>(var);
+        if(s.asl != nullptr)
+        {
+            res.push_back(' ');
+            s.asl->str(res, indent);
+        }
         if(s.i != nullptr)
         {
             res.push_back(' ');
@@ -2789,6 +2832,11 @@ std::string &EnumSpecifier::str(std::string &res, std::size_t &indent) const
     else if(std::holds_alternative<Si>(var))
     {
         auto &&s = std::get<Si>(var);
+        if(s.asl != nullptr)
+        {
+            res.push_back(' ');
+            s.asl->str(res, indent);
+        }        
         res.push_back(' ');
         s.i->str(res, indent);
     }
@@ -3202,7 +3250,8 @@ SpecifierQualifierList::~SpecifierQualifierList()
             delete std::get<TypeSpecifier*>(v);
         else if(std::holds_alternative<TypeQualifier*>(v))
             delete std::get<TypeQualifier*>(v);
-        
+        else if(std::holds_alternative<AttributeSpecifierList*>(v))
+            delete std::get<AttributeSpecifierList*>(v);
     }
 }
 
@@ -3218,6 +3267,8 @@ SpecifierQualifierList *SpecifierQualifierList::copy() const
             cv.emplace<TypeSpecifier*>(std::get<TypeSpecifier*>(v)->copy());
         else if(std::holds_alternative<TypeQualifier*>(v))
             cv.emplace<TypeQualifier*>(std::get<TypeQualifier*>(v)->copy());
+        else if(std::holds_alternative<AttributeSpecifierList*>(v))
+            cv.emplace<AttributeSpecifierList*>(std::get<AttributeSpecifierList*>(v)->copy());
         
         cseq.push_back(cv);
     }
@@ -3235,6 +3286,8 @@ std::string &SpecifierQualifierList::str(std::string &res, std::size_t &indent) 
             std::get<TypeSpecifier*>(v)->str(res, indent);
         else if(std::holds_alternative<TypeQualifier*>(v))
             std::get<TypeQualifier*>(v)->str(res, indent);
+        else if(std::holds_alternative<AttributeSpecifierList*>(v))
+            std::get<AttributeSpecifierList*>(v)->str(res, indent);
     };
 
     if(!seq.empty())
