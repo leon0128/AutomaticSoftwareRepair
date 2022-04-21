@@ -10,9 +10,6 @@ class Analyzer;
 
 class Controller
 {
-private:
-    inline static const char *CONFIGURE_FILENAME{"configure.json"};
-
 public:
     Controller();
     Controller(const Controller&) = delete;

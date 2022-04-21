@@ -116,6 +116,8 @@ private:
     TOKEN::MultiplicativeExpression *tokMultiplicativeExpression();
 
     TOKEN::AttributeSpecifier *tokAttributeSpecifier();
+    TOKEN::AttributeSpecifierList *tokAttributeSpecifierList();
+    TOKEN::AttributeStatement *tokAttributeStatement();
 
     TOKEN::IntegerConstant *convIntegerConstant();
     TOKEN::FloatingConstant *convFloatingConstant();
