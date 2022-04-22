@@ -50,7 +50,8 @@ const std::unordered_map<std::string, TOKEN::Keyword::Tag> TreeGenerator::KEYWOR
         , {"_Imaginary", TOKEN::Keyword::Tag::IMAGINARY}
         , {"_Noreturn", TOKEN::Keyword::Tag::NORETURN}
         , {"_Static_assert", TOKEN::Keyword::Tag::STATIC_ASSERT}
-        , {"_Thread_local", TOKEN::Keyword::Tag::THREAD_LOCAL}};
+        , {"_Thread_local", TOKEN::Keyword::Tag::THREAD_LOCAL}
+        , {"__attribute__", TOKEN::Keyword::Tag::ATTRIBUTE}};
 
 TreeGenerator::TreeGenerator(const std::string &file
     , const Sequence &seq)
@@ -1695,6 +1696,7 @@ TOKEN::LabeledStatement *TreeGenerator::tokLabeledStatement()
 
     if(TOKEN::LabeledStatement::Si_s s;
         (s.i = tokIdentifier()) != nullptr
+            && (s.asl = tokAttributeSpecifierList(), true)
             && isMatch(TOKEN::Punctuator::Tag::COLON)
             && (s.s = tokStatement()) != nullptr)
         return new TOKEN::LabeledStatement(s);
@@ -1702,6 +1704,7 @@ TOKEN::LabeledStatement *TreeGenerator::tokLabeledStatement()
     {
         mIdx = pre;
         delete s.i;
+        delete s.asl;
         delete s.s;
     }
 
@@ -2441,20 +2444,91 @@ TOKEN::MultiplicativeExpression *TreeGenerator::tokMultiplicativeExpression()
     return new TOKEN::MultiplicativeExpression(std::move(seq));
 }
 
-TOKEN::Attribute *TreeGenerator::tokAttribute()
+TOKEN::AttributeSpecifier *TreeGenerator::tokAttributeSpecifier()
 {
     using namespace TOKEN;
 
     std::size_t pre{mIdx};
-    std::size_t numParenthesis{0ull};
+    int numParenthesis{0};
+
+    std::vector<Token*> seq;
 
     if(isMatch(Keyword::Tag::ATTRIBUTE)
         && isMatch(Punctuator::Tag::L_PARENTHESIS)
         && isMatch(Punctuator::Tag::L_PARENTHESIS))
     {
-        numParenthesis += 2;
+        while(true)
+        {
+            if(mIdx >= mSeq.size())
+            {
+                mIdx = pre;
+                for(auto &&t : seq)
+                    delete t;
+                return nullptr;
+            }
 
+            std::size_t currentIdx{mIdx};
+            if(numParenthesis == 0
+                && isMatch(Punctuator::Tag::R_PARENTHESIS)
+                && isMatch(Punctuator::Tag::R_PARENTHESIS))
+                break;
+            else
+                mIdx = currentIdx;
 
+            if(isMatch(Punctuator::Tag::L_PARENTHESIS))
+            {
+                seq.push_back(mSeq[mIdx - 1]->copy());
+                numParenthesis++;
+            }
+            else if(isMatch(Punctuator::Tag::R_PARENTHESIS))
+            {
+                seq.push_back(mSeq[mIdx - 1]->copy());
+                numParenthesis--;
+            }
+            else
+                seq.push_back(mSeq[mIdx]->copy());
+        }
+    }
+    else
+    {
+        mIdx = pre;
+        return nullptr;
+    }
+
+    return new AttributeSpecifier{std::move(seq)};
+}
+
+TOKEN::AttributeSpecifierList *TreeGenerator::tokAttributeSpecifierList()
+{
+    using namespace TOKEN;
+
+    std::vector<AttributeSpecifier*> seq;
+    for(auto &&as{tokAttributeSpecifier()};
+        as != nullptr;
+        as = tokAttributeSpecifier())
+        seq.push_back(as);
+    
+    if(seq.empty())
+        return nullptr;
+    
+    return new AttributeSpecifierList{std::move(seq)};
+}
+
+TOKEN::AttributeStatement *TreeGenerator::tokAttributeStatement()
+{
+    using namespace TOKEN;
+
+    std::size_t preIdx{mIdx};
+
+    auto *asl{tokAttributeSpecifierList()};
+    if(asl != nullptr
+        && isMatch(Punctuator::Tag::SEMICOLON))
+        return new AttributeStatement{asl};
+    else
+    {
+        mIdx = preIdx;
+        delete asl;
+        return nullptr;
     }
 
     return nullptr;

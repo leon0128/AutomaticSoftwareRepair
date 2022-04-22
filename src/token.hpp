@@ -1224,7 +1224,8 @@ struct DeclarationSpecifiers
         , TypeSpecifier*
         , TypeQualifier*
         , FunctionSpecifier*
-        , AlignmentSpecifier*>;
+        , AlignmentSpecifier*
+        , AttributeSpecifierList*>;
     
     std::vector<Var> seq;
 
@@ -1535,17 +1536,29 @@ struct InitDeclarator
 {
     struct Sd
     {
+        AttributeSpecifierList *asl0;
         Declarator *d;
-        constexpr Sd(Declarator *ind = nullptr) noexcept
-            : d(ind){}
+        AttributeSpecifierList *asl1;
+        constexpr Sd(AttributeSpecifierList *inasl0 = nullptr
+            , Declarator *ind = nullptr
+            , AttributeSpecifierList *inasl1 = nullptr) noexcept
+            : asl0{inasl0}
+            , d(ind)
+            , asl1{inasl1}{}
     };
     struct Sd_i
     {
+        AttributeSpecifierList *asl0;
         Declarator *d;
+        AttributeSpecifierList *asl1;
         Initializer *i;
-        constexpr Sd_i(Declarator *ind = nullptr
+        constexpr Sd_i(AttributeSpecifierList *inasl0 = nullptr
+            , Declarator *ind = nullptr
+            , AttributeSpecifierList *inasl1 = nullptr
             , Initializer *ini = nullptr) noexcept
-            : d(ind)
+            : asl0{inasl0}
+            , d(ind)
+            , asl1{inasl1}
             , i(ini){}
     };
 
@@ -1637,18 +1650,24 @@ struct EnumSpecifier
 {
     struct Si_el
     {
+        AttributeSpecifierList *asl;
         Identifier *i;
         EnumeratorList *el;
-        constexpr Si_el(Identifier *ini = nullptr
+        constexpr Si_el(AttributeSpecifierList *inasl = nullptr
+            , Identifier *ini = nullptr
             , EnumeratorList *inel = nullptr) noexcept
-            : i(ini)
+            : asl{inasl}
+            , i(ini)
             , el(inel){}
     };
     struct Si
     {
+        AttributeSpecifierList *asl;
         Identifier *i;
-        constexpr Si(Identifier *ini = nullptr) noexcept
-            : i(ini){}
+        constexpr Si(AttributeSpecifierList *inasl
+            , Identifier *ini = nullptr) noexcept
+            : asl{inasl}
+            , i(ini){}
     };
 
     using Var = std::variant<std::monostate
@@ -1889,7 +1908,8 @@ struct SpecifierQualifierList
 {
     using Var = std::variant<std::monostate
         , TypeSpecifier*
-        , TypeQualifier*>;
+        , TypeQualifier*
+        , AttributeSpecifierList*>;
 
     std::vector<Var> seq;
 
