@@ -15,6 +15,7 @@ namespace TOKEN
     class SelectionStatement;
     class IterationStatement;
     class JumpStatement;
+    class AttributeStatement;
     class BlockItemList;
 }
 
@@ -32,6 +33,7 @@ private:
     static bool divide(TOKEN::SelectionStatement*);
     static bool divide(TOKEN::IterationStatement*);
     static bool divide(TOKEN::JumpStatement*);
+    static bool divide(TOKEN::AttributeStatement*);
     
     static bool divide(TOKEN::BlockItemList*
         , std::size_t pos

@@ -106,6 +106,8 @@ bool Divider::divide(TOKEN::Statement *statement)
         return divide(std::get<IterationStatement*>(statement->var));
     else if(std::holds_alternative<JumpStatement*>(statement->var))
         return divide(std::get<JumpStatement*>(statement->var));
+    else if(std::holds_alternative<AttributeStatement*>(statement->var))
+        return divide(std::get<AttributeStatement*>(statement->var));
 
     return true;
 }
@@ -194,6 +196,11 @@ bool Divider::divide(TOKEN::JumpStatement*)
     return true;
 }
 
+bool Divider::divide(TOKEN::AttributeStatement*)
+{
+    return true;
+}
+
 TOKEN::Statement *Divider::createStatement(TOKEN::InitDeclarator *id)
 {
     using namespace TOKEN;
@@ -225,10 +232,13 @@ TOKEN::Statement *Divider::createStatement(TOKEN::InitDeclarator *id)
         return nullptr;
     }
 
+    auto *asl0{s.asl0};
     auto *declarator{s.d};
+    auto *asl1{s.asl1};
+
     delete s.i;
     
-    id->var.emplace<InitDeclarator::Sd>(declarator);
+    id->var.emplace<InitDeclarator::Sd>(asl0, declarator, asl1);
 
     return statement;
 }
