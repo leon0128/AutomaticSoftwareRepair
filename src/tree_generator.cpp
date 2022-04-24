@@ -170,7 +170,8 @@ TOKEN::DeclarationSpecifiers *TreeGenerator::tokDeclarationSpecifiers()
             || (v.emplace<TOKEN::TypeSpecifier*>(tokTypeSpecifier()) != nullptr && (hasTypeSpecifier = true))
             || v.emplace<TOKEN::TypeQualifier*>(tokTypeQualifier()) != nullptr
             || v.emplace<TOKEN::FunctionSpecifier*>(tokFunctionSpecifier()) != nullptr
-            || v.emplace<TOKEN::AlignmentSpecifier*>(tokAlignmentSpecifier()) != nullptr)
+            || v.emplace<TOKEN::AlignmentSpecifier*>(tokAlignmentSpecifier()) != nullptr
+            || v.emplace<TOKEN::AttributeSpecifierList*>(tokAttributeSpecifierList()) != nullptr)
             seq.push_back(v);
         else
             break;
@@ -444,24 +445,32 @@ TOKEN::InitDeclarator *TreeGenerator::tokInitDeclarator()
     std::size_t pre = mIdx;
 
     if(TOKEN::InitDeclarator::Sd_i s;
-        (s.d = tokDeclarator()) != nullptr
+        (s.asl0 = tokAttributeSpecifierList(), true)
+            && (s.d = tokDeclarator()) != nullptr
+            && (s.asl1 = tokAttributeSpecifierList(), true)
             && isMatch(TOKEN::Punctuator::Tag::ASSIGNMENT)
             && (s.i = tokInitializer()) != nullptr)
         return new TOKEN::InitDeclarator(s);
     else
     {
         mIdx = pre;
+        delete s.asl0;
         delete s.d;
+        delete s.asl1;
         delete s.i;
     }
 
     if(TOKEN::InitDeclarator::Sd s;
-        (s.d = tokDeclarator()) != nullptr)
+        (s.asl0 = tokAttributeSpecifierList(), true)
+            && (s.d = tokDeclarator()) != nullptr
+            && (s.asl1 = tokAttributeSpecifierList(), true))
         return new TOKEN::InitDeclarator(s);
     else
     {
         mIdx = pre;
+        delete s.asl0;
         delete s.d;
+        delete s.asl1;
     }
 
     return nullptr;
@@ -692,6 +701,7 @@ TOKEN::StructOrUnionSpecifier *TreeGenerator::tokStructOrUnionSpecifier()
 
     if(TOKEN::StructOrUnionSpecifier::Ssou_i_sdl s;
         (s.sou = tokStructOrUnion()) != nullptr
+            && (s.asl = tokAttributeSpecifierList(), true)
             && (s.i = tokIdentifier(), true)
             && isMatch(TOKEN::Punctuator::Tag::L_CURLY_BRACKET)
             && (s.sdl = tokStructDeclarationList()) != nullptr
@@ -701,18 +711,21 @@ TOKEN::StructOrUnionSpecifier *TreeGenerator::tokStructOrUnionSpecifier()
     {
         mIdx = pre;
         delete s.sou;
+        delete s.asl;
         delete s.i;
         delete s.sdl;
     }
 
     if(TOKEN::StructOrUnionSpecifier::Ssou_i s;
         (s.sou = tokStructOrUnion()) != nullptr
+            && (s.asl = tokAttributeSpecifierList(), true)
             && (s.i = tokIdentifier()) != nullptr)
         return new TOKEN::StructOrUnionSpecifier(s);
     else
     {
         mIdx = pre;
         delete s.sou;
+        delete s.asl;
         delete s.i;
     }
 
@@ -725,6 +738,7 @@ TOKEN::EnumSpecifier *TreeGenerator::tokEnumSpecifier()
 
     if(TOKEN::EnumSpecifier::Si_el s;
         isMatch(TOKEN::Keyword::Tag::ENUM)
+            && (s.asl = tokAttributeSpecifierList(), true)
             && (s.i = tokIdentifier(), true)
             && isMatch(TOKEN::Punctuator::Tag::L_CURLY_BRACKET)
             && (s.el = tokEnumeratorList()) != nullptr
@@ -734,17 +748,20 @@ TOKEN::EnumSpecifier *TreeGenerator::tokEnumSpecifier()
     else
     {
         mIdx = pre;
+        delete s.asl;
         delete s.i;
         delete s.el;
     }
 
     if(TOKEN::EnumSpecifier::Si s;
         isMatch(TOKEN::Keyword::Tag::ENUM)
+            && (s.asl = tokAttributeSpecifierList(), true)
             && (s.i = tokIdentifier()) != nullptr)
         return new TOKEN::EnumSpecifier(s);
     else
     {
         mIdx = pre;
+        delete s.asl;
         delete s.i;
     }
 
@@ -1033,6 +1050,7 @@ TOKEN::SpecifierQualifierList *TreeGenerator::tokSpecifierQualifierList()
     {
         TOKEN::TypeSpecifier *ts{nullptr};
         TOKEN::TypeQualifier *tq{nullptr};
+        TOKEN::AttributeSpecifierList *asl{nullptr};
         if((ts = tokTypeSpecifier()))
         {
             hasTypeSpecifier = true;
@@ -1040,6 +1058,8 @@ TOKEN::SpecifierQualifierList *TreeGenerator::tokSpecifierQualifierList()
         }
         else if((tq = tokTypeQualifier()))
             seq.emplace_back(tq);
+        else if((asl = tokAttributeSpecifierList()))
+            seq.emplace_back(asl);
         else
             break;
 
@@ -1301,6 +1321,9 @@ TOKEN::Statement *TreeGenerator::tokStatement()
     else if(TOKEN::JumpStatement *js = tokJumpStatement();
         js != nullptr)
         return new TOKEN::Statement(js);
+    else if(TOKEN::AttributeStatement *asl{tokAttributeStatement()};
+        asl != nullptr)
+        return new TOKEN::Statement{asl};
     
     return nullptr;
 }
@@ -1339,6 +1362,7 @@ TOKEN::Enumerator *TreeGenerator::tokEnumerator()
 
     if(TOKEN::Enumerator::Sec_ce s;
         (s.ec = tokEnumerationConstant()) != nullptr
+            && (s.asl = tokAttributeSpecifierList(), true)
             && isMatch(TOKEN::Punctuator::Tag::ASSIGNMENT)
             && (s.ce = tokConstantExpression()) != nullptr)
         return new TOKEN::Enumerator(s);
@@ -1346,16 +1370,19 @@ TOKEN::Enumerator *TreeGenerator::tokEnumerator()
     {
         mIdx = pre;
         delete s.ec;
+        delete s.asl;
         delete s.ce;
     }
 
     if(TOKEN::Enumerator::Sec s;
-        (s.ec = tokEnumerationConstant()) != nullptr)
+        (s.ec = tokEnumerationConstant()) != nullptr
+        && (s.asl = tokAttributeSpecifierList(), true))
         return new TOKEN::Enumerator(s);
     else
     {
         mIdx = pre;
         delete s.ec;
+        delete s.asl;
     }
 
     return nullptr;
@@ -2477,16 +2504,18 @@ TOKEN::AttributeSpecifier *TreeGenerator::tokAttributeSpecifier()
 
             if(isMatch(Punctuator::Tag::L_PARENTHESIS))
             {
-                seq.push_back(mSeq[mIdx - 1]->copy());
+                mIdx--;
+                seq.push_back(convToken());
                 numParenthesis++;
             }
             else if(isMatch(Punctuator::Tag::R_PARENTHESIS))
             {
-                seq.push_back(mSeq[mIdx - 1]->copy());
+                mIdx--;
+                seq.push_back(convToken());
                 numParenthesis--;
             }
             else
-                seq.push_back(mSeq[mIdx]->copy());
+                seq.push_back(convToken());
         }
     }
     else
@@ -2584,6 +2613,47 @@ TOKEN::CharacterConstant *TreeGenerator::convCharacterConstant()
     if(mIdx < mSeq.size()
         && std::holds_alternative<TOKEN::CharacterConstant*>(mSeq[mIdx]->var))
         return mIdx++, std::get<TOKEN::CharacterConstant*>(mSeq[mIdx - 1]->var)->copy();
+    else
+        return nullptr;
+}
+
+TOKEN::Token *TreeGenerator::convToken()
+{
+    if(mIdx >= mSeq.size())
+        return nullptr;
+
+    TOKEN::Token returnToken;
+    if(std::holds_alternative<TOKEN::Identifier*>(mSeq[mIdx]->var))
+    {
+        auto &&iter{KEYWORD_MAP.find(TOKEN::str(std::get<TOKEN::Identifier*>(mSeq[mIdx]->var)))};
+        if(iter != KEYWORD_MAP.end())
+            returnToken.var.emplace<TOKEN::Keyword*>(new TOKEN::Keyword{iter->second});
+        else
+            returnToken.var.emplace<TOKEN::Identifier*>(std::get<TOKEN::Identifier*>(mSeq[mIdx]->var)->copy());
+
+        mIdx++;
+    }
+    else if(std::holds_alternative<TOKEN::PPNumber*>(mSeq[mIdx]->var)
+        || std::holds_alternative<TOKEN::CharacterConstant*>(mSeq[mIdx]->var))
+    {
+        if(returnToken.var.emplace<TOKEN::Constant*>(tokConstant()) == nullptr)
+            returnToken.var.emplace<std::monostate>(std::monostate{});
+
+        // mIdx is increased by tokConstant()
+    }
+    else if(std::holds_alternative<TOKEN::StringLiteral*>(mSeq[mIdx]->var))
+    {
+        returnToken.var.emplace<TOKEN::StringLiteral*>(std::get<TOKEN::StringLiteral*>(mSeq[mIdx]->var)->copy());
+        mIdx++;
+    }
+    else if(std::holds_alternative<TOKEN::Punctuator*>(mSeq[mIdx]->var))
+    {
+        returnToken.var.emplace<TOKEN::Punctuator*>(std::get<TOKEN::Punctuator*>(mSeq[mIdx]->var)->copy());
+        mIdx++;
+    }
+
+    if(!std::holds_alternative<std::monostate>(returnToken.var))
+        return new TOKEN::Token{std::move(returnToken.var)};
     else
         return nullptr;
 }

@@ -1664,7 +1664,7 @@ struct EnumSpecifier
     {
         AttributeSpecifierList *asl;
         Identifier *i;
-        constexpr Si(AttributeSpecifierList *inasl
+        constexpr Si(AttributeSpecifierList *inasl = nullptr
             , Identifier *ini = nullptr) noexcept
             : asl{inasl}
             , i(ini){}

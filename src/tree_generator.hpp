@@ -123,6 +123,7 @@ private:
     TOKEN::FloatingConstant *convFloatingConstant();
     TOKEN::EnumerationConstant *convEnumerationConstant();
     TOKEN::CharacterConstant *convCharacterConstant();
+    TOKEN::Token *convToken();
 
     // if token is matching, idx is increment
     bool isMatch(TOKEN::Keyword::Tag);
