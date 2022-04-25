@@ -71,6 +71,10 @@ namespace TOKEN
     class AbstractDeclarator;
     class Pointer;
     class DirectAbstractDeclarator;
+
+    class AttributeSpecifierList;
+    class AttributeSpecifier;
+    class AttributeStatement;
 }
 namespace IDENTIFIER
 {
@@ -101,6 +105,8 @@ public:
 
     // if statement fits to scope, this return true.
     // otherwise, this return false.
+    // if statement has attribute-specifier,
+    // return value is false.
     bool isFittable(std::size_t scopeId
         , const TOKEN::Statement*);
 
@@ -184,6 +190,10 @@ private:
     bool select(const TOKEN::AbstractDeclarator*);
     bool select(const TOKEN::Pointer*);
     bool select(const TOKEN::DirectAbstractDeclarator*);
+
+    bool select(const TOKEN::AttributeSpecifierList*);
+    bool select(const TOKEN::AttributeSpecifier*);
+    bool select(const TOKEN::AttributeStatement*);
 
     bool clearError() const;
     bool invalidStatementError() const;

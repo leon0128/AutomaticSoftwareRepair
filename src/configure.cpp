@@ -9,7 +9,7 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--result", {Tag::RESULT, true}}
     , {"--preprocessor", {Tag::PREPROCESSOR, true}}
     , {"--compiler", {Tag::COMPILER, true}}
-    , {"--test-scricp", {Tag::TEST_SCRIPT, true}}
+    , {"--test-script", {Tag::TEST_SCRIPT, true}}
     , {"--test-filename", {Tag::TEST_FILENAME, true}}
     , {"--execution", {Tag::EXECUTION, true}}
     , {"--pos-prefix", {Tag::POS_PREFIX, true}}

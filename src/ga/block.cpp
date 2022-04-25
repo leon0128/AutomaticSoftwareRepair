@@ -295,7 +295,8 @@ StatPair Block::createStatPair(const TOKEN::Statement *statement)
     else if(std::holds_alternative<IterationStatement*>(statement->var))
         statPair.second = new Block{std::get<IterationStatement*>(statement->var)};
     else if(std::holds_alternative<ExpressionStatement*>(statement->var)
-        || std::holds_alternative<JumpStatement*>(statement->var))
+        || std::holds_alternative<JumpStatement*>(statement->var)
+        || std::holds_alternative<AttributeStatement*>(statement->var))
         ;
     else
         variantError("Statement");
@@ -347,6 +348,7 @@ TOKEN::Statement *Block::createStatement(const StatPair &pair) const
     using SS = SelectionStatement;
     using IS = IterationStatement;
     using JS = JumpStatement;
+    using AS = AttributeStatement;
 
     const auto &oldPtr{std::get<std::shared_ptr<Statement>>(Analyzer::statementMap().at(pair.first))};
     Statement *newStatement{nullptr};
@@ -362,6 +364,7 @@ TOKEN::Statement *Block::createStatement(const StatPair &pair) const
         {
             const auto &s{std::get<LS::Si_s>(oldLs->var)};
             newStatement->var.emplace<LS*>(new LS{LS::Si_s{s.i->copy()
+                , s.asl->copy()
                 , pair.second->createStatement()}});
         }
         else if(std::holds_alternative<LS::Sce_s>(oldLs->var))
@@ -435,6 +438,8 @@ TOKEN::Statement *Block::createStatement(const StatPair &pair) const
     }
     else if(std::holds_alternative<JS*>(oldPtr->var))
         newStatement->var.emplace<JS*>(std::get<JS*>(oldPtr->var)->copy());
+    else if(std::holds_alternative<AS*>(oldPtr->var))
+        newStatement->var.emplace<AS*>(std::get<AS*>(oldPtr->var)->copy());
 
     return newStatement;
 }

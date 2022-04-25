@@ -260,6 +260,8 @@ bool Selector::select(const TOKEN::Statement *statement)
         return select(std::get<TOKEN::SelectionStatement*>(statement->var));
     else if(std::holds_alternative<TOKEN::IterationStatement*>(statement->var))
         return select(std::get<TOKEN::IterationStatement*>(statement->var));
+    else if(std::holds_alternative<TOKEN::AttributeStatement*>(statement->var))
+        return select(std::get<TOKEN::AttributeStatement*>(statement->var));
     else
         return invalidStatementError();
 
@@ -304,6 +306,9 @@ bool Selector::select(const TOKEN::LabeledStatement *ls)
     {
         auto &&s{std::get<LS::Si_s>(ls->var)};
         if(!select(s.i))
+            return false;
+        if(s.asl != nullptr
+            && select(s.asl))
             return false;
         
         if(!select(s.s))
@@ -1041,6 +1046,11 @@ bool Selector::select(const TOKEN::SpecifierQualifierList *sql)
         }
         else if(std::holds_alternative<TypeQualifier*>(v))
             ;
+        else if(std::holds_alternative<AttributeSpecifierList*>(v))
+        {
+            if(!select(std::get<AttributeSpecifierList*>(v)))
+                return false;
+        }
         else
             return invalidVariantError("SpecifierQualifierList");
     }
@@ -1095,6 +1105,9 @@ bool Selector::select(const TOKEN::StructOrUnionSpecifier *sous)
     if(std::holds_alternative<SOUS::Ssou_i_sdl>(sous->var))
     {
         const auto &s{std::get<SOUS::Ssou_i_sdl>(sous->var)};
+        if(s.asl != nullptr
+            && !select(s.asl))
+            return false;
         if(bool(s.i))
             if(!select(s.i))
                 return false;
@@ -1104,6 +1117,9 @@ bool Selector::select(const TOKEN::StructOrUnionSpecifier *sous)
     else if(std::holds_alternative<SOUS::Ssou_i>(sous->var))
     {
         const auto &s{std::get<SOUS::Ssou_i>(sous->var)};
+        if(s.asl != nullptr
+            && !select(s.asl))
+            return false;
         if(!select(s.i))
             return false;
     }
@@ -1308,6 +1324,11 @@ bool Selector::select(const TOKEN::DeclarationSpecifiers *ds)
             if(!select(std::get<AlignmentSpecifier*>(v)))
                 return false;
         }
+        else if(std::holds_alternative<AttributeSpecifierList*>(v))
+        {
+            if(!select(std::get<AttributeSpecifierList*>(v)))
+                return false;
+        }
         else
             return invalidVariantError("DeclarationSpecifiers");
     }
@@ -1342,6 +1363,9 @@ bool Selector::select(const TOKEN::EnumSpecifier *es)
     if(std::holds_alternative<ES::Si_el>(es->var))
     {
         const auto &s{std::get<ES::Si_el>(es->var)};
+        if(s.asl != nullptr
+            && !select(s.asl))
+            return false;
         if(bool(s.i))
             if(!select(s.i))
                 return false;
@@ -1351,6 +1375,9 @@ bool Selector::select(const TOKEN::EnumSpecifier *es)
     else if(std::holds_alternative<ES::Si>(es->var))
     {
         const auto &s{std::get<ES::Si>(es->var)};
+        if(s.asl != nullptr
+            && !select(s.asl))
+            return false;
         if(!select(s.i))
             return false;
     }
@@ -1380,12 +1407,19 @@ bool Selector::select(const TOKEN::Enumerator *enumerator)
         const auto &s{std::get<E::Sec>(enumerator->var)};
         if(!select(s.ec))
             return false;
+        if(s.asl != nullptr
+            && !select(s.asl))
+            return false;
     }
     else if(std::holds_alternative<E::Sec_ce>(enumerator->var))
     {
         const auto &s{std::get<E::Sec_ce>(enumerator->var)};
-        if(!select(s.ec)
-            || !select(s.ce))
+        if(!select(s.ec))
+            return false;
+        if(s.asl != nullptr
+            && !select(s.asl))
+            return false;
+        if(!select(s.ce))
             return false;
     }
 
@@ -1462,6 +1496,32 @@ bool Selector::select(const TOKEN::DirectAbstractDeclarator *dad)
             return invalidVariantError("DirectAbstractDeclarator");
     }
 
+    return true;
+}
+
+bool Selector::select(const TOKEN::AttributeSpecifierList *asl)
+{
+    for(auto &&as : asl->seq)
+    {
+        if(!select(as))
+            return false;
+    }
+
+    return true;
+}
+
+bool Selector::select(const TOKEN::AttributeSpecifier *as)
+{
+    mIsFittables.push_back(false);
+
+    return true;
+}
+
+bool Selector::select(const TOKEN::AttributeStatement *as)
+{
+    if(!select(as->asl))
+        return false;
+    
     return true;
 }
 
