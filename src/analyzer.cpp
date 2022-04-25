@@ -498,6 +498,12 @@ bool Analyzer::analyze(TOKEN::Statement *s)
         if(!analyze(std::get<TOKEN::JumpStatement*>(s->var)))
             return false;
     }
+    else if(std::holds_alternative<TOKEN::AttributeStatement*>(s->var))
+    {
+        s->scopeId = mScope->id();
+        if(!analyze(std::get<TOKEN::AttributeStatement*>(s->var)))
+            return false;
+    }
     else
         variantError("Statement");
 
@@ -739,6 +745,11 @@ bool Analyzer::analyze(const TOKEN::JumpStatement *js)
     else
         variantError("JumpStatement");
 
+    return true;
+}
+
+bool Analyzer::analyze(const TOKEN::AttributeStatement*)
+{
     return true;
 }
 

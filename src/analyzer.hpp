@@ -96,6 +96,7 @@ private:
     bool analyze(const TOKEN::SelectionStatement*);
     bool analyze(const TOKEN::IterationStatement*);
     bool analyze(const TOKEN::JumpStatement*);
+    bool analyze(const TOKEN::AttributeStatement*);
 
     bool analyze(const TOKEN::Initializer*);
     bool analyze(const TOKEN::InitializerList*);
