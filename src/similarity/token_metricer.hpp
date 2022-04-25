@@ -86,6 +86,10 @@ namespace TOKEN
     class AbstractDeclarator;
     class Pointer;
     class DirectAbstractDeclarator;
+
+    class AttributeSpecifierList;
+    class AttributeSpecifier;
+    class AttributeStatement;
 }
 
 namespace SIM
@@ -186,6 +190,10 @@ private:
     bool process(const TOKEN::AbstractDeclarator*);
     bool process(const TOKEN::Pointer*);
     bool process(const TOKEN::DirectAbstractDeclarator*);
+
+    bool process(const TOKEN::AttributeSpecifierList*);
+    bool process(const TOKEN::AttributeSpecifier*);
+    bool process(const TOKEN::AttributeStatement*);
 
     std::string getIdentifier(const TOKEN::Declarator*) const;
 

@@ -135,13 +135,26 @@ bool TokenMetricer::process(const TOKEN::InitDeclarator *id)
     if(std::holds_alternative<ID::Sd>(id->var))
     {
         auto &&s{std::get<ID::Sd>(id->var)};
+        
+        if(s.asl0 != nullptr
+            && !process(s.asl0))
+            return false;
         if(!process(s.d))
+            return false;
+        if(s.asl1 != nullptr
+            && !process(s.asl1))
             return false;
     }
     else if(std::holds_alternative<ID::Sd_i>(id->var))
     {
         auto &&s{std::get<ID::Sd_i>(id->var)};
+        if(s.asl0 != nullptr
+            && !process(s.asl0))
+            return false;
         if(!process(s.d))
+            return false;
+        if(s.asl1 != nullptr
+            && !process(s.asl1))
             return false;
         
         mCurrentSTM->array()[STM::ASSIGNMENT]++;
@@ -169,6 +182,8 @@ bool TokenMetricer::process(const TOKEN::Statement *statement)
         return process(std::get<TOKEN::SelectionStatement*>(statement->var));
     else if(std::holds_alternative<TOKEN::IterationStatement*>(statement->var))
         return process(std::get<TOKEN::IterationStatement*>(statement->var));
+    else if(std::holds_alternative<TOKEN::AttributeStatement*>(statement->var))
+        return process(std::get<TOKEN::AttributeStatement*>(statement->var));
     else
         return invalidStatementError();
 
@@ -240,6 +255,9 @@ bool TokenMetricer::process(const TOKEN::LabeledStatement *ls)
     if(std::holds_alternative<LS::Si_s>(ls->var))
     {
         auto &&s{std::get<LS::Si_s>(ls->var)};
+        if(s.asl != nullptr
+            && !process(s.asl))
+            return false;
         if(!process(s.i))
             return false;
 
@@ -1416,6 +1434,11 @@ bool TokenMetricer::process(const TOKEN::SpecifierQualifierList *sql)
             if(!process(std::get<TypeQualifier*>(v)))
                 return false;
         }
+        else if(std::holds_alternative<AttributeSpecifierList*>(v))
+        {
+            if(!process(std::get<AttributeSpecifierList*>(v)))
+                return false;
+        }
         else
             return invalidVariantError("SpecifierQualifierList");
     }
@@ -1553,6 +1576,7 @@ bool TokenMetricer::process(const TOKEN::StructOrUnionSpecifier *sous)
         const auto &s{std::get<SOUS::Ssou_i_sdl>(sous->var)};
         
         if(!process(s.sou)
+            || !(s.asl ? process(s.asl) : true)
             || !(s.i ? process(s.i) : true))
             return false;
         
@@ -1567,6 +1591,7 @@ bool TokenMetricer::process(const TOKEN::StructOrUnionSpecifier *sous)
     {
         const auto &s{std::get<SOUS::Ssou_i>(sous->var)};
         if(!process(s.sou)
+            || !(s.asl ? process(s.asl) : true)
             || !process(s.i))
             return false;
     }
@@ -1892,6 +1917,11 @@ bool TokenMetricer::process(const TOKEN::DeclarationSpecifiers *ds)
             if(!process(std::get<AlignmentSpecifier*>(v)))
                 return false;
         }
+        else if(std::holds_alternative<AttributeSpecifierList*>(v))
+        {
+            if(!process(std::get<AttributeSpecifierList*>(v)))
+                return false;
+        }
         else
             return invalidVariantError("DeclarationSpecifiers");
     }
@@ -2000,7 +2030,8 @@ bool TokenMetricer::process(const TOKEN::EnumSpecifier *es)
     {
         const auto &s{std::get<ES::Si_el>(es->var)};
         
-        if(!(s.i ? process(s.i) : true))
+        if(!(s.asl ? process(s.asl) : true)
+            || !(s.i ? process(s.i) : true))
             return false;
         
         mCurrentSTM->array()[STM::L_CURLY_BRACKET]++;
@@ -2013,7 +2044,8 @@ bool TokenMetricer::process(const TOKEN::EnumSpecifier *es)
     else if(std::holds_alternative<ES::Si>(es->var))
     {
         const auto &s{std::get<ES::Si>(es->var)};
-        if(!process(s.i))
+        if(!(s.asl ? process(s.asl) : true)
+            || !process(s.i))
             return false;
     }
     else
@@ -2051,11 +2083,17 @@ bool TokenMetricer::process(const TOKEN::Enumerator *enumerator)
         const auto &s{std::get<E::Sec>(enumerator->var)};
         if(!process(s.ec))
             return false;
+        if(s.asl != nullptr
+            && !process(s.asl))
+            return false;
     }
     else if(std::holds_alternative<E::Sec_ce>(enumerator->var))
     {
         const auto &s{std::get<E::Sec_ce>(enumerator->var)};
         if(!process(s.ec))
+            return false;
+        if(s.asl != nullptr
+            && !process(s.asl))
             return false;
         
         mCurrentSTM->array()[STM::ASSIGNMENT]++;
@@ -2180,6 +2218,42 @@ bool TokenMetricer::process(const TOKEN::DirectAbstractDeclarator *dad)
         else
             return invalidVariantError("DirectAbstractDeclarator");
     }
+
+    return true;
+}
+
+bool TokenMetricer::process(const TOKEN::AttributeSpecifierList *asl)
+{
+    for(const auto &as : asl->seq)
+    {
+        if(!process(as))
+            return false;
+    }
+
+    return true;
+}
+
+bool TokenMetricer::process(const TOKEN::AttributeSpecifier *as)
+{
+    using STM = StructureTokenMetrics<std::size_t>;
+    mCurrentSTM->array()[static_cast<std::size_t>(STM::Tag::ATTRIBUTE)]++;
+    mCurrentSTM->array()[static_cast<std::size_t>(STM::Tag::L_PARENTHESIS)] += 2;
+
+    // no evaluate for enclosed tokens
+
+    mCurrentSTM->array()[static_cast<std::size_t>(STM::Tag::R_PARENTHESIS)] += 2;
+
+    return true;
+}
+
+bool TokenMetricer::process(const TOKEN::AttributeStatement *as)
+{
+    using STM = StructureTokenMetrics<std::size_t>;
+
+    if(!process(as->asl))
+        return false;
+    
+    mCurrentSTM->array()[static_cast<std::size_t>(STM::Tag::SEMICOLON)]++;
 
     return true;
 }
