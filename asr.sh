@@ -5,7 +5,7 @@
 EXECUTION_NAME="./asr"
 TARGET_FILENAME="test/test.c"
 TARGET_FUNCTIONS=()
-EXTERNAL_PATHS=("test/test.c")
+EXTERNAL_PATHS=("test/pplinux/linux/arch/x86/boot/a20.c")
 RESULT_FILENAME="test/result.c"
 TEMPORARY_FILENAME="test/__test.c"
 TEMPORARY_EXECUTION_NAME="test/__test"
@@ -21,7 +21,7 @@ NEGATIVE_TEST_WEIGHT=10
 TARGET_SCORE=10
 
 ## external softwares
-PREPROCESSOR="cpp -P -D__extension__"
+PREPROCESSOR="cpp -P -D__extension__="
 COMPILER="gcc"
 
 ## operation

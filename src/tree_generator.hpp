@@ -128,6 +128,9 @@ private:
     // if token is matching, idx is increment
     bool isMatch(TOKEN::Keyword::Tag);
     bool isMatch(TOKEN::Punctuator::Tag);
+
+    // error
+    bool noEvaluatedError() const;
 };
 
 #endif

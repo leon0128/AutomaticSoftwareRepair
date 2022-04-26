@@ -75,14 +75,7 @@ bool TreeGenerator::execute()
         && mTranslationUnit)
         return true;
     else
-    {
-        std::cerr << "TreeGenerator error:\n"
-            "    what: token-sequence has not been evaluated to the end.\n"
-            "    file: " << mFile << "\n"
-            "    idx: " << mIdx
-            << std::endl;
-        return false;
-    }
+        return noEvaluatedError();
 }
 
 TOKEN::TranslationUnit *TreeGenerator::tokTranslationUnit()
@@ -2622,40 +2615,43 @@ TOKEN::Token *TreeGenerator::convToken()
     if(mIdx >= mSeq.size())
         return nullptr;
 
-    TOKEN::Token returnToken;
+    TOKEN::Token *returnToken{new TOKEN::Token{}};
     if(std::holds_alternative<TOKEN::Identifier*>(mSeq[mIdx]->var))
     {
         auto &&iter{KEYWORD_MAP.find(TOKEN::str(std::get<TOKEN::Identifier*>(mSeq[mIdx]->var)))};
         if(iter != KEYWORD_MAP.end())
-            returnToken.var.emplace<TOKEN::Keyword*>(new TOKEN::Keyword{iter->second});
+            returnToken->var.emplace<TOKEN::Keyword*>(new TOKEN::Keyword{iter->second});
         else
-            returnToken.var.emplace<TOKEN::Identifier*>(std::get<TOKEN::Identifier*>(mSeq[mIdx]->var)->copy());
+            returnToken->var.emplace<TOKEN::Identifier*>(std::get<TOKEN::Identifier*>(mSeq[mIdx]->var)->copy());
 
         mIdx++;
     }
     else if(std::holds_alternative<TOKEN::PPNumber*>(mSeq[mIdx]->var)
         || std::holds_alternative<TOKEN::CharacterConstant*>(mSeq[mIdx]->var))
     {
-        if(returnToken.var.emplace<TOKEN::Constant*>(tokConstant()) == nullptr)
-            returnToken.var.emplace<std::monostate>(std::monostate{});
+        if(returnToken->var.emplace<TOKEN::Constant*>(tokConstant()) == nullptr)
+            returnToken->var.emplace<std::monostate>(std::monostate{});
 
         // mIdx is increased by tokConstant()
     }
     else if(std::holds_alternative<TOKEN::StringLiteral*>(mSeq[mIdx]->var))
     {
-        returnToken.var.emplace<TOKEN::StringLiteral*>(std::get<TOKEN::StringLiteral*>(mSeq[mIdx]->var)->copy());
+        returnToken->var.emplace<TOKEN::StringLiteral*>(std::get<TOKEN::StringLiteral*>(mSeq[mIdx]->var)->copy());
         mIdx++;
     }
     else if(std::holds_alternative<TOKEN::Punctuator*>(mSeq[mIdx]->var))
     {
-        returnToken.var.emplace<TOKEN::Punctuator*>(std::get<TOKEN::Punctuator*>(mSeq[mIdx]->var)->copy());
+        returnToken->var.emplace<TOKEN::Punctuator*>(std::get<TOKEN::Punctuator*>(mSeq[mIdx]->var)->copy());
         mIdx++;
     }
 
-    if(!std::holds_alternative<std::monostate>(returnToken.var))
-        return new TOKEN::Token{std::move(returnToken.var)};
+    if(!std::holds_alternative<std::monostate>(returnToken->var))
+        return returnToken;
     else
+    {
+        delete returnToken;
         return nullptr;
+    }
 }
 
 bool TreeGenerator::isMatch(TOKEN::Keyword::Tag tag)
@@ -2681,5 +2677,27 @@ bool TreeGenerator::isMatch(TOKEN::Punctuator::Tag tag)
             return mIdx++, true;
     }
     
+    return false;
+}
+
+bool TreeGenerator::noEvaluatedError() const
+{
+    static const constexpr std::size_t numMaxOutputTokens{10ull};
+
+    std::cerr << "TreeGenerator error:\n"
+        "    what: token-sequence has not been evaluated to the end.\n"
+        "    file: " << mFile << "\n"
+        "    idx: " << mIdx << "\n"
+        "    token: ";
+
+    for(std::size_t i{0ull};
+        i < numMaxOutputTokens && i + mIdx < mSeq.size();
+        i++)
+    {
+        std::cout << TOKEN::str(mSeq[i + mIdx]) << ' ';
+    }
+
+    std::cout << std::endl;
+
     return false;
 }
