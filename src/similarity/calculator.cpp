@@ -17,9 +17,12 @@ Calculator::Calculator()
 
 bool Calculator::execute(const STMs<std::size_t> &stms)
 {
-    auto okapi{calculateOkapiBM25(stms)};
+    // no edit stms
+    // auto &&stmsToUse{stms};
+    // use Okapi BM25
+    auto &&stmsToUse{calculateOkapiBM25(stms)};
 
-    mResult = std::valarray<std::valarray<double>>(std::valarray<double>(0.0, okapi.size()), okapi.size());
+    mResult = std::valarray<std::valarray<double>>(std::valarray<double>(0.0, stmsToUse.size()), stmsToUse.size());
     mFunctionNames = std::deque<std::string>(stms.size());
 
     for(std::size_t i{0ull}; i < stms.size(); i++)
@@ -28,7 +31,7 @@ bool Calculator::execute(const STMs<std::size_t> &stms)
     for(std::size_t i{0ull}; i < mResult.size(); i++)
     {
         for(std::size_t j{0ull}; j < mResult[i].size(); j++)
-            mResult[i][j] = calculateCosineSimilarity(okapi[i], okapi[j]);
+            mResult[i][j] = calculateCosineSimilarity(stmsToUse[i], stmsToUse[j]);
     }
 
     return true;
