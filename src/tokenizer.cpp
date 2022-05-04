@@ -474,14 +474,18 @@ IntegerConstant *decIntegerConstant(const std::string &src
 {
     std::size_t pre = idx;
 
-    if(IntegerConstant::Sdc_is s;
-        (s.dc = decDecimalConstant(src, idx)) != nullptr
+    // order of tokenizing
+    // hexadecimal -> octal -> decimal
+    // 0x-- -> 0-- -> --
+
+    if(IntegerConstant::Shc_is s;
+        (s.hc = decHexadecimalConstant(src, idx)) != nullptr
             && (s.is = decIntegerSuffix(src, idx), true))
         return new IntegerConstant(s);
     else
     {
         idx = pre;
-        delete s.dc;
+        delete s.hc;
         delete s.is;
     }
 
@@ -496,14 +500,15 @@ IntegerConstant *decIntegerConstant(const std::string &src
         delete s.is;
     }
 
-    if(IntegerConstant::Shc_is s;
-        (s.hc = decHexadecimalConstant(src, idx)) != nullptr
+
+    if(IntegerConstant::Sdc_is s;
+        (s.dc = decDecimalConstant(src, idx)) != nullptr
             && (s.is = decIntegerSuffix(src, idx), true))
         return new IntegerConstant(s);
     else
     {
         idx = pre;
-        delete s.hc;
+        delete s.dc;
         delete s.is;
     }
 
