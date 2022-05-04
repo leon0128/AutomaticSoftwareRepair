@@ -52,7 +52,8 @@ const std::unordered_map<Keyword::Tag, std::string> Keyword::KEYWORD_MAP
         , {Tag::NORETURN, "_Noreturn"}
         , {Tag::STATIC_ASSERT, "_Static_assert"}
         , {Tag::THREAD_LOCAL, "_Thread_local"}
-        , {Tag::ATTRIBUTE, "__attribute__"}};
+        , {Tag::ATTRIBUTE, "__attribute__"}
+        , {Tag::ASM, "__asm__"}};
 
 const std::unordered_map<Punctuator::Tag, std::string> Punctuator::PUNCTUATOR_MAP
     = {{Tag::L_SQUARE_BRACKET, "["}
@@ -2573,6 +2574,14 @@ InitDeclarator::~InitDeclarator()
         delete s.asl1;
         delete s.i;
     }
+    else if(std::holds_alternative<Sd_ba>(var))
+    {
+        auto &&s{std::get<Sd_ba>(var)};
+        delete s.asl0;
+        delete s.d;
+        delete s.asl1;
+        delete s.ba;
+    }
 }
 
 InitDeclarator *InitDeclarator::copy() const
@@ -2594,6 +2603,14 @@ InitDeclarator *InitDeclarator::copy() const
             , s.d->copy()
             , s.asl1 ? s.asl1->copy() : nullptr
             , s.i->copy());
+    }
+    else if(std::holds_alternative<Sd_ba>(var))
+    {
+        auto &&s{std::get<Sd_ba>(var)};
+        cvar.emplace<Sd_ba>(s.asl0 != nullptr ? s.asl0->copy() : nullptr
+            , s.d->copy()
+            , s.asl1 != nullptr ? s.asl1->copy() : nullptr
+            , s.ba->copy());
     }
 
     return new InitDeclarator(cvar);
@@ -2634,6 +2651,23 @@ std::string &InitDeclarator::str(std::string &res, std::size_t &indent) const
         }
         res += " = ";
         s.i->str(res, indent);
+    }
+    else if(std::holds_alternative<Sd_ba>(var))
+    {
+        auto &&s{std::get<Sd_ba>(var)};
+        if(s.asl0 != nullptr)
+        {
+            res.push_back(' ');
+            s.asl0->str(res, indent);
+        }
+        s.d->str(res, indent);
+        if(s.asl1 != nullptr)
+        {
+            res.push_back(' ');
+            s.asl1->str(res, indent);
+        }
+        res.push_back(' ');
+        s.ba->str(res, indent);
     }
 
     return res;
@@ -3597,6 +3631,8 @@ Statement::~Statement()
         delete std::get<JumpStatement*>(var);
     else if(std::holds_alternative<AttributeStatement*>(var))
         delete std::get<AttributeStatement*>(var);
+    else if(std::holds_alternative<AsmStatement*>(var))
+        delete std::get<AsmStatement*>(var);
 }
 
 Statement *Statement::copy() const
@@ -3618,6 +3654,8 @@ Statement *Statement::copy() const
         cvar.emplace<JumpStatement*>(std::get<JumpStatement*>(var)->copy());
     else if(std::holds_alternative<AttributeStatement*>(var))
         cvar.emplace<AttributeStatement*>(std::get<AttributeStatement*>(var)->copy());
+    else if(std::holds_alternative<AsmStatement*>(var))
+        cvar.emplace<AsmStatement*>(std::get<AsmStatement*>(var)->copy());
 
     auto &&ret{new Statement(cvar)};
     ret->scopeId = scopeId;
@@ -3644,6 +3682,8 @@ std::string &Statement::str(std::string &res, std::size_t &indent) const
         std::get<JumpStatement*>(var)->str(res, indent);
     else if(std::holds_alternative<AttributeStatement*>(var))
         std::get<AttributeStatement*>(var)->str(res, indent);
+    else if(std::holds_alternative<AsmStatement*>(var))
+        std::get<AsmStatement*>(var)->str(res, indent);
 
     return res;
 }
@@ -5761,11 +5801,174 @@ std::string &AttributeStatement::str(std::string &res, std::size_t &indent) cons
     return res;
 }
 
+BasicAsm::~BasicAsm()
+{
+    delete aq;
+    delete sl;
+}
+
+BasicAsm *BasicAsm::copy() const
+{
+    return new BasicAsm{(aq != nullptr ? aq->copy() : nullptr)
+        , sl->copy()};
+}
+
+std::string &BasicAsm::str(std::string &res, std::size_t &indent) const
+{
+    res += "__asm__ ";
+
+    if(aq != nullptr)
+        aq->str(res, indent);
+    
+    res.push_back('(');
+    sl->str(res, indent);
+    res.push_back(')');
+
+    return res;
+}
+
+ExtendedAsm::~ExtendedAsm()
+{
+    delete aq;
+    delete sl;
+    for(auto &&t : oo)
+        delete t;
+    for(auto &&t : io)
+        delete t;
+    for(auto &&t : clobbers)
+        delete t;
+    for(auto &&t : gl)
+        delete t;
+}
+
+ExtendedAsm *ExtendedAsm::copy() const
+{
+    auto &&copyVector{[&](auto &&to, auto &&from)
+        -> void
+    {
+        for(auto &&t : from)
+            to.push_back(t->copy());
+    }};
+
+    AsmQualifiers *caq{aq != nullptr ? aq->copy() : nullptr};
+    StringLiteral *csl{sl->copy()};
+    std::vector<Token*> coo, cio, cclobbers, cgl;
+    copyVector(coo, oo);
+    copyVector(cio, io);
+    copyVector(cclobbers, clobbers);
+    copyVector(cgl, gl);
+
+    return new ExtendedAsm{caq, csl, coo, cio, cclobbers, cgl};
+}
+
+std::string &ExtendedAsm::str(std::string &res, std::size_t &indent) const
+{
+    auto &&outputVector{[&](auto &&vec)
+        -> void
+    {
+        for(auto &&t : vec)
+        {
+            t->str(res, indent);
+            res.push_back(' ');
+        }
+    }};
+
+    res += "__asm__ ";
+
+    if(aq != nullptr)
+        aq->str(res, indent);
+    
+    res.push_back('(');
+
+    sl->str(res, indent);
+
+    indent++;
+    addLine(res, indent);
+
+    res.push_back(':');
+    outputVector(oo);
+
+    if(!io.empty() || !gl.empty())
+    {
+        addLine(res, indent);
+        res.push_back(':');
+        outputVector(io);
+    }
+
+    if(!clobbers.empty() || !gl.empty())
+    {
+        addLine(res, indent);
+        res.push_back(':');
+        outputVector(clobbers);
+    }
+
+    if(!gl.empty())
+    {
+        addLine(res, indent);
+        res.push_back(':');
+        outputVector(gl);
+    }
+
+    res.push_back(')');
+    indent--;
+
+    return res;
+}
+
 std::string &addLine(std::string &str, std::size_t &indent)
 {
     str.push_back('\n');
     str += std::string(4 * indent, ' ');
     return str;
+}
+
+AsmQualifiers *AsmQualifiers::copy() const
+{
+    return new AsmQualifiers{seq};
+}
+
+std::string &AsmQualifiers::str(std::string &res, std::size_t &indent) const
+{
+    static const std::unordered_map<Tag, std::string> tagMap{{Tag::VOLATILE, "volatile"}
+        , {Tag::INLINE, "inline"}
+        , {Tag::GOTO, "goto"}};
+
+    for(auto &&tag : seq)
+    {
+        res += tagMap.at(tag);
+        res.push_back(' ');
+    }
+
+    return res;
+}
+
+AsmStatement::~AsmStatement()
+{
+    if(std::holds_alternative<BasicAsm*>(var))
+        delete std::get<BasicAsm*>(var);
+    else if(std::holds_alternative<ExtendedAsm*>(var))
+        delete std::get<ExtendedAsm*>(var);
+}
+
+AsmStatement *AsmStatement::copy() const
+{
+    if(std::holds_alternative<BasicAsm*>(var))
+        return new AsmStatement{std::get<BasicAsm*>(var)->copy()};
+    else if(std::holds_alternative<ExtendedAsm*>(var))
+        return new AsmStatement{std::get<ExtendedAsm*>(var)->copy()};
+
+    return new AsmStatement{std::monostate{}};
+}
+
+std::string &AsmStatement::str(std::string &res, std::size_t &indent) const
+{
+    if(std::holds_alternative<BasicAsm*>(var))
+        std::get<BasicAsm*>(var)->str(res, indent);
+    else if(std::holds_alternative<ExtendedAsm*>(var))
+        std::get<ExtendedAsm*>(var)->str(res, indent);
+    
+    res.push_back(';');
+    return res;
 }
 
 }

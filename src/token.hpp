@@ -139,6 +139,11 @@ class AttributeSpecifier;
 class AttributeSpecifierList;
 class AttributeStatement;
 
+class BasicAsm;
+class ExtendedAsm;
+class AsmQualifiers;
+class AsmStatement;
+
 template<class T>
 extern std::string str(const T *t)
 {
@@ -184,7 +189,7 @@ struct Keyword
         , VOLATILE, WHILE, ALIGNAS, ALIGNOF
         , ATOMIC, BOOL, COMPLEX, GENERIC
         , IMAGINARY, NORETURN, STATIC_ASSERT, THREAD_LOCAL
-        , ATTRIBUTE
+        , ATTRIBUTE, ASM
     };
 
     Tag tag;
@@ -1561,10 +1566,26 @@ struct InitDeclarator
             , asl1{inasl1}
             , i(ini){}
     };
+    struct Sd_ba
+    {
+        AttributeSpecifierList *asl0;
+        Declarator *d;
+        AttributeSpecifierList *asl1;
+        BasicAsm *ba;
+        constexpr Sd_ba(AttributeSpecifierList *inasl0 = nullptr
+            , Declarator *ind = nullptr
+            , AttributeSpecifierList *inasl1 = nullptr
+            , BasicAsm *inba = nullptr) noexcept
+            : asl0{inasl0}
+            , d{ind}
+            , asl1{inasl1}
+            , ba{inba}{}
+    };
 
     using Var = std::variant<std::monostate
         , Sd
-        , Sd_i>;
+        , Sd_i
+        , Sd_ba>;
 
     Var var;
 
@@ -2073,7 +2094,8 @@ struct Statement
         , SelectionStatement*
         , IterationStatement*
         , JumpStatement*
-        , AttributeStatement*>;
+        , AttributeStatement*
+        , AsmStatement*>;
 
     Var var;
     // if statement has sub-statement and sub-statement has block scope,
@@ -3115,6 +3137,85 @@ struct AttributeStatement
     ~AttributeStatement();
 
     AttributeStatement *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
+};
+
+struct BasicAsm
+{
+    AsmQualifiers *aq;
+    StringLiteral *sl;
+
+    constexpr BasicAsm(AsmQualifiers *inaq = nullptr
+        , StringLiteral *insl = nullptr)
+        : aq{inaq}
+        , sl{insl}{}
+    ~BasicAsm();
+
+    BasicAsm *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
+};
+
+struct ExtendedAsm
+{
+    AsmQualifiers *aq;
+    StringLiteral *sl;
+    std::vector<Token*> oo;
+    std::vector<Token*> io;
+    std::vector<Token*> clobbers;
+    std::vector<Token*> gl;
+
+    ExtendedAsm(AsmQualifiers *inaq
+        , StringLiteral *insl
+        , const std::vector<Token*> &inoo
+        , const std::vector<Token*> &inio
+        , const std::vector<Token*> &inclobbers
+        , const std::vector<Token*> &ingl)
+        : aq{inaq}
+        , sl{insl}
+        , oo(inoo)
+        , io(inio)
+        , clobbers(inclobbers)
+        , gl(ingl){}
+    ~ExtendedAsm();
+
+    ExtendedAsm *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
+};
+
+struct AsmQualifiers
+{
+    enum class Tag : unsigned char
+    {
+        NONE
+        , VOLATILE
+        , INLINE
+        , GOTO
+    };
+
+    std::vector<Tag> seq;
+
+    AsmQualifiers(const std::vector<Tag> &inseq)
+        : seq(inseq){}
+    ~AsmQualifiers() = default;
+    
+    AsmQualifiers *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
+};
+
+struct AsmStatement
+{
+    using Var = std::variant<std::monostate
+        , BasicAsm*
+        , ExtendedAsm*>;
+
+    Var var;
+    
+    template<class... Args>
+    AsmStatement(Args&&... args)
+        : var(std::forward<Args>(args)...){}
+    ~AsmStatement();
+
+    AsmStatement *copy() const;
     std::string &str(std::string&, std::size_t&) const;
 };
 
