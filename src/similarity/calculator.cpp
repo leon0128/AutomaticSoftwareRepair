@@ -17,9 +17,12 @@ Calculator::Calculator()
 
 bool Calculator::execute(const STMs<std::size_t> &stms)
 {
-    // no edit stms
+    if(stms.empty())
+        return emptyError("array of StructureTokenMetrics is empty.");
+
+    /* no edit stms */
     // auto &&stmsToUse{stms};
-    // use Okapi BM25
+    /* use Okapi BM25 */
     auto &&stmsToUse{calculateOkapiBM25(stms)};
 
     mResult = std::valarray<std::valarray<double>>(std::valarray<double>(0.0, stmsToUse.size()), stmsToUse.size());
