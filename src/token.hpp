@@ -3164,12 +3164,12 @@ struct ExtendedAsm
     std::vector<Token*> clobbers;
     std::vector<Token*> gl;
 
-    ExtendedAsm(AsmQualifiers *inaq
-        , StringLiteral *insl
-        , const std::vector<Token*> &inoo
-        , const std::vector<Token*> &inio
-        , const std::vector<Token*> &inclobbers
-        , const std::vector<Token*> &ingl)
+    ExtendedAsm(AsmQualifiers *inaq = nullptr
+        , StringLiteral *insl = nullptr
+        , const std::vector<Token*> &inoo = std::vector<Token*>{}
+        , const std::vector<Token*> &inio = std::vector<Token*>{}
+        , const std::vector<Token*> &inclobbers = std::vector<Token*>{}
+        , const std::vector<Token*> &ingl = std::vector<Token*>{})
         : aq{inaq}
         , sl{insl}
         , oo(inoo)

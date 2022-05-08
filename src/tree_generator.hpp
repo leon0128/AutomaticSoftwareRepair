@@ -119,6 +119,11 @@ private:
     TOKEN::AttributeSpecifierList *tokAttributeSpecifierList();
     TOKEN::AttributeStatement *tokAttributeStatement();
 
+    TOKEN::AsmQualifiers *tokAsmQualifiers();
+    TOKEN::BasicAsm *tokBasicAsm();
+    TOKEN::ExtendedAsm *tokExtendedAsm();
+    TOKEN::AsmStatement *tokAsmStatement();
+
     TOKEN::IntegerConstant *convIntegerConstant();
     TOKEN::FloatingConstant *convFloatingConstant();
     TOKEN::EnumerationConstant *convEnumerationConstant();

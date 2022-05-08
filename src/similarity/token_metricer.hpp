@@ -90,6 +90,11 @@ namespace TOKEN
     class AttributeSpecifierList;
     class AttributeSpecifier;
     class AttributeStatement;
+
+    class AsmQualifiers;
+    class BasicAsm;
+    class ExtendedAsm;
+    class AsmStatement;
 }
 
 namespace SIM
@@ -194,6 +199,11 @@ private:
     bool process(const TOKEN::AttributeSpecifierList*);
     bool process(const TOKEN::AttributeSpecifier*);
     bool process(const TOKEN::AttributeStatement*);
+
+    bool process(const TOKEN::AsmQualifiers*);
+    bool process(const TOKEN::BasicAsm*);
+    bool process(const TOKEN::ExtendedAsm*);
+    bool process(const TOKEN::AsmStatement*);
 
     std::string getIdentifier(const TOKEN::Declarator*) const;
 

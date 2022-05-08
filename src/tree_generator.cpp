@@ -51,7 +51,9 @@ const std::unordered_map<std::string, TOKEN::Keyword::Tag> TreeGenerator::KEYWOR
         , {"_Noreturn", TOKEN::Keyword::Tag::NORETURN}
         , {"_Static_assert", TOKEN::Keyword::Tag::STATIC_ASSERT}
         , {"_Thread_local", TOKEN::Keyword::Tag::THREAD_LOCAL}
-        , {"__attribute__", TOKEN::Keyword::Tag::ATTRIBUTE}};
+        , {"__attribute__", TOKEN::Keyword::Tag::ATTRIBUTE}
+        , {"__asm__", TOKEN::Keyword::Tag::ASM}
+        , {"asm", TOKEN::Keyword::Tag::ASM}};
 
 TreeGenerator::TreeGenerator(const std::string &file
     , const Sequence &seq)
@@ -451,6 +453,21 @@ TOKEN::InitDeclarator *TreeGenerator::tokInitDeclarator()
         delete s.d;
         delete s.asl1;
         delete s.i;
+    }
+
+    if(TOKEN::InitDeclarator::Sd_ba s;
+        (s.asl0 = tokAttributeSpecifierList(), true)
+            && (s.d = tokDeclarator()) != nullptr
+            && (s.asl1 = tokAttributeSpecifierList(), true)
+            && (s.ba = tokBasicAsm()))
+        return new TOKEN::InitDeclarator{s};
+    else
+    {
+        mIdx = pre;
+        delete s.asl0;
+        delete s.d;
+        delete s.asl1;
+        delete s.ba;
     }
 
     if(TOKEN::InitDeclarator::Sd s;
@@ -1314,9 +1331,12 @@ TOKEN::Statement *TreeGenerator::tokStatement()
     else if(TOKEN::JumpStatement *js = tokJumpStatement();
         js != nullptr)
         return new TOKEN::Statement(js);
-    else if(TOKEN::AttributeStatement *asl{tokAttributeStatement()};
-        asl != nullptr)
-        return new TOKEN::Statement{asl};
+    else if(TOKEN::AttributeStatement *as{tokAttributeStatement()};
+        as != nullptr)
+        return new TOKEN::Statement{as};
+    else if(TOKEN::AsmStatement *as{tokAsmStatement()};
+        as != nullptr)
+        return new TOKEN::Statement{as};
     
     return nullptr;
 }
@@ -2556,6 +2576,159 @@ TOKEN::AttributeStatement *TreeGenerator::tokAttributeStatement()
     return nullptr;
 }
 
+TOKEN::AsmQualifiers *TreeGenerator::tokAsmQualifiers()
+{
+    using namespace TOKEN;
+    using AQ = AsmQualifiers;
+
+    std::vector<AQ::Tag> seq;
+    
+    if(isMatch(Keyword::Tag::VOLATILE))
+        seq.push_back(AQ::Tag::VOLATILE);
+    else if(isMatch(Keyword::Tag::INLINE))
+        seq.push_back(AQ::Tag::INLINE);
+    else if(isMatch(Keyword::Tag::GOTO))
+        seq.push_back(AQ::Tag::GOTO);
+    
+    if(!seq.empty())
+        return new AsmQualifiers{seq};
+    else
+        return nullptr;
+}
+
+TOKEN::BasicAsm *TreeGenerator::tokBasicAsm()
+{
+    using namespace TOKEN;
+
+    std::size_t preIdx{mIdx};
+
+    BasicAsm *ba{new BasicAsm{}};
+
+    if(isMatch(Keyword::Tag::ASM)
+        && (ba->aq = tokAsmQualifiers(), true)
+        && isMatch(Punctuator::Tag::L_PARENTHESIS)
+        && ((ba->sl = tokStringLiteral()) != nullptr)
+        && isMatch(Punctuator::Tag::R_PARENTHESIS))
+        return ba;
+    else
+    {
+        mIdx = preIdx;
+        delete ba;
+        return nullptr;
+    }
+}
+
+TOKEN::ExtendedAsm *TreeGenerator::tokExtendedAsm()
+{
+    using namespace TOKEN;
+
+    // this function is not need to free seq's memory
+    // even if new Tokens are added to seq.
+    auto &&tokTokens{[&](std::vector<Token*> &seq)
+        -> bool
+    {
+        if(!isMatch(Punctuator::Tag::COLON))
+            return false;
+        
+        std::size_t preIdx{mIdx};
+        int numParenthesis{0};
+
+        // exit conditions:
+        //  numParenthesis is 0
+        //  and next token is ':' or ')'
+        while(!(numParenthesis == 0
+            && (isMatch(Punctuator::Tag::COLON)
+                || isMatch(Punctuator::Tag::R_PARENTHESIS))))
+        {
+            if(mIdx >= mSeq.size())
+            {
+                mIdx = preIdx;
+                return false;
+            }
+
+            if(isMatch(Punctuator::Tag::L_PARENTHESIS))
+                numParenthesis++, mIdx--;
+            else if(isMatch(Punctuator::Tag::R_PARENTHESIS))
+                numParenthesis--, mIdx--;
+            
+            if(Token *token{convToken()};
+                token != nullptr)
+                seq.push_back(token);
+            else
+            {
+                mIdx = preIdx;
+                return false;
+            }
+        }
+
+        // back to before ':' or ')'
+        mIdx--;
+        return true;
+    }};
+
+    std::size_t preIdx{mIdx};
+
+    ExtendedAsm *ea{new ExtendedAsm{}};
+
+    if(!(isMatch(Keyword::Tag::ASM)
+        && (ea->aq = tokAsmQualifiers(), true)
+        && isMatch(Punctuator::Tag::L_PARENTHESIS)
+        && (ea->sl = tokStringLiteral())))
+    {
+        mIdx = preIdx;
+        delete ea;
+        return nullptr;
+    }
+
+    // output operands
+    if(!tokTokens(ea->oo))
+    {
+        mIdx = preIdx;
+        delete ea;
+        return nullptr;
+    }
+
+    // input operands
+    // clobbers
+    // goto labels
+    tokTokens(ea->io);
+    tokTokens(ea->clobbers);
+    tokTokens(ea->gl);
+
+    if(isMatch(Punctuator::Tag::R_PARENTHESIS))
+        return ea;
+    else
+    {
+        mIdx = preIdx;
+        delete ea;
+        return nullptr;
+    }
+}
+
+TOKEN::AsmStatement *TreeGenerator::tokAsmStatement()
+{
+    using namespace TOKEN;
+
+    std::size_t preIdx{mIdx};
+    AsmStatement *as{new AsmStatement{std::monostate{}}};
+
+    if(as->var.emplace<BasicAsm*>(tokBasicAsm()) == nullptr
+        && as->var.emplace<ExtendedAsm*>(tokExtendedAsm()) == nullptr)
+    {
+        delete as;
+        return nullptr;
+    }
+
+    if(isMatch(Punctuator::Tag::SEMICOLON))
+        return as;
+    else
+    {
+        mIdx = preIdx;
+        delete as;
+        return nullptr;
+    }
+}
+
 TOKEN::IntegerConstant *TreeGenerator::convIntegerConstant()
 {
     if(mIdx < mSeq.size()
@@ -2682,7 +2855,7 @@ bool TreeGenerator::isMatch(TOKEN::Punctuator::Tag tag)
 
 bool TreeGenerator::noEvaluatedError() const
 {
-    static const constexpr std::size_t numMaxOutputTokens{10ull};
+    static const constexpr std::size_t numMaxOutputTokens{15ull};
 
     std::cerr << "TreeGenerator error:\n"
         "    what: token-sequence has not been evaluated to the end.\n"

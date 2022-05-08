@@ -262,6 +262,8 @@ bool Selector::select(const TOKEN::Statement *statement)
         return select(std::get<TOKEN::IterationStatement*>(statement->var));
     else if(std::holds_alternative<TOKEN::AttributeStatement*>(statement->var))
         return select(std::get<TOKEN::AttributeStatement*>(statement->var));
+    else if(std::holds_alternative<TOKEN::AsmStatement*>(statement->var))
+        return select(std::get<TOKEN::AsmStatement*>(statement->var));
     else
         return invalidStatementError();
 
@@ -1521,6 +1523,35 @@ bool Selector::select(const TOKEN::AttributeStatement *as)
 {
     if(!select(as->asl))
         return false;
+    
+    return true;
+}
+
+bool Selector::select(const TOKEN::AsmQualifiers*)
+{
+    return true;
+}
+
+bool Selector::select(const TOKEN::BasicAsm*)
+{
+    mIsFittables.push_back(false);
+
+    return true;
+}
+
+bool Selector::select(const TOKEN::ExtendedAsm*)
+{
+    mIsFittables.push_back(false);
+
+    return true;
+}
+
+bool Selector::select(const TOKEN::AsmStatement *as)
+{
+    if(std::holds_alternative<TOKEN::BasicAsm*>(as->var))
+        return select(std::get<TOKEN::BasicAsm*>(as->var));
+    else if(std::holds_alternative<TOKEN::ExtendedAsm*>(as->var))
+        return select(std::get<TOKEN::ExtendedAsm*>(as->var));
     
     return true;
 }

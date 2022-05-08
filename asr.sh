@@ -21,7 +21,7 @@ NEGATIVE_TEST_WEIGHT=10
 TARGET_SCORE=10
 
 ## external softwares
-PREPROCESSOR="cpp -P -D__extension__="
+PREPROCESSOR="cpp -P -D__extension__= -D__builtin_offsetof(TYPE,MEMBER)=((size_t)&((TYPE*)0)->MEMBER)"
 COMPILER="gcc"
 
 ## operation

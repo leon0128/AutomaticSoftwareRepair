@@ -75,6 +75,11 @@ namespace TOKEN
     class AttributeSpecifierList;
     class AttributeSpecifier;
     class AttributeStatement;
+
+    class AsmQualifiers;
+    class BasicAsm;
+    class ExtendedAsm;
+    class AsmStatement;
 }
 namespace IDENTIFIER
 {
@@ -194,6 +199,11 @@ private:
     bool select(const TOKEN::AttributeSpecifierList*);
     bool select(const TOKEN::AttributeSpecifier*);
     bool select(const TOKEN::AttributeStatement*);
+
+    bool select(const TOKEN::AsmQualifiers*);
+    bool select(const TOKEN::BasicAsm*);
+    bool select(const TOKEN::ExtendedAsm*);
+    bool select(const TOKEN::AsmStatement*);
 
     bool clearError() const;
     bool invalidStatementError() const;

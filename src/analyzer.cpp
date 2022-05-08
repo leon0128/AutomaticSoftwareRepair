@@ -291,6 +291,7 @@ bool Analyzer::analyze(TOKEN::Declaration *d)
                 using ID = TOKEN::InitDeclarator;
 
                 const TOKEN::Initializer *initializer{nullptr};
+                const TOKEN::BasicAsm *ba{nullptr};
                 const TOKEN::Declarator *declarator{nullptr};
                 if(std::holds_alternative<ID::Sd>(id->var))
                     declarator = std::get<ID::Sd>(id->var).d;
@@ -298,6 +299,11 @@ bool Analyzer::analyze(TOKEN::Declaration *d)
                 {
                     initializer = std::get<ID::Sd_i>(id->var).i;
                     declarator = std::get<ID::Sd_i>(id->var).d;
+                }
+                else if(std::holds_alternative<ID::Sd_ba>(id->var))
+                {
+                    declarator = std::get<ID::Sd_ba>(id->var).d;
+                    ba = std::get<ID::Sd_ba>(id->var).ba;
                 }
                 else
                     variantError("InitDeclarator");
@@ -335,7 +341,7 @@ bool Analyzer::analyze(TOKEN::Declaration *d)
                             , type
                             , storageClass
                             , alignment
-                            , bool(initializer)});
+                            , initializer != nullptr || ba != nullptr});
                     }
 
                     auto &&pair{mScope->addIdentifier(id
@@ -370,11 +376,11 @@ bool Analyzer::analyze(TOKEN::Declaration *d)
                         if(!TYPE::equalTo(oPtr->type(), type))
                             return differentTypeError(identifier);
                         
-                        if(oPtr->isDefined() && initializer)
+                        if(oPtr->isDefined() && (initializer != nullptr || ba != nullptr))
                             return redefinedError(identifier);
                         
                         oPtr->storageClass(storageClass);
-                        if(bool(initializer)
+                        if((initializer != nullptr || ba != nullptr)
                             || mScope->scopeTag() != SCOPE::Scope::ScopeTag::FILE)
                             oPtr->isDefined(true);
                     }
@@ -502,6 +508,12 @@ bool Analyzer::analyze(TOKEN::Statement *s)
     {
         s->scopeId = mScope->id();
         if(!analyze(std::get<TOKEN::AttributeStatement*>(s->var)))
+            return false;
+    }
+    else if(std::holds_alternative<TOKEN::AsmStatement*>(s->var))
+    {
+        s->scopeId = mScope->id();
+        if(!analyze(std::get<TOKEN::AsmStatement*>(s->var)))
             return false;
     }
     else
@@ -749,6 +761,11 @@ bool Analyzer::analyze(const TOKEN::JumpStatement *js)
 }
 
 bool Analyzer::analyze(const TOKEN::AttributeStatement*)
+{
+    return true;
+}
+
+bool Analyzer::analyze(const TOKEN::AsmStatement*)
 {
     return true;
 }

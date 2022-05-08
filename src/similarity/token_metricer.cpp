@@ -162,6 +162,20 @@ bool TokenMetricer::process(const TOKEN::InitDeclarator *id)
         if(!process(s.i))
             return false;
     }
+    else if(std::holds_alternative<ID::Sd_ba>(id->var))
+    {
+        auto &&s{std::get<ID::Sd_ba>(id->var)};
+        if(s.asl0 != nullptr
+            && !process(s.asl0))
+            return false;
+        if(!process(s.d))
+            return false;
+        if(s.asl1 != nullptr
+            && !process(s.asl1))
+            return false;
+        if(!process(s.ba))
+            return false;
+    }
     else
         return invalidVariantError("TOKEN::InitDeclarator");
     
@@ -184,6 +198,8 @@ bool TokenMetricer::process(const TOKEN::Statement *statement)
         return process(std::get<TOKEN::IterationStatement*>(statement->var));
     else if(std::holds_alternative<TOKEN::AttributeStatement*>(statement->var))
         return process(std::get<TOKEN::AttributeStatement*>(statement->var));
+    else if(std::holds_alternative<TOKEN::AsmStatement*>(statement->var))
+        return process(std::get<TOKEN::AsmStatement*>(statement->var));
     else
         return invalidStatementError();
 
@@ -2253,6 +2269,72 @@ bool TokenMetricer::process(const TOKEN::AttributeStatement *as)
     if(!process(as->asl))
         return false;
     
+    mCurrentSTM->array()[static_cast<std::size_t>(STM::Tag::SEMICOLON)]++;
+
+    return true;
+}
+
+bool TokenMetricer::process(const TOKEN::AsmQualifiers *aq)
+{
+    using STM = StructureTokenMetrics<std::size_t>;
+
+    static const std::unordered_map<TOKEN::AsmQualifiers::Tag, STM::Tag>
+        tagMap{{TOKEN::AsmQualifiers::Tag::VOLATILE, STM::Tag::VOLATILE}
+            , {TOKEN::AsmQualifiers::Tag::INLINE, STM::Tag::INLINE}
+            , {TOKEN::AsmQualifiers::Tag::GOTO, STM::Tag::GOTO}};
+
+    for(auto &&tag : aq->seq)
+        mCurrentSTM->array()[static_cast<std::size_t>(tagMap.at(tag))]++;
+    
+    return true;
+}
+
+bool TokenMetricer::process(const TOKEN::BasicAsm *ba)
+{
+    using STM = StructureTokenMetrics<std::size_t>;
+
+    mCurrentSTM->array()[static_cast<std::size_t>(STM::Tag::ASM)]++;
+
+    if(ba->aq != nullptr
+        && !process(ba->aq))
+        return false;
+    
+    mCurrentSTM->array()[static_cast<std::size_t>(STM::Tag::L_PARENTHESIS)]++;
+    mCurrentSTM->array()[static_cast<std::size_t>(STM::Tag::R_PARENTHESIS)]++;
+
+    return true;
+}
+
+bool TokenMetricer::process(const TOKEN::ExtendedAsm *ea)
+{
+    using STM = StructureTokenMetrics<std::size_t>;
+
+    mCurrentSTM->array()[static_cast<std::size_t>(STM::Tag::ASM)]++;
+
+    if(ea->aq != nullptr
+        && !process(ea->aq))
+        return false;
+    
+    mCurrentSTM->array()[static_cast<std::size_t>(STM::Tag::L_PARENTHESIS)]++;
+
+    // contents of extended asm are not evaluated.
+
+    mCurrentSTM->array()[static_cast<std::size_t>(STM::Tag::R_PARENTHESIS)]++;
+
+    return true;
+}
+
+bool TokenMetricer::process(const TOKEN::AsmStatement *as)
+{
+    using STM = StructureTokenMetrics<std::size_t>;
+
+    if(std::holds_alternative<TOKEN::BasicAsm*>(as->var)
+        && !process(std::get<TOKEN::BasicAsm*>(as->var)))
+        return false;
+    else if(std::holds_alternative<TOKEN::ExtendedAsm*>(as->var)
+        && !process(std::get<TOKEN::ExtendedAsm*>(as->var)))
+        return false;
+
     mCurrentSTM->array()[static_cast<std::size_t>(STM::Tag::SEMICOLON)]++;
 
     return true;

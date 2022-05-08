@@ -108,6 +108,8 @@ bool Divider::divide(TOKEN::Statement *statement)
         return divide(std::get<JumpStatement*>(statement->var));
     else if(std::holds_alternative<AttributeStatement*>(statement->var))
         return divide(std::get<AttributeStatement*>(statement->var));
+    else if(std::holds_alternative<AsmStatement*>(statement->var))
+        return divide(std::get<AsmStatement*>(statement->var));
 
     return true;
 }
@@ -197,6 +199,11 @@ bool Divider::divide(TOKEN::JumpStatement*)
 }
 
 bool Divider::divide(TOKEN::AttributeStatement*)
+{
+    return true;
+}
+
+bool Divider::divide(TOKEN::AsmStatement*)
 {
     return true;
 }
