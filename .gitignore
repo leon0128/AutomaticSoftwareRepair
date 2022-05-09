@@ -1,4 +1,5 @@
-test.c
+__test.c
+__test
 
 # Prerequisites
 *.d
@@ -35,5 +36,4 @@ test.c
 cil
 Repair
 asr
-test/
 output.log

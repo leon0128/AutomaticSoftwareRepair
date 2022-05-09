@@ -4,16 +4,16 @@
 ## general
 EXECUTION_NAME="./asr"
 TARGET_FILENAME="test/test.c"
-TARGET_FUNCTIONS=()
-EXTERNAL_PATHS=("test/pplinux/linux/arch/x86/boot/a20.c")
+TARGET_FUNCTIONS=("getValue")
+EXTERNAL_PATHS=("test/test.c" "test/external.c")
 RESULT_FILENAME="test/result.c"
 TEMPORARY_FILENAME="test/__test.c"
 TEMPORARY_EXECUTION_NAME="test/__test"
 
 ## test case
 TEST_SCRIPT_FILENAME="test/test.sh"
-POSITIVE_PREFIX="p"
-NEGATIVE_PREFIX="n"
+POSITIVE_PREFIX=p
+NEGATIVE_PREFIX=n
 NUMBER_OF_POSITIVE=0
 NUMBER_OF_NEGATIVE=1
 POSITIVE_TEST_WEIGHT=1
@@ -21,8 +21,8 @@ NEGATIVE_TEST_WEIGHT=10
 TARGET_SCORE=10
 
 ## external softwares
-PREPROCESSOR="cpp -P -D__extension__= -D__builtin_offsetof(TYPE,MEMBER)=((size_t)&((TYPE*)0)->MEMBER)"
-COMPILER="gcc"
+PREPROCESSOR="cpp -P"
+COMPILER=gcc
 
 ## operation
 ADD_PROBABILITY=0.4
@@ -41,7 +41,7 @@ TOURNAMENT_SIZE=3
 TARGET=""
 for VALUE in "${TARGET_FUNCTIONS[@]}"
 do
-    TARGET+="--target \"${VALUE}\" "
+    TARGET+="--target ${VALUE} "
 done
 
 POOL=""

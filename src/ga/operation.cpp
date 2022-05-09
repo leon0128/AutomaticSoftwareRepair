@@ -73,6 +73,7 @@ bool Operation::initialize(const Pool &pool
             != Configure::TARGET_FUNCTION_NAMES.end())
             SELECTABLE_DESTINATION_INDICES.push_back(i);
     }
+
     if(SELECTABLE_DESTINATION_INDICES.empty())
     {
         SELECTABLE_DESTINATION_INDICES.resize(block->stats().size());

@@ -51,11 +51,11 @@ bool Controller::execute(int argc, char **argv)
     for(const auto &analyzer : pool)
         tus.emplace_back(analyzer->filename(), analyzer->translationUnit());
 
-    SIM::Controller simController;
-    if(!simController.execute(tus))
-        return false;
+    // SIM::Controller simController;
+    // if(!simController.execute(tus))
+    //     return false;
     
-    return true;
+    // return true;
 
     GA::Controller gaController;
     if(!gaController.execute(source

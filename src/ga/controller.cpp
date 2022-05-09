@@ -115,6 +115,9 @@ std::shared_ptr<REPRESENTATION::Representation> Controller::geneticAlgorithm() c
             }
         }
 
+        if(isFoundResult)
+            break;
+
         std::sort(scores.begin()
             , scores.end()
             , [](const auto &lhs
@@ -169,7 +172,9 @@ int Controller::fitness(const REPRESENTATION::Representation *rep) const
                     , Configure::TEST_SCRIPT
                     , Configure::EXECUTION_NAME
                     , prefix + std::to_string(i)
-                    , "> /dev/null 2>&1")
+                    , ">"
+                    , SYSTEM::NULLFILE
+                    , "2>&1")
                     == 0)
                     score += weight;
             }
@@ -213,7 +218,9 @@ bool Controller::compile(const std::string &filename) const
         , filename
         , "-o"
         , Configure::EXECUTION_NAME
-        , "> /dev/null 2>&1")
+        , ">"
+        , SYSTEM::NULLFILE
+        , "2>&1")
         != 0)
         return compilingError(filename);
 
