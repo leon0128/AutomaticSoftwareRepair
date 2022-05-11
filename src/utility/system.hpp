@@ -8,6 +8,12 @@
 namespace SYSTEM
 {
 
+#if _WIN64 || _WIN32
+inline extern const char * const NULLFILE{"NUL"};
+#else
+inline extern const char * const NULLFILE{"/dev/null"};
+#endif
+
 inline extern int system(const std::string &cmd);
 template<class Str
     , class ...Args>

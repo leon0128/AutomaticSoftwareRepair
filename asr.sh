@@ -41,7 +41,7 @@ TOURNAMENT_SIZE=3
 TARGET=""
 for VALUE in "${TARGET_FUNCTIONS[@]}"
 do
-    TARGET+="--target \"${VALUE}\" "
+    TARGET+="--target ${VALUE} "
 done
 
 POOL=""

@@ -71,7 +71,9 @@ bool Sequencer::preprocess()
         , mFile
         , "-o"
         , Configure::TEST_FILENAME
-        , "> /dev/null 2>&1")
+        , ">"
+        , SYSTEM::NULLFILE
+        , "2>&1")
         != 0)
     {
         std::cerr << "Sequencer::preprocess() error:\n"
