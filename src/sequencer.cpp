@@ -66,15 +66,17 @@ bool Sequencer::preprocess()
         return false;
     }
 
-    if(SYSTEM::system(Configure::PREPROCESSOR
+    
+    std::string command{SYSTEM::command(Configure::PREPROCESSOR
         , "-P"
         , mFile
         , "-o"
         , Configure::TEST_FILENAME
         , ">"
         , SYSTEM::NULLFILE
-        , "2>&1")
-        != 0)
+        , "2>&1")};
+
+    if(SYSTEM::system(command) != 0)
     {
         std::cerr << "Sequencer::preprocess() error:\n"
             "    filename: " << mFile

@@ -55,6 +55,7 @@ $EXECUTION_NAME \
     $TARGET \
     $POOL \
     --result "$RESULT_FILENAME" \
+    --command-log \
     --preprocessor "$PREPROCESSOR" \
     --compiler "$COMPILER" \
     --test-script "$TEST_SCRIPT_FILENAME" \

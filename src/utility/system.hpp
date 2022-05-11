@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <string>
 #include <utility>
+#include <iostream>
 
 namespace SYSTEM
 {
@@ -13,6 +14,9 @@ inline extern const char * const NULLFILE{"NUL"};
 #else
 inline extern const char * const NULLFILE{"/dev/null"};
 #endif
+
+inline extern bool shouldOutputLog;
+bool shouldOutputLog{false};
 
 inline extern int system(const std::string &cmd);
 template<class Str
@@ -28,6 +32,9 @@ inline extern std::string command();
 
 inline extern int system(const std::string &cmd)
 {
+    if(shouldOutputLog)
+        std::clog << "command: " << cmd << std::endl;
+
     return std::system(cmd.c_str());
 }
 
@@ -36,8 +43,13 @@ template<class Str
 inline extern int system(Str &&str
     , Args &&...args)
 {
-    return std::system(command(std::forward<Str>(str)
-        , std::forward<Args>(args)...).c_str());
+    std::string com{command(std::forward<Str>(str)
+        , std::forward<Args>(args)...)};
+    
+    if(shouldOutputLog)
+        std::clog << "command: " << com << std::endl;
+
+    return std::system(com.c_str());
 }
 
 template<class Str

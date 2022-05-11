@@ -168,14 +168,15 @@ int Controller::fitness(const REPRESENTATION::Representation *rep) const
                 i < size;
                 i++)
             {
-                if(SYSTEM::system("sh"
+                std::string command{SYSTEM::command("bash"
                     , Configure::TEST_SCRIPT
                     , Configure::EXECUTION_NAME
                     , prefix + std::to_string(i)
                     , ">"
                     , SYSTEM::NULLFILE
-                    , "2>&1")
-                    == 0)
+                    , "2>&1")};
+
+                if(SYSTEM::system(command) == 0)
                     score += weight;
             }
 
@@ -214,14 +215,15 @@ bool Controller::outputToFile(const std::string &filename
 
 bool Controller::compile(const std::string &filename) const
 {
-    if(SYSTEM::system(Configure::COMPILER
+    std::string command{SYSTEM::command(Configure::COMPILER
         , filename
         , "-o"
         , Configure::EXECUTION_NAME
         , ">"
         , SYSTEM::NULLFILE
-        , "2>&1")
-        != 0)
+        , "2>&1")};
+    
+    if(SYSTEM::system(command) != 0)
         return compilingError(filename);
 
     return true;

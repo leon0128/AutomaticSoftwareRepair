@@ -18,6 +18,7 @@ private:
         , TARGET
         , POOL
         , RESULT
+        , COMMAND_LOG
         , PREPROCESSOR
         , COMPILER
         , TEST_SCRIPT
@@ -50,6 +51,8 @@ public:
     inline static std::vector<std::string> TARGET_FUNCTION_NAMES;
     inline static std::vector<std::string> POOL;
     inline static std::string RESULT_FILENAME;
+
+    inline static bool SHOULD_OUTPUT_COMMAND_LOG;
 
     inline static std::string PREPROCESSOR;
     inline static std::string COMPILER;

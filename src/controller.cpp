@@ -4,6 +4,7 @@
 #include <filesystem>
 
 #include "utility/output.hpp"
+#include "utility/system.hpp"
 #include "similarity/controller.hpp"
 #include "ga/controller.hpp"
 #include "analyzer.hpp"
@@ -69,6 +70,8 @@ bool Controller::initialize(int argc, char **argv)
 {
     if(!Configure::parseCommandLineArguments(argc, argv))
         return false;
+    
+    SYSTEM::shouldOutputLog = Configure::SHOULD_OUTPUT_COMMAND_LOG;
 
     return true;
 }

@@ -7,6 +7,7 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--target", {Tag::TARGET, true}}
     , {"--pool", {Tag::POOL, true}}
     , {"--result", {Tag::RESULT, true}}
+    , {"--command-log", {Tag::COMMAND_LOG, false}}
     , {"--preprocessor", {Tag::PREPROCESSOR, true}}
     , {"--compiler", {Tag::COMPILER, true}}
     , {"--test-script", {Tag::TEST_SCRIPT, true}}
@@ -98,6 +99,9 @@ bool Configure::readArgument(Tag tag
         case(Tag::RESULT):
             if(!assignString(tag, arg, RESULT_FILENAME))
                 return false;
+            break;
+        case(Tag::COMMAND_LOG):
+            SHOULD_OUTPUT_COMMAND_LOG = true;
             break;
         case(Tag::PREPROCESSOR):
             if(!assignString(tag, arg, PREPROCESSOR))
@@ -210,6 +214,9 @@ bool Configure::setDefaultValue()
                 break;
             case(Tag::RESULT):
                 RESULT_FILENAME = "result.c";
+                break;
+            case(Tag::COMMAND_LOG):
+                SHOULD_OUTPUT_COMMAND_LOG = false;
                 break;
             case(Tag::PREPROCESSOR):
                 PREPROCESSOR = "cpp -P";
