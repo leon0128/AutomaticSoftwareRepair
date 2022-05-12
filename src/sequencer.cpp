@@ -2,6 +2,7 @@
 #include <string>
 #include <limits>
 #include <filesystem>
+#include <utility>
 
 #include "utility/system.hpp"
 #include "utility/file.hpp"
@@ -120,6 +121,52 @@ bool Sequencer::convertCharacter()
 
 bool Sequencer::concatenateStringLiteral()
 {
+    // pre: pre + post
+    // post: empty
+    auto &&concatenateVector{[&](std::vector<TOKEN::SChar*> &pre
+        , std::vector<TOKEN::SChar*> &post)
+        -> void
+    {
+        pre.insert(pre.end()
+            , post.begin()
+            , post.end());
+        post.clear();
+    }};
+
+    for(std::size_t i{0ull}; i + 1ull < mSeq.size(); i++)
+    {
+        if(!std::holds_alternative<TOKEN::StringLiteral*>(mSeq[i]->var)
+            || !std::holds_alternative<TOKEN::StringLiteral*>(mSeq[i + 1ull]->var))
+            continue;
+
+        auto &&preSL{std::get<TOKEN::StringLiteral*>(mSeq[i]->var)};
+        auto &&postSL{std::get<TOKEN::StringLiteral*>(mSeq[i]->var)};
+
+        // if both are not same tag for each other,
+        // no change
+        if(preSL->ep != nullptr
+            && postSL->ep != nullptr)
+        {
+            if(preSL->ep->tag != postSL->ep->tag)
+                continue;
+        }
+
+        // if only post-SL has encoding-prefix,
+        // move it to pre-SL.
+        if(preSL->ep != nullptr
+            ^ postSL->ep != nullptr)
+        {
+            if(postSL->ep != nullptr)
+                std::swap(preSL->ep, postSL->ep);
+        }
+
+        concatenateVector(preSL->scs->seq
+            , postSL->scs->seq);
+        delete mSeq[i + 1ull];
+        mSeq.erase(mSeq.begin() + i + 1ull);
+        i--;
+    }
+
     return true;
 }
 

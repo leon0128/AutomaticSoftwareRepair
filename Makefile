@@ -9,11 +9,11 @@ SOURCE_DIRECTORIES = ./src/ \
 
 # compiler settings
 ## c++ compiler
-CXX = g++-10
+CXX = g++
 ## c++ compiler flags
 CXXFLAGS = -g3 -Wall -std=c++20
 ## c++ preprocessor
-CPP = g++-10 -E
+CPP = g++ -E
 ## c++ preprocessor flags
 CPPFLAGS = 
 

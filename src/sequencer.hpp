@@ -1,7 +1,7 @@
 #ifndef SEQUENCER_HPP
 #define SEQUENCER_HPP
 
-#include <vector>
+#include <deque>
 #include <string>
 
 namespace TOKEN
@@ -13,7 +13,7 @@ namespace TOKEN
 class Sequencer
 {
 public:
-    using Sequence = std::vector<TOKEN::PreprocessingToken*>;
+    using Sequence = std::deque<TOKEN::PreprocessingToken*>;
 
     Sequencer();
     ~Sequencer();

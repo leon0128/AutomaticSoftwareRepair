@@ -28,6 +28,8 @@ const std::unordered_map<std::string, TOKEN::Keyword::Tag> TreeGenerator::KEYWOR
         , {"long", TOKEN::Keyword::Tag::LONG}
         , {"register", TOKEN::Keyword::Tag::REGISTER}
         , {"restrict", TOKEN::Keyword::Tag::RESTRICT}
+        , {"__restrict", TOKEN::Keyword::Tag::RESTRICT}
+        , {"__restrict__", TOKEN::Keyword::Tag::RESTRICT}
         , {"return", TOKEN::Keyword::Tag::RETURN}
         , {"short", TOKEN::Keyword::Tag::SHORT}
         , {"signed", TOKEN::Keyword::Tag::SIGNED}

@@ -1,6 +1,7 @@
 #ifndef TREE_GENERATOR_HPP
 #define TREE_GENERATOR_HPP
 
+#include <deque>
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -15,7 +16,7 @@ private:
     static const std::unordered_map<std::string, TOKEN::Keyword::Tag> KEYWORD_MAP;
 
 public:
-    using Sequence = std::vector<TOKEN::PreprocessingToken*>;
+    using Sequence = std::deque<TOKEN::PreprocessingToken*>;
 
     TreeGenerator(const std::string &file
         , const Sequence &seq);
