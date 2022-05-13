@@ -189,7 +189,7 @@ struct Keyword
         , VOLATILE, WHILE, ALIGNAS, ALIGNOF
         , ATOMIC, BOOL, COMPLEX, GENERIC
         , IMAGINARY, NORETURN, STATIC_ASSERT, THREAD_LOCAL
-        , ATTRIBUTE, ASM
+        , ATTRIBUTE, ASM, BUILTIN_VA_LIST
     };
 
     Tag tag;
@@ -1350,6 +1350,7 @@ struct TypeSpecifier
         , UNSIGNED
         , BOOL
         , COMPLEX
+        , BUILTIN_VA_LIST
     };
 
     using Var = std::variant<std::monostate

@@ -53,7 +53,8 @@ const std::unordered_map<Keyword::Tag, std::string> Keyword::KEYWORD_MAP
         , {Tag::STATIC_ASSERT, "_Static_assert"}
         , {Tag::THREAD_LOCAL, "_Thread_local"}
         , {Tag::ATTRIBUTE, "__attribute__"}
-        , {Tag::ASM, "__asm__"}};
+        , {Tag::ASM, "__asm__"}
+        , {Tag::BUILTIN_VA_LIST, "__builtin_va_list"}};
 
 const std::unordered_map<Punctuator::Tag, std::string> Punctuator::PUNCTUATOR_MAP
     = {{Tag::L_SQUARE_BRACKET, "["}
@@ -2202,6 +2203,9 @@ std::string &TypeSpecifier::str(std::string &res, std::size_t &indent) const
                 break;
             case(Tag::COMPLEX):
                 res += "_Complex";
+                break;
+            case(Tag::BUILTIN_VA_LIST):
+                res += "__builtin_va_list";
                 break;
             
             default:;

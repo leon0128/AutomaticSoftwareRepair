@@ -55,7 +55,8 @@ const std::unordered_map<std::string, TOKEN::Keyword::Tag> TreeGenerator::KEYWOR
         , {"_Thread_local", TOKEN::Keyword::Tag::THREAD_LOCAL}
         , {"__attribute__", TOKEN::Keyword::Tag::ATTRIBUTE}
         , {"__asm__", TOKEN::Keyword::Tag::ASM}
-        , {"asm", TOKEN::Keyword::Tag::ASM}};
+        , {"asm", TOKEN::Keyword::Tag::ASM}
+        , {"__builtin_va_list", TOKEN::Keyword::Tag::BUILTIN_VA_LIST}};
 
 TreeGenerator::TreeGenerator(const std::string &file
     , const Sequence &seq)
@@ -359,6 +360,8 @@ TOKEN::TypeSpecifier *TreeGenerator::tokTypeSpecifier()
         var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::BOOL);
     else if(isMatch(TOKEN::Keyword::Tag::COMPLEX))
         var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::COMPLEX);
+    else if(isMatch(TOKEN::Keyword::Tag::BUILTIN_VA_LIST))
+        var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::BUILTIN_VA_LIST);
     else if(var.emplace<TOKEN::AtomicTypeSpecifier*>(tokAtomicTypeSpecifier()) != nullptr
         || var.emplace<TOKEN::StructOrUnionSpecifier*>(tokStructOrUnionSpecifier()) != nullptr
         || var.emplace<TOKEN::EnumSpecifier*>(tokEnumSpecifier()) != nullptr

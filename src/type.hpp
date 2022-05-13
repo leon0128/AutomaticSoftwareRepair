@@ -187,6 +187,7 @@ enum class Base::Tag : unsigned char
     , S_LONG, U_LONG, S_LONG_LONG, U_LONG_LONG
     , FLOAT, DOUBLE, LONG_DOUBLE, BOOL
     , FLOAT_COMPLEX, DOUBLE_COMPLEX, LONG_DOUBLE_COMPLEX
+    , BUILTIN_VA_LIST
 };
 
 class Initializer::Element
