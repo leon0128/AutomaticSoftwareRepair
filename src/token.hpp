@@ -1572,14 +1572,17 @@ struct InitDeclarator
         Declarator *d;
         AttributeSpecifierList *asl1;
         BasicAsm *ba;
+        AttributeSpecifierList *asl2;
         constexpr Sd_ba(AttributeSpecifierList *inasl0 = nullptr
             , Declarator *ind = nullptr
             , AttributeSpecifierList *inasl1 = nullptr
-            , BasicAsm *inba = nullptr) noexcept
+            , BasicAsm *inba = nullptr
+            , AttributeSpecifierList *inasl2 = nullptr) noexcept
             : asl0{inasl0}
             , d{ind}
             , asl1{inasl1}
-            , ba{inba}{}
+            , ba{inba}
+            , asl2{inasl2}{}
     };
 
     using Var = std::variant<std::monostate

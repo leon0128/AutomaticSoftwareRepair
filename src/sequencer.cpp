@@ -123,14 +123,21 @@ bool Sequencer::concatenateStringLiteral()
 {
     // pre: pre + post
     // post: empty
-    auto &&concatenateVector{[&](std::vector<TOKEN::SChar*> &pre
-        , std::vector<TOKEN::SChar*> &post)
+    auto &&concatenateVector{[&](TOKEN::SCharSequence *&pre
+        , TOKEN::SCharSequence *&post)
         -> void
     {
-        pre.insert(pre.end()
-            , post.begin()
-            , post.end());
-        post.clear();
+        if(pre == nullptr
+            && post != nullptr)
+            std::swap(pre, post);
+        else if(pre != nullptr
+            && post != nullptr)
+        {
+            pre->seq.insert(pre->seq.end()
+                , post->seq.begin()
+                , post->seq.end());
+            post->seq.clear();
+        }
     }};
 
     for(std::size_t i{0ull}; i + 1ull < mSeq.size(); i++)
@@ -153,15 +160,15 @@ bool Sequencer::concatenateStringLiteral()
 
         // if only post-SL has encoding-prefix,
         // move it to pre-SL.
-        if(preSL->ep != nullptr
-            ^ postSL->ep != nullptr)
+        if((preSL->ep != nullptr)
+            ^ (postSL->ep != nullptr))
         {
             if(postSL->ep != nullptr)
                 std::swap(preSL->ep, postSL->ep);
         }
 
-        concatenateVector(preSL->scs->seq
-            , postSL->scs->seq);
+        concatenateVector(preSL->scs
+            , postSL->scs);
         delete mSeq[i + 1ull];
         mSeq.erase(mSeq.begin() + i + 1ull);
         i--;

@@ -2581,6 +2581,7 @@ InitDeclarator::~InitDeclarator()
         delete s.d;
         delete s.asl1;
         delete s.ba;
+        delete s.asl2;
     }
 }
 
@@ -2610,7 +2611,8 @@ InitDeclarator *InitDeclarator::copy() const
         cvar.emplace<Sd_ba>(s.asl0 != nullptr ? s.asl0->copy() : nullptr
             , s.d->copy()
             , s.asl1 != nullptr ? s.asl1->copy() : nullptr
-            , s.ba->copy());
+            , s.ba->copy()
+            , s.asl2 != nullptr ? s.asl2->copy() : nullptr);
     }
 
     return new InitDeclarator(cvar);
@@ -2668,6 +2670,11 @@ std::string &InitDeclarator::str(std::string &res, std::size_t &indent) const
         }
         res.push_back(' ');
         s.ba->str(res, indent);
+        if(s.asl2 != nullptr)
+        {
+            res.push_back(' ');
+            s.asl2->str(res, indent);
+        }
     }
 
     return res;

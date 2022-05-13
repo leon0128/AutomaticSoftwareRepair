@@ -461,7 +461,8 @@ TOKEN::InitDeclarator *TreeGenerator::tokInitDeclarator()
         (s.asl0 = tokAttributeSpecifierList(), true)
             && (s.d = tokDeclarator()) != nullptr
             && (s.asl1 = tokAttributeSpecifierList(), true)
-            && (s.ba = tokBasicAsm()))
+            && (s.ba = tokBasicAsm())
+            && (s.asl2 = tokAttributeSpecifierList(), true))
         return new TOKEN::InitDeclarator{s};
     else
     {
