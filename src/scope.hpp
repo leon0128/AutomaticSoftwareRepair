@@ -71,6 +71,10 @@ public:
         {return mScopeTag;}
     Map &map(NamespaceTag tag)
         {return mArr[static_cast<std::size_t>(tag)];}
+    const Map &map(NamespaceTag tag) const noexcept
+        {return mArr[static_cast<std::size_t>(tag)];}
+
+    void outputData(std::size_t numIndent = 0ull) const;
 
 private:
     std::size_t mId;
