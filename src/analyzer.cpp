@@ -92,7 +92,9 @@ const Analyzer::BaseTypeMap Analyzer::BASE_TYPE_MAP
         , {ResultTypeTag::LONG_DOUBLE_COMPLEX
             , {{BaseTypeTag::LONG
                 , BaseTypeTag::DOUBLE
-                , BaseTypeTag::COMPLEX}}}};
+                , BaseTypeTag::COMPLEX}}}
+        , {ResultTypeTag::BUILTIN_VA_LIST
+            , {{BaseTypeTag::BUILTIN_VA_LIST}}}};
 
 Analyzer::Analyzer()
     : mFilename{}
@@ -183,6 +185,7 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
     bool oldIsFunction{flag(FlagTag::IS_FUNCTION, true)};
     bool oldIsDeclarationOver{flag(FlagTag::IS_DECLARATION_OVER, false)};
     bool oldIsCreatingBlock{flag(FlagTag::IS_CREATING_BLOCK, false)};
+    bool oldIsOutestParameter{flag(FlagTag::IS_OUTEST_PARAMETER, true)};
 
     fd->statementId = NEXT_STATEMENT_ID++;
 
@@ -254,6 +257,7 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
     flag(FlagTag::IS_FUNCTION, oldIsFunction);
     flag(FlagTag::IS_DECLARATION_OVER, oldIsDeclarationOver);
     flag(FlagTag::IS_CREATING_BLOCK, oldIsCreatingBlock);
+    flag(FlagTag::IS_OUTEST_PARAMETER, oldIsOutestParameter);
 
     mScope = mScope->getParent();
     mScope = mScope->getParent();
@@ -386,7 +390,7 @@ bool Analyzer::analyze(TOKEN::Declaration *d)
                     }
                     else if(auto &&fPtr{std::dynamic_pointer_cast<IDENTIFIER::Function>(idPtr->first)};
                         bool(fPtr))
-                    {                        
+                    {
                         if(storageClass.flags.test(static_cast<std::size_t>(IDENTIFIER::StorageClass::Tag::TYPEDEF)))
                             return differentTypeError(identifier);
 
@@ -460,7 +464,7 @@ bool Analyzer::analyze(const TOKEN::CompoundStatement *cs
     
     if(flag(FlagTag::IS_CREATING_BLOCK))
         mScope = mScope->getParent();
-    
+
     return true;
 }
 
@@ -2256,6 +2260,12 @@ std::optional<TYPE::Type>
     Analyzer::analyzeType(const TOKEN::ParameterTypeList *ptl
         , const TYPE::Type &baseType)
 {
+    // whether this is function prototype or not.
+    if(!flag(FlagTag::IS_OUTEST_PARAMETER)
+        || !flag(FlagTag::IS_FUNCTION))
+        mScope = mScope->addChild(SCOPE::Scope::ScopeTag::FUNCTION_PROTOTYPE);
+    bool oldIsOutestParameter{flag(FlagTag::IS_OUTEST_PARAMETER, false)};
+
     TYPE::Function function{baseType};
 
     for(const auto &pd : ptl->pl->seq)
@@ -2268,6 +2278,11 @@ std::optional<TYPE::Type>
     }
 
     function.isVariable = ptl->isValiable;
+
+    flag(FlagTag::IS_OUTEST_PARAMETER, oldIsOutestParameter);
+    if(!flag(FlagTag::IS_OUTEST_PARAMETER)
+        || !flag(FlagTag::IS_FUNCTION))
+        mScope = mScope->getParent();
 
     return {TYPE::Type{std::move(function)}};
 }

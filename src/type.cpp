@@ -183,29 +183,39 @@ bool equalTo(const Struct &lhs
     if(lhs.quals.flags != rhs.quals.flags)
         return false;
 
-    auto &&lhsIter{Analyzer::typeMap().find(lhs.id)};
-    auto &&rhsIter{Analyzer::typeMap().find(rhs.id)};
-
-    if(!lhsIter->second->isDefined()
-        || !rhsIter->second->isDefined())
+    auto &&lhsIdInfo{Analyzer::typeMap().at(lhs.id)};
+    auto &&rhsIdInfo{Analyzer::typeMap().at(rhs.id)};
+    const auto &lhsStruct{std::dynamic_pointer_cast<StructInfo>(lhsIdInfo)};
+    const auto &rhsStruct{std::dynamic_pointer_cast<StructInfo>(rhsIdInfo)};
+    if(lhsStruct == nullptr
+        || rhsStruct == nullptr)
         return false;
-    
-    const auto &lhsStruct{std::dynamic_pointer_cast<StructInfo>(lhsIter->second)};
-    const auto &rhsStruct{std::dynamic_pointer_cast<StructInfo>(rhsIter->second)};
 
     if(lhsStruct->isUnion != rhsStruct->isUnion)
         return false;
-    
-    if(lhsStruct->members.size() != rhsStruct->members.size())
+
+    if(lhsStruct->isDefined()
+         != rhsStruct->isDefined())
         return false;
-    
-    for(std::size_t i{0ull};
-        i < lhsStruct->members.size();
-        i++)
+
+    if(lhsStruct->isDefined())
     {
-        if(!equalTo(lhsStruct->members[i].first
-            , rhsStruct->members[i].first)
-            || lhsStruct->members[i].second != rhsStruct->members[i].second)
+        if(lhsStruct->members.size() != rhsStruct->members.size())
+            return false;
+        
+        for(std::size_t i{0ull};
+            i < lhsStruct->members.size();
+            i++)
+        {
+            if(!equalTo(lhsStruct->members[i].first
+                , rhsStruct->members[i].first)
+                || lhsStruct->members[i].second != rhsStruct->members[i].second)
+                return false;
+        }
+    }
+    else
+    {
+        if(lhsStruct->tag() != rhsStruct->tag())
             return false;
     }
 

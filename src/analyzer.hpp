@@ -31,7 +31,7 @@ class Analyzer
 {
 private:
     enum class FlagTag : unsigned char;
-    inline static constexpr const std::size_t NUM_FLAG_TAG{3};
+    inline static constexpr const std::size_t NUM_FLAG_TAG{4};
 
     using Flags = std::bitset<NUM_FLAG_TAG>;
 
@@ -222,6 +222,8 @@ enum class Analyzer::FlagTag : unsigned char
     // if it flag is false,
     // block scope is not created at compound-statement
     , IS_CREATING_BLOCK
+    // used in function-definition or prototype-declaration
+    , IS_OUTEST_PARAMETER
 };
 
 #endif
