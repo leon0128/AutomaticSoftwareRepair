@@ -20,34 +20,23 @@ Controller::Controller()
 
 bool Controller::execute(int argc, char **argv)
 {
+    // initialize
     if(!initialize(argc, argv))
         return false;
 
-    std::shared_ptr<Analyzer> source{analyze(Configure::SOURCE_FILENAME)};
+    // create Analyzer from source code to be fixed
+    std::shared_ptr<Analyzer> source{createAnalyzer(Configure::SOURCE_FILENAME)};
     if(!source)
         return false;
 
-    std::deque<std::string> allFiles;
-    for(const auto &path : Configure::POOL)
-    {
-        if(!addAllFiles(allFiles
-            , std::filesystem::path{path}))
-            return false;
-    }
-
+    // create Analyzers from pool
     std::vector<std::shared_ptr<Analyzer>> pool;
-    for(std::size_t i{0ull}; i < allFiles.size(); i++)
-    {
-        std::shared_ptr<Analyzer> analyzer{analyze(allFiles[i])};
-        if(analyzer)
-            pool.push_back(std::move(analyzer));
-        else
-            poolAnalyzingWarning("ignore this file");
-    }
-
+    if(!createAnalyzersFromPool(pool))
+        return false;
     if(pool.empty())
         return emptyPoolError();
 
+    // calculate similarity
     std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>> tus;
     for(const auto &analyzer : pool)
         tus.emplace_back(analyzer->filename(), analyzer->translationUnit());
@@ -58,6 +47,7 @@ bool Controller::execute(int argc, char **argv)
     
     return true;
 
+    // execute genetic algorithm
     GA::Controller gaController;
     if(!gaController.execute(source
         , pool))
@@ -106,7 +96,29 @@ bool Controller::addAllFiles(std::deque<std::string> &files
     return true;
 }
 
-Analyzer *Controller::analyze(const std::string &filename)
+bool Controller::createAnalyzersFromPool(std::vector<std::shared_ptr<Analyzer>> &pool)
+{
+    std::deque<std::string> allFiles;
+    for(const auto &path : Configure::POOL)
+    {
+        if(!addAllFiles(allFiles
+            , std::filesystem::path{path}))
+            return false;
+    }
+
+    for(std::size_t i{0ull}; i < allFiles.size(); i++)
+    {
+        std::shared_ptr<Analyzer> analyzer{createAnalyzer(allFiles[i])};
+        if(analyzer)
+            pool.push_back(std::move(analyzer));
+        else
+            poolAnalyzingWarning("ignore this file");
+    }
+
+    return true;
+}
+
+Analyzer *Controller::createAnalyzer(const std::string &filename)
 {
     Sequencer sequencer;
     if(!sequencer.execute(filename))
