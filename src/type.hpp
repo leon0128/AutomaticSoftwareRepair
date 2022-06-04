@@ -73,6 +73,8 @@ public:
     enum class Tag : unsigned char;
 
     std::bitset<NUM_TAG> flags{0b0000ull};
+
+    std::string name() const;
 };
 
 class Base
@@ -82,6 +84,8 @@ public:
 
     Tag tag{0};
     Qualifiers quals;
+
+    std::string name() const;
 };
 
 class Function
@@ -90,6 +94,8 @@ public:
     std::any retType;
     std::vector<Type> paramTypes;
     bool isVariable{false};
+
+    std::string name() const;
 };
 
 class Array
@@ -100,6 +106,8 @@ public:
     std::shared_ptr<TOKEN::AssignmentExpression> exp;
     bool hasStatic{false};
     bool isVariable{false};
+
+    std::string name() const;
 };
 
 class Pointer
@@ -107,6 +115,8 @@ class Pointer
 public:
     std::any refType;
     Qualifiers quals;
+
+    std::string name() const;
 };
 
 class Enum
@@ -114,6 +124,8 @@ class Enum
 public:
     std::size_t id{0ull};
     Qualifiers quals;
+
+    std::string name() const;
 };
 
 class Struct
@@ -121,6 +133,8 @@ class Struct
 public:
     std::size_t id{0ull};
     Qualifiers quals;
+
+    std::string name() const;
 };
 
 class Bitfield
@@ -128,6 +142,8 @@ class Bitfield
 public:
     std::any refType;
     std::shared_ptr<TOKEN::ConstantExpression> exp;
+
+    std::string name() const;
 };
 
 class Typedef
@@ -135,12 +151,16 @@ class Typedef
 public:
     std::any refType;
     Qualifiers quals;
+
+    std::string name() const;
 };
 
 class Lvalue
 {
 public:
     std::any refType;
+
+    std::string name() const;
 };
 
 class Initializer
@@ -152,6 +172,8 @@ public:
     class Element;
 
     std::vector<Element> elems;
+
+    std::string name() const;
 };
 
 class Type
@@ -170,6 +192,8 @@ public:
         , Initializer>;
     
     Var var;
+
+    std::string name() const;
 };
 
 enum class Qualifiers::Tag : unsigned char

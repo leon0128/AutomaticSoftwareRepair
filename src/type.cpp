@@ -1,4 +1,6 @@
 #include <iostream>
+#include <map>
+#include <typeinfo>
 
 #include "analyzer.hpp"
 #include "type.hpp"
@@ -253,6 +255,271 @@ bool equalTo(std::size_t lhs
 
     return true;
 }
+
+std::string Qualifiers::name() const
+{
+    static const std::map<Tag, std::string> nameMap
+        {{Tag::CONST, "const"}
+            , {Tag::RESTRICT, "restrict"}
+            , {Tag::VOLATILE, "volatile"}
+            , {Tag::ATOMIC, "atomic"}};
+
+    std::string qualifiersName;
+    
+    for(const auto &[tag, tagName] : nameMap)
+    {
+        if(flags.test(static_cast<std::size_t>(tag)))
+        {
+            qualifiersName += tagName;
+            qualifiersName.push_back(' ');
+        }
+    }
+
+    return qualifiersName;
+}
+
+std::string Base::name() const
+{
+    static const std::map<Tag, std::string> nameMap
+        {{Tag::VOID, "void"}
+            , {Tag::CHAR, "char"}
+            , {Tag::S_CHAR, "signed char"}
+            , {Tag::U_CHAR, "unsigned char"}
+            , {Tag::S_SHORT, "short"}
+            , {Tag::U_SHORT, "unsigned short"}
+            , {Tag::S_INT, "int"}
+            , {Tag::U_INT, "unsigned int"}
+            , {Tag::S_LONG, "long"}
+            , {Tag::U_LONG, "unsigned long"}
+            , {Tag::S_LONG_LONG, "long long"}
+            , {Tag::U_LONG_LONG, "unsigned long long"}
+            , {Tag::FLOAT, "float"}
+            , {Tag::DOUBLE, "double"}
+            , {Tag::LONG_DOUBLE, "long double"}
+            , {Tag::BOOL, "bool"}
+            , {Tag::FLOAT_COMPLEX, "float complex"}
+            , {Tag::DOUBLE_COMPLEX, "double complex"}
+            , {Tag::LONG_DOUBLE_COMPLEX, "long double complex"}
+            , {Tag::BUILTIN_VA_LIST, "builtin_va_list"}};
+
+    std::string baseName{quals.name()};
+
+    baseName += nameMap.at(tag);
+
+    return baseName;
+}
+
+std::string Function::name() const
+{
+    std::string functionName;
+
+    if(retType.type() == typeid(Type))
+        functionName += std::any_cast<Type>(retType).name();
+    else
+        functionName += "[[(Function)unknown object]]";
+
+    functionName.push_back('(');
+
+    for(const auto &param : paramTypes)
+    {
+        functionName += param.name();
+        functionName.push_back(',');
+    }
+
+    for(std::size_t i{0ull}; i < paramTypes.size(); i++)
+    {
+        if(i != 0ull)
+            functionName.push_back(',');
+        functionName += paramTypes[i].name();
+    }
+
+    if(isVariable)
+    {
+        if(!paramTypes.empty())
+            functionName.push_back(',');
+        functionName += "...";
+    }
+
+    functionName.push_back(')');
+
+    return functionName;
+}
+
+std::string Array::name() const
+{
+    std::string arrayName;
+
+    if(eleType.type() == typeid(Type))
+        arrayName += std::any_cast<Type>(eleType).name();
+    else
+        arrayName += "[[(Array)unknown object]]";
+
+    arrayName.push_back('[');
+
+    if(hasStatic)
+        arrayName += "static ";
+    
+    arrayName += quals.name();
+    arrayName.push_back(' ');
+
+    if(exp.get() != nullptr)
+    {
+        arrayName += TOKEN::str(exp.get());
+        arrayName.push_back(' ');
+    }
+
+    if(isVariable)
+        arrayName.push_back('*');
+
+    arrayName.push_back(']');
+
+    return arrayName;
+}
+
+std::string Pointer::name() const
+{
+    std::string pointerName;
+
+    if(refType.type() == typeid(Type))
+        pointerName += std::any_cast<Type>(refType).name();
+    else
+        pointerName += "[[(Pointer)unknown object]]";
+
+    pointerName += "*";
+    
+    pointerName += quals.name();
+
+    return pointerName;
+}
+
+std::string Enum::name() const
+{
+    std::string enumName{quals.name()};
+
+    auto &&idInfo{Analyzer::typeMap().at(id)};
+    auto &&enumInfo{std::dynamic_pointer_cast<EnumInfo>(idInfo)};
+
+    if(enumInfo.get() != nullptr)
+    {
+        enumName += "[[(Enum)unknown object]]";
+        return enumName;
+    }
+
+    enumName += "enum ";
+    enumName += enumInfo->tag();
+
+    return enumName;
+}
+
+std::string Struct::name() const
+{
+    std::string structName{quals.name()};
+
+    auto &&idInfo{Analyzer::typeMap().at(id)};
+    auto &&structInfo{std::dynamic_pointer_cast<StructInfo>(idInfo)};
+
+    if(structInfo.get() != nullptr)
+    {
+        structName += "[[(Struct)unknown object]]";
+        return structName;
+    }
+
+    if(structInfo->isUnion)
+        structName += "union ";
+    else
+        structName += "struct ";
+
+    structName += structInfo->tag();
+
+    return structName;
+}
+
+std::string Bitfield::name() const
+{
+    std::string bitfieldName;
+
+    if(refType.type() != typeid(Type))
+    {
+        bitfieldName += "[[(Bitfield)unknown object]]";
+        return bitfieldName;
+    }
+
+    bitfieldName += std::any_cast<Type>(refType).name();
+    bitfieldName.push_back(':');
+    bitfieldName += TOKEN::str(exp.get());
+
+    return bitfieldName;
+}
+
+std::string Typedef::name() const
+{
+    std::string typedefName{quals.name()};
+
+    if(refType.type() != typeid(Type))
+    {
+        typedefName += "[[(Typedef)unknown object]]";
+        return typedefName;
+    }
+
+    typedefName += "[[typedef ";
+    typedefName += std::any_cast<Type>(refType).name();
+    typedefName += "]]";
+
+    return typedefName;
+}
+
+std::string Lvalue::name() const
+{
+    std::string lvalueName;
+
+    if(refType.type() != typeid(Type))
+    {
+        lvalueName += "[[(Lvalue) unknown object]]";
+        return lvalueName;
+    }
+
+    lvalueName += "[[lvalue ";
+    lvalueName += std::any_cast<Type>(refType).name();
+    lvalueName += "]]";
+
+    return lvalueName;
+}
+
+std::string Initializer::name() const
+{
+    std::string initializerName;
+
+    initializerName += "initializer-list type";
+
+    return initializerName;
+}
+
+// helper macro for Type::name() const
+// if(std::holds_alternative<TYPENAME>(VARIABLE))
+//      return std::get<TYPENAME>(VARIABLE);
+#define IF_HOLDS_RETURN_NAME(TYPENAME, VARIABLE) \
+    if(std::holds_alternative<TYPENAME>(VARIABLE)) \
+        return std::get<TYPENAME>(VARIABLE).name();
+
+std::string Type::name() const
+{
+    if(std::holds_alternative<std::monostate>(var))
+        return {"[[(Type)std::monostate]]"};
+    else IF_HOLDS_RETURN_NAME(Base, var)
+    else IF_HOLDS_RETURN_NAME(Function, var)
+    else IF_HOLDS_RETURN_NAME(Array, var)
+    else IF_HOLDS_RETURN_NAME(Pointer, var)
+    else IF_HOLDS_RETURN_NAME(Enum, var)
+    else IF_HOLDS_RETURN_NAME(Struct, var)
+    else IF_HOLDS_RETURN_NAME(Bitfield, var)
+    else IF_HOLDS_RETURN_NAME(Typedef, var)
+    else IF_HOLDS_RETURN_NAME(Lvalue, var)
+    else IF_HOLDS_RETURN_NAME(Initializer, var)
+    else
+        return {"[[(Type)unknown type]]"};
+}
+
+#undef IF_HOLDS_RETURN_NAME
 
 bool notSupportedError(const std::string &msg)
 {
