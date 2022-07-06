@@ -43,26 +43,37 @@ std::optional<Type> extractType(const Typedef&);
 std::optional<Type> addQualifiers(const Type&
     , const Qualifiers&);
 bool equalTo(const Type&
-    , const Type&);
+    , const Type&
+    , std::size_t rec = 0ull);
 bool equalTo(const Base&
-    , const Base&);
+    , const Base&
+    , std::size_t rec = 0ull);
 bool equalTo(const Function&
-    , const Function&);
+    , const Function&
+    , std::size_t rec = 0ull);
 bool equalTo(const Array&
-    , const Array&);
+    , const Array&
+    , std::size_t rec = 0ull);
 bool equalTo(const Pointer&
-    , const Pointer&);
+    , const Pointer&
+    , std::size_t rec = 0ull);
 bool equalTo(const Enum&
-    , const Enum&);
+    , const Enum&
+    , std::size_t rec = 0ull);
 bool equalTo(const Struct&
-    , const Struct&);
+    , const Struct&
+    , std::size_t rec = 0ull);
 bool equalTo(const Bitfield&
-    , const Bitfield&);
+    , const Bitfield&
+    , std::size_t rec = 0ull);
 bool equalTo(std::size_t
-    , std::size_t);
+    , std::size_t
+    , std::size_t rec = 0ull);
 
 bool notSupportedError(const std::string&);
 bool notDefinedError(const std::string&);
+// this function return true.
+bool passingMaxRecursionWarning();
 
 class Qualifiers
 {

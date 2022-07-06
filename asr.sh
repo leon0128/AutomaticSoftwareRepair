@@ -36,6 +36,8 @@ GENERATION=10
 NUMBER_OF_ELITE=2
 TOURNAMENT_SIZE=3
 
+## others
+MAX_RECURSION=16
 
 # execution
 TARGET=""
@@ -75,4 +77,5 @@ $EXECUTION_NAME \
     --tournament "$TOURNAMENT_SIZE" \
     --add-prob "$ADD_PROBABILITY" \
     --sub-prob "$SUB_PROBABILITY" \
-    --swap-prob "$SWAP_PROBABILITY"
+    --swap-prob "$SWAP_PROBABILITY" \
+    --max-recursion "$MAX_RECURSION"

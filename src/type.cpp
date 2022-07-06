@@ -2,6 +2,7 @@
 #include <map>
 #include <typeinfo>
 
+#include "configure.hpp"
 #include "analyzer.hpp"
 #include "type.hpp"
 
@@ -10,25 +11,28 @@ namespace TYPE
 
 std::optional<Type> extractType(const Typedef &typedefType)
 {
+    if(typedefType.refType.type() != typeid(Type))
+        return {std::nullopt};
+
     return addQualifiers(std::any_cast<Type>(typedefType.refType)
         , typedefType.quals);
 }
+
+// to be used only in this function.
+#define IF_HOLDS_ADD_QUALS(TYPENAME, TYPE_VAR, QUAL_VAR) \
+    if(std::holds_alternative<TYPENAME>(TYPE_VAR.var)) \
+        std::get<TYPENAME>(TYPE_VAR.var).quals.flags |= QUAL_VAR.flags;
 
 std::optional<Type> addQualifiers(const Type &type
     , const Qualifiers &quals)
 {
     Type returnType{type};
 
-    if(std::holds_alternative<Base>(returnType.var))
-        std::get<Base>(returnType.var).quals.flags |= quals.flags;
-    else if(std::holds_alternative<Pointer>(returnType.var))
-        std::get<Pointer>(returnType.var).quals.flags |= quals.flags;
-    else if(std::holds_alternative<Enum>(returnType.var))
-        std::get<Enum>(returnType.var).quals.flags |= quals.flags;
-    else if(std::holds_alternative<Struct>(returnType.var))
-        std::get<Struct>(returnType.var).quals.flags |= quals.flags;
-    else if(std::holds_alternative<Typedef>(returnType.var))
-        std::get<Typedef>(returnType.var).quals.flags |= quals.flags;
+    IF_HOLDS_ADD_QUALS(Base, returnType, quals)
+    else IF_HOLDS_ADD_QUALS(Pointer, returnType, quals)
+    else IF_HOLDS_ADD_QUALS(Enum, returnType, quals)
+    else IF_HOLDS_ADD_QUALS(Struct, returnType, quals)
+    else IF_HOLDS_ADD_QUALS(Typedef, returnType, quals)
     else
     {
         notSupportedError("TYPE::addQualifiers()");
@@ -38,9 +42,22 @@ std::optional<Type> addQualifiers(const Type &type
     return {std::move(returnType)};
 }
 
+#undef IF_HOLDS_ADD_QUALS
+
+// to be used only in this function
+#define IF_HOLDS_RETURN_EQUAL(TYPENAME, LHS_TYPEVAR, RHS_TYPEVAR, REC_VAR) \
+    if(std::holds_alternative<TYPENAME>(LHS_TYPEVAR.var)) \
+        return equalTo(std::get<TYPENAME>(LHS_TYPEVAR.var) \
+            , std::get<TYPENAME>(RHS_TYPEVAR.var) \
+            , REC_VAR + 1ull);
+
 bool equalTo(const Type &lhs
-    , const Type &rhs)
+    , const Type &rhs
+    , std::size_t rec)
 {
+    if(rec >= Configure::MAX_RECURSION)
+        return passingMaxRecursionWarning();
+
     if(std::holds_alternative<Typedef>(lhs.var)
         || std::holds_alternative<Typedef>(rhs.var))
     {
@@ -54,7 +71,8 @@ bool equalTo(const Type &lhs
             return false;
 
         return equalTo(lo.value()
-            , ro.value());
+            , ro.value()
+            , rec + 1ull);
     }
     else
     {
@@ -63,49 +81,46 @@ bool equalTo(const Type &lhs
 
         if(std::holds_alternative<std::monostate>(lhs.var))
             return false;
-        
-        if(std::holds_alternative<Base>(lhs.var))
-            return equalTo(std::get<Base>(lhs.var)
-                , std::get<Base>(rhs.var));
-        else if(std::holds_alternative<Function>(lhs.var))
-            return equalTo(std::get<Function>(lhs.var)
-                , std::get<Function>(rhs.var));
-        else if(std::holds_alternative<Array>(lhs.var))
-            return equalTo(std::get<Array>(lhs.var)
-                , std::get<Array>(rhs.var));
-        else if(std::holds_alternative<Pointer>(lhs.var))
-            return equalTo(std::get<Pointer>(lhs.var)
-                , std::get<Pointer>(rhs.var));
-        else if(std::holds_alternative<Enum>(lhs.var))
-            return equalTo(std::get<Enum>(lhs.var)
-                , std::get<Enum>(rhs.var));
-        else if(std::holds_alternative<Struct>(lhs.var))
-            return equalTo(std::get<Struct>(lhs.var)
-                , std::get<Struct>(rhs.var));
-        else if(std::holds_alternative<Bitfield>(lhs.var))
-            return equalTo(std::get<Bitfield>(lhs.var)
-                , std::get<Bitfield>(rhs.var));
+
+        IF_HOLDS_RETURN_EQUAL(Base, lhs, rhs, rec)
+        else IF_HOLDS_RETURN_EQUAL(Function, lhs, rhs, rec)
+        else IF_HOLDS_RETURN_EQUAL(Array, lhs, rhs, rec)
+        else IF_HOLDS_RETURN_EQUAL(Pointer, lhs, rhs, rec)
+        else IF_HOLDS_RETURN_EQUAL(Enum, lhs, rhs, rec)
+        else IF_HOLDS_RETURN_EQUAL(Struct, lhs, rhs, rec)
+        else IF_HOLDS_RETURN_EQUAL(Bitfield, lhs, rhs, rec)
         else
-            return notSupportedError("");
+            return notSupportedError("Type::equalTo(const Type&, const Type&)");
 
         return true;
     }
 }
 
+#undef IF_HOLDS_RETURN_EQUAL
+
 bool equalTo(const Base &lhs
-    , const Base &rhs)
+    , const Base &rhs
+    , std::size_t rec)
 {
     return lhs.tag == rhs.tag
         && lhs.quals.flags == rhs.quals.flags;
 }
 
 bool equalTo(const Function &lhs
-    , const Function &rhs)
+    , const Function &rhs
+    , std::size_t rec)
 {
+    // return type
+    if(lhs.retType.type() != typeid(Type)
+        || rhs.retType.type() != typeid(Type))
+        return false;
+
     if(!equalTo(std::any_cast<Type>(lhs.retType)
-        , std::any_cast<Type>(rhs.retType)))
+        , std::any_cast<Type>(rhs.retType)
+        , rec))
         return false;
     
+    // parameter type
     if(lhs.paramTypes.size() != rhs.paramTypes.size())
         return false;
     for(std::size_t i{0ull};
@@ -113,7 +128,8 @@ bool equalTo(const Function &lhs
         i++)
     {
         if(!equalTo(lhs.paramTypes[i]
-            , rhs.paramTypes[i]))
+            , rhs.paramTypes[i]
+            , rec))
             return false;
     }
 
@@ -124,10 +140,16 @@ bool equalTo(const Function &lhs
 }
 
 bool equalTo(const Array &lhs
-    , const Array &rhs)
+    , const Array &rhs
+    , std::size_t rec)
 {
+    if(lhs.eleType.type() != typeid(Type)
+        || rhs.eleType.type() != typeid(Type))
+        return false;
+
     if(!equalTo(std::any_cast<Type>(lhs.eleType)
-        , std::any_cast<Type>(rhs.eleType)))
+        , std::any_cast<Type>(rhs.eleType)
+        , rec))
         return false;
     
     if(lhs.quals.flags != rhs.quals.flags)
@@ -137,10 +159,16 @@ bool equalTo(const Array &lhs
 }
 
 bool equalTo(const Pointer &lhs
-    , const Pointer &rhs)
+    , const Pointer &rhs
+    , std::size_t rec)
 {
+    if(lhs.refType.type() != typeid(Type)
+        || rhs.refType.type() != typeid(Type))
+        return false;
+
     if(!equalTo(std::any_cast<Type>(lhs.refType)
-        , std::any_cast<Type>(rhs.refType)))
+        , std::any_cast<Type>(rhs.refType)
+        , rec))
         return false;
     
     if(lhs.quals.flags != rhs.quals.flags)
@@ -150,7 +178,8 @@ bool equalTo(const Pointer &lhs
 }
 
 bool equalTo(const Enum &lhs
-    , const Enum &rhs)
+    , const Enum &rhs
+    , std::size_t rec)
 {
     if(lhs.quals.flags != rhs.quals.flags)
         return false;
@@ -158,12 +187,20 @@ bool equalTo(const Enum &lhs
     auto &&lhsIter{Analyzer::typeMap().find(lhs.id)};
     auto &&rhsIter{Analyzer::typeMap().find(rhs.id)};
 
+    if(lhsIter == Analyzer::typeMap().end()
+        || rhsIter == Analyzer::typeMap().end())
+        return false;
+
     if(!lhsIter->second->isDefined()
         || !rhsIter->second->isDefined())
         return false;
     
     const auto &lhsEnum{std::dynamic_pointer_cast<EnumInfo>(lhsIter->second)};
     const auto &rhsEnum{std::dynamic_pointer_cast<EnumInfo>(rhsIter->second)};
+
+    if(lhsEnum.get() == nullptr
+        || rhsEnum.get() == nullptr)
+        return false;
 
     if(lhsEnum->members.size() != rhsEnum->members.size())
         return false;
@@ -180,17 +217,19 @@ bool equalTo(const Enum &lhs
 }
 
 bool equalTo(const Struct &lhs
-    , const Struct &rhs)
+    , const Struct &rhs
+    , std::size_t rec)
 {
     if(lhs.quals.flags != rhs.quals.flags)
         return false;
 
     auto &&lhsIdInfo{Analyzer::typeMap().at(lhs.id)};
     auto &&rhsIdInfo{Analyzer::typeMap().at(rhs.id)};
+
     const auto &lhsStruct{std::dynamic_pointer_cast<StructInfo>(lhsIdInfo)};
     const auto &rhsStruct{std::dynamic_pointer_cast<StructInfo>(rhsIdInfo)};
-    if(lhsStruct == nullptr
-        || rhsStruct == nullptr)
+    if(lhsStruct.get() == nullptr
+        || rhsStruct.get() == nullptr)
         return false;
 
     if(lhsStruct->isUnion != rhsStruct->isUnion)
@@ -210,7 +249,8 @@ bool equalTo(const Struct &lhs
             i++)
         {
             if(!equalTo(lhsStruct->members[i].first
-                , rhsStruct->members[i].first)
+                , rhsStruct->members[i].first
+                , rec)
                 || lhsStruct->members[i].second != rhsStruct->members[i].second)
                 return false;
         }
@@ -225,20 +265,31 @@ bool equalTo(const Struct &lhs
 }
 
 bool equalTo(const Bitfield &lhs
-    , const Bitfield &rhs)
+    , const Bitfield &rhs
+    , std::size_t rec)
 {
+    if(lhs.refType.type() != typeid(Type)
+        || rhs.refType.type() != typeid(Type))
+        return false;
+
     if(equalTo(std::any_cast<Type>(lhs.refType)
-        , std::any_cast<Type>(rhs.refType)))
+        , std::any_cast<Type>(rhs.refType)
+        , rec))
         return false;
     
     return true;
 }
 
 bool equalTo(std::size_t lhs
-    , std::size_t rhs)
+    , std::size_t rhs
+    , std::size_t rec)
 {
     auto &&lhsIter{Analyzer::typeMap().find(lhs)};
     auto &&rhsIter{Analyzer::typeMap().find(rhs)};
+
+    if(lhsIter == Analyzer::typeMap().end()
+        || rhsIter == Analyzer::typeMap().end())
+        return false;
 
     if(lhsIter->second->derivedTag() != rhsIter->second->derivedTag())
         return false;
@@ -247,10 +298,12 @@ bool equalTo(std::size_t lhs
     {
         case(IdInfo::DerivedTag::STRUCT):
             return equalTo(Struct{lhs}
-                , Struct{rhs});
+                , Struct{rhs}
+                , rec);
         case(IdInfo::DerivedTag::ENUM):
             return equalTo(Enum{lhs}
-                , Enum{rhs});
+                , Enum{rhs}
+                , rec);
     }
 
     return true;
@@ -528,6 +581,15 @@ bool notSupportedError(const std::string &msg)
         "    ---: " << msg
         << std::endl;
     return false;
+}
+
+bool passingMaxRecursionWarning()
+{
+    // std::cerr << "Type::PassingMaxRecursionWarning():\n"
+    //     "    what: recursion count is passed specified limit.\n"
+    //     "    max recursion: " << Configure::MAX_RECURSION
+    //     << std::endl;
+    return true;
 }
 
 IdInfo::IdInfo(DerivedTag dTag

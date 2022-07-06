@@ -41,6 +41,7 @@ private:
         , SWAPPING_PROB
         , NEW_OPERATION_PROB
         , CONCATENATION_PROB
+        , MAX_RECURSION
         , NUM_ENUM
     };
 
@@ -80,6 +81,8 @@ public:
 
     inline static double ADDING_NEW_OPERATION_PROBABILITY;
     inline static double CONCATENATION_PROBABILITY;
+
+    inline static std::size_t MAX_RECURSION;
 
 private:
     static bool readArgument(Tag

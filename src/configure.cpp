@@ -29,7 +29,8 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--sub-prob", {Tag::SUBTRACTING_PROB, true}}
     , {"--swap-prob", {Tag::SWAPPING_PROB, true}}
     , {"--new-operation-prob", {Tag::NEW_OPERATION_PROB, true}}
-    , {"--concatenation-prob", {Tag::CONCATENATION_PROB, true}}};
+    , {"--concatenation-prob", {Tag::CONCATENATION_PROB, true}}
+    , {"--max-recursion", {Tag::MAX_RECURSION, true}}};
 
 bool Configure::parseCommandLineArguments(int argc, char **argv)
 {
@@ -191,6 +192,10 @@ bool Configure::readArgument(Tag tag
             if(!assignDouble(tag, arg, CONCATENATION_PROBABILITY))
                 return false;
             break;
+        case(Tag::MAX_RECURSION):
+            if(!assignSizeT(tag, arg, MAX_RECURSION))
+                return false;
+            break;
         default:
             return unknownTagError(tag);
     }
@@ -284,6 +289,8 @@ bool Configure::setDefaultValue()
             case(Tag::CONCATENATION_PROB):
                 CONCATENATION_PROBABILITY = 0.50;
                 break;
+            case(Tag::MAX_RECURSION):
+                MAX_RECURSION = 16ull;
             
             default:;
         }
