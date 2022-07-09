@@ -471,7 +471,7 @@ std::string Struct::name() const
     auto &&idInfo{Analyzer::typeMap().at(id)};
     auto &&structInfo{std::dynamic_pointer_cast<StructInfo>(idInfo)};
 
-    if(structInfo.get() != nullptr)
+    if(structInfo.get() == nullptr)
     {
         structName += "[[(Struct)unknown object]]";
         return structName;
