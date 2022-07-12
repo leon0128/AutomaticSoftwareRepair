@@ -3,7 +3,7 @@
 PROGRAM = asr
 ## source directories
 SOURCE_DIRECTORIES = ./src/ \
-	./src/ga/ \
+	./src/repair/ \
 	./src/similarity/ \
 	./src/utility/
 

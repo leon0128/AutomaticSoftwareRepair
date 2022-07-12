@@ -12,7 +12,7 @@
 #include "block.hpp"
 #include "operation.hpp"
 
-namespace GA::OPERATION
+namespace REPAIR::OPERATION
 {
 
 std::vector<

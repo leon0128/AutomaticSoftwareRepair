@@ -6,7 +6,8 @@
 #include "utility/output.hpp"
 #include "utility/system.hpp"
 #include "similarity/controller.hpp"
-#include "ga/controller.hpp"
+#include "repair/controller.hpp"
+#include "time_measurer.hpp"
 #include "analyzer.hpp"
 #include "divider.hpp"
 #include "tree_generator.hpp"
@@ -48,8 +49,8 @@ bool Controller::execute(int argc, char **argv)
     return true;
 
     // execute genetic algorithm
-    GA::Controller gaController;
-    if(!gaController.execute(source
+    REPAIR::Controller repairController;
+    if(!repairController.execute(source
         , pool))
         return false;
 

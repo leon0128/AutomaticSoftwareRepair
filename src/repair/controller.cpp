@@ -15,7 +15,7 @@
 #include "operation.hpp"
 #include "controller.hpp"
 
-namespace GA
+namespace REPAIR
 {
 
 Controller::Controller()
