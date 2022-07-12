@@ -17,11 +17,11 @@ constexpr std::size_t cast(Tag tag) noexcept
 class TimeMeasurer
 {
 public:
-    enum class MainTag : unsigned char;
-    enum class SimTag : unsigned char;
-    enum class GATag : unsigned char;
+    enum class MainTag : std::size_t;
+    enum class SimTag : std::size_t;
+    enum class RepairTag : std::size_t;
 
-    enum class MainTag : unsigned char
+    enum class MainTag : std::size_t
     {
         INITIALIZING
         , ANALYZING
@@ -30,13 +30,13 @@ public:
         , TAG_SIZE // to be used to decide array size
     };
 
-    enum class SimTag : unsigned char
+    enum class SimTag : std::size_t
     {
         CALCULATION
         , TAG_SIZE // to be used to decide array size
     };
 
-    enum class GATag : unsigned char
+    enum class RepairTag : std::size_t
     {
         INITIALIZING
         , FITNESS
@@ -52,24 +52,24 @@ public:
         {return mMainTimers.at(cast(tag));}
     auto &timer(SimTag tag)
         {return mSimTimers.at(cast(tag));}
-    auto &timer(GATag tag)
-        {return mGATimers.at(cast(tag));}
+    auto &timer(RepairTag tag)
+        {return mRepairTimers.at(cast(tag));}
 
     const auto &timer(MainTag tag) const
         {return mMainTimers.at(cast(tag));}
     const auto &timer(SimTag tag) const
         {return mSimTimers.at(cast(tag));}
-    const auto &timer(GATag tag) const
-        {return mGATimers.at(cast(tag));}
+    const auto &timer(RepairTag tag) const
+        {return mRepairTimers.at(cast(tag));}
 
 private:
     static const std::unordered_map<MainTag, std::string> mMainTagNameMap;
     static const std::unordered_map<SimTag, std::string> mSimTagNameMap;
-    static const std::unordered_map<GATag, std::string> mGATagNameMap;
+    static const std::unordered_map<RepairTag, std::string> mRepairTagNameMap;
 
     std::array<TIMER::Timer<>, cast(MainTag::TAG_SIZE)> mMainTimers;
     std::array<TIMER::Timer<>, cast(SimTag::TAG_SIZE)> mSimTimers;
-    std::array<TIMER::Timer<>, cast(GATag::TAG_SIZE)> mGATimers;
+    std::array<TIMER::Timer<>, cast(RepairTag::TAG_SIZE)> mRepairTimers;
 };
 
 #endif

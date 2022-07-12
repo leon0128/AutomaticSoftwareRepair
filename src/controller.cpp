@@ -21,6 +21,9 @@ Controller::Controller()
 
 bool Controller::execute(int argc, char **argv)
 {
+    TimeMeasurer tm;
+    tm.print();
+
     // initialize
     if(!initialize(argc, argv))
         return false;
