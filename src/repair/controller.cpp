@@ -10,6 +10,7 @@
 #include "../configure.hpp"
 #include "../analyzer.hpp"
 #include "../scope.hpp"
+#include "../time_measurer.hpp"
 #include "block.hpp"
 #include "representation.hpp"
 #include "operation.hpp"
@@ -51,6 +52,8 @@ bool Controller::execute(std::shared_ptr<Analyzer> srcAnalyzer
 bool Controller::initialize(std::shared_ptr<Analyzer> src
     , const std::vector<std::shared_ptr<Analyzer>> &pool)
 {
+    TimeMeasurer::Wrapper wrapper{TimeMeasurer::RepairTag::INITIALIZING};
+
     mBlock = new BLOCK::Block{src->translationUnit()
         , src->scope()->id()};
     for(const auto &analyzer : pool)
@@ -191,12 +194,15 @@ int Controller::fitness(const REPRESENTATION::Representation *rep) const
         return std::numeric_limits<int>::min();
 
     int score{0};
-    score += evaluate(Configure::POSITIVE_TEST_PREFIX
-        , Configure::NUM_POSITIVE_TEST
-        , Configure::POSITIVE_TEST_WEIGHT);
-    score += evaluate(Configure::NEGATIVE_TEST_PREFIX
-        , Configure::NUM_NEGATIVE_TEST
-        , Configure::NEGATIVE_TEST_WEIGHT);
+    {
+        TimeMeasurer::Wrapper wrapper{TimeMeasurer::RepairTag::EVALUATION};
+        score += evaluate(Configure::POSITIVE_TEST_PREFIX
+            , Configure::NUM_POSITIVE_TEST
+            , Configure::POSITIVE_TEST_WEIGHT);
+        score += evaluate(Configure::NEGATIVE_TEST_PREFIX
+            , Configure::NUM_NEGATIVE_TEST
+            , Configure::NEGATIVE_TEST_WEIGHT);
+    }
 
     return score;
 }
@@ -204,6 +210,8 @@ int Controller::fitness(const REPRESENTATION::Representation *rep) const
 bool Controller::outputToFile(const std::string &filename
     , const REPRESENTATION::Representation *rep) const
 {
+    TimeMeasurer::Wrapper wrapper{TimeMeasurer::RepairTag::FILE_CREATION};
+
     std::shared_ptr<TOKEN::TranslationUnit> tu{rep->block()->createTranslationUnit()};
     
     if(!PATH::write(filename
@@ -215,6 +223,8 @@ bool Controller::outputToFile(const std::string &filename
 
 bool Controller::compile(const std::string &filename) const
 {
+    TimeMeasurer::Wrapper wrapper{TimeMeasurer::RepairTag::COMPILATION};
+
     std::string command{SYSTEM::command(Configure::COMPILER
         , filename
         , "-o"
@@ -233,6 +243,8 @@ std::shared_ptr<REPRESENTATION::Representation> Controller::manipulate(const std
     , const std::vector<std::pair<int, std::size_t>> &scores) const
 {
     using namespace REPRESENTATION;
+
+    TimeMeasurer::Wrapper wrapper{TimeMeasurer::RepairTag::MANIPLATION};
 
     std::shared_ptr<Representation> rep;
 

@@ -9,11 +9,14 @@ decltype(TimeMeasurer::mMainTagNameMap) TimeMeasurer::mMainTagNameMap
         , {MainTag::REPAIR, "repair"}};
 
 decltype(TimeMeasurer::mSimTagNameMap) TimeMeasurer::mSimTagNameMap
-    {{SimTag::CALCULATION, "similality calculation"}};
+    {{SimTag::METRIC, "metrics calculation"}
+        , {SimTag::CALCULATION, "similality calculation"}};
 
 decltype(TimeMeasurer::mRepairTagNameMap) TimeMeasurer::mRepairTagNameMap
     {{RepairTag::INITIALIZING, "initializing"}
-        , {RepairTag::FITNESS, "fitness calculation"}
+        , {RepairTag::FILE_CREATION, "file creation"}
+        , {RepairTag::COMPILATION, "compilation"}
+        , {RepairTag::EVALUATION, "evaluation"}
         , {RepairTag::MANIPLATION, "manipulation"}};
 
 TimeMeasurer::TimeMeasurer()
