@@ -25,23 +25,6 @@ TimeMeasurer::TimeMeasurer()
 
 void TimeMeasurer::print()
 {
-    auto &&printHelper{[&](const std::string &title
-        , auto sizeTag
-        , const auto &map)
-            -> void
-        {
-            for(std::size_t i{0ull}; i < cast(sizeTag); i++)
-            {
-                // std::cout << title
-                //     << map.at(decltype(sizeTag){i})
-                //     << ": "
-                //     << timer(decltype(sizeTag){i}).count<std::chrono::milliseconds>()
-                //     << " (ms)"
-                //     << std::endl;
-                timer(decltype(sizeTag){i}).count<std::chrono::milliseconds>();
-            }
-        }};
-
     // MainTag
     for(std::size_t tag{0ull}; tag < cast(MainTag::TAG_SIZE); tag++)
     {
@@ -49,6 +32,26 @@ void TimeMeasurer::print()
             << mMainTagNameMap.at(MainTag{tag})
             << ": "
             << timer(MainTag{tag}).count<std::chrono::milliseconds>()
+            << " (ms)"
+            << std::endl;
+    }
+    // SimTag
+    for(std::size_t tag{0ull}; tag < cast(SimTag::TAG_SIZE); tag++)
+    {
+        std::cout << "similarity-time: "
+            << mSimTagNameMap.at(SimTag{tag})
+            << ": "
+            << timer(SimTag{tag}).count<std::chrono::milliseconds>()
+            << " (ms)"
+            << std::endl;
+    }
+    // RepairTag
+    for(std::size_t tag{0ull}; tag < cast(RepairTag::TAG_SIZE); tag++)
+    {
+        std::cout << "repair-time: "
+            << mRepairTagNameMap.at(RepairTag{tag})
+            << ": "
+            << timer(RepairTag{tag}).count<std::chrono::milliseconds>()
             << " (ms)"
             << std::endl;
     }
