@@ -1,11 +1,11 @@
-#ifndef GA_REPRESENTATION_HPP
-#define GA_REPRESENTATION_HPP
+#ifndef REPAIR_REPRESENTATION_HPP
+#define REPAIR_REPRESENTATION_HPP
 
 #include <vector>
 #include <functional>
 #include <string>
 
-namespace GA
+namespace REPAIR
 {
 
 namespace BLOCK

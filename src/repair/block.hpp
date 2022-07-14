@@ -1,5 +1,5 @@
-#ifndef GA_BLOCK_HPP
-#define GA_BLOCK_HPP
+#ifndef REPAIR_BLOCK_HPP
+#define REPAIR_BLOCK_HPP
 
 #include <string>
 #include <vector>
@@ -7,7 +7,7 @@
 
 #include "../token.hpp"
 
-namespace GA
+namespace REPAIR
 {
 
 namespace BLOCK

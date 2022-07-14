@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "../utility/output.hpp"
+#include "../time_measurer.hpp"
 #include "structure_token_metrics.hpp"
 #include "calculator.hpp"
 #include "token_metricer.hpp"
@@ -18,16 +19,22 @@ Controller::Controller()
 bool Controller::execute(const std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>> &tus)
 {
     TokenMetricer tm;
-
-    for(const auto &tu : tus)
+    
     {
-        if(!tm.execute(tu.first, tu.second))
-            return false;
+        TimeMeasurer::Wrapper wrapper{TimeMeasurer::SimTag::METRIC};
+        for(const auto &tu : tus)
+        {
+            if(!tm.execute(tu.first, tu.second))
+                return false;
+        }
     }
 
     Calculator calculator;
-    if(!calculator.execute(tm.stms()))
-        return false;
+    {
+        TimeMeasurer::Wrapper wrapper{TimeMeasurer::SimTag::CALCULATION};
+        if(!calculator.execute(tm.stms()))
+            return false;
+    }
 
     if(!outputCSV(calculator.functionNames(), calculator.result()))
         return false;

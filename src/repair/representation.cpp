@@ -6,7 +6,7 @@
 #include "operation.hpp"
 #include "representation.hpp"
 
-namespace GA::REPRESENTATION
+namespace REPAIR::REPRESENTATION
 {
 
 bool Representation::initialize(const Pool &pool
