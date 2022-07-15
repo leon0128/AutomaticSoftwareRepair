@@ -153,8 +153,9 @@ extern std::string str(const T *t)
     return ret;
 }
 
-struct Token
+class Token
 {
+public:
     using Variant = std::variant<std::monostate
         , Keyword*
         , Identifier*
@@ -173,8 +174,9 @@ struct Token
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Keyword
+class Keyword
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -204,8 +206,9 @@ struct Keyword
     static const std::unordered_map<Tag, std::string> KEYWORD_MAP;
 };
 
-struct Identifier
+class Identifier
 {
+public:
     using Element = std::variant<std::monostate
         , IdentifierNondigit*
         , Digit*>;
@@ -230,8 +233,9 @@ struct Identifier
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Constant
+class Constant
 {
+public:
     using Variant = std::variant<std::monostate
         , IntegerConstant*
         , FloatingConstant*
@@ -249,8 +253,9 @@ struct Constant
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct StringLiteral
+class StringLiteral
 {
+public:
     EncodingPrefix *ep;
     SCharSequence *scs;
     
@@ -264,8 +269,9 @@ struct StringLiteral
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Punctuator
+class Punctuator
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -295,8 +301,9 @@ struct Punctuator
     static const std::unordered_map<Tag, std::string> PUNCTUATOR_MAP;
 };
 
-struct IdentifierNondigit
+class IdentifierNondigit
 {
+public:
     using Variant = std::variant<std::monostate
         , Nondigit*
         , UniversalCharacterName*>;
@@ -312,8 +319,9 @@ struct IdentifierNondigit
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Digit
+class Digit
 {
+public:
     char c;
 
     constexpr Digit(char inc = static_cast<char>(0)) noexcept
@@ -324,8 +332,9 @@ struct Digit
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct IntegerConstant
+class IntegerConstant
 {
+public:
     struct Sdc_is
     {
         DecimalConstant *dc;
@@ -370,8 +379,9 @@ struct IntegerConstant
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct FloatingConstant
+class FloatingConstant
 {
+public:
     using Variant = std::variant<std::monostate
         , DecimalFloatingConstant*
         , HexadecimalFloatingConstant*>;
@@ -387,8 +397,9 @@ struct FloatingConstant
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct EnumerationConstant
+class EnumerationConstant
 {
+public:
     Identifier *i;
 
     constexpr EnumerationConstant(Identifier *ini = nullptr) noexcept
@@ -399,8 +410,9 @@ struct EnumerationConstant
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct CharacterConstant
+class CharacterConstant
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -422,8 +434,9 @@ struct CharacterConstant
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct EncodingPrefix
+class EncodingPrefix
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -443,8 +456,9 @@ struct EncodingPrefix
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct SCharSequence
+class SCharSequence
 {
+public:
     std::vector<SChar*> seq;
 
     template<class... Args>
@@ -456,8 +470,9 @@ struct SCharSequence
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Nondigit
+class Nondigit
 {
+public:
     char c;
 
     constexpr Nondigit(char inc = static_cast<char>(0)) noexcept
@@ -468,8 +483,9 @@ struct Nondigit
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct UniversalCharacterName
+class UniversalCharacterName
 {
+public:
     struct Su_hq
     {
         HexQuad *hq;
@@ -501,8 +517,9 @@ struct UniversalCharacterName
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct DecimalConstant
+class DecimalConstant
 {
+public:
     NonzeroDigit *nd;
     std::vector<Digit*> seq;
 
@@ -517,8 +534,9 @@ struct DecimalConstant
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct OctalConstant
+class OctalConstant
 {
+public:
     std::vector<OctalDigit*> seq;
     
     template<class Seq>
@@ -530,8 +548,9 @@ struct OctalConstant
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct HexadecimalConstant
+class HexadecimalConstant
 {
+public:
     HexadecimalPrefix *hp;
     std::vector<HexadecimalDigit*> seq;
 
@@ -546,8 +565,9 @@ struct HexadecimalConstant
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct DecimalFloatingConstant
+class DecimalFloatingConstant
 {
+public:
     struct Sfc_ep_fs
     {
         FractionalConstant *fc;
@@ -588,8 +608,9 @@ struct DecimalFloatingConstant
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct HexadecimalFloatingConstant
+class HexadecimalFloatingConstant
 {
+public:
     struct Shp_hfc_bep_fs
     {
         HexadecimalPrefix *hp;
@@ -636,8 +657,9 @@ struct HexadecimalFloatingConstant
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct CCharSequence
+class CCharSequence
 {
+public:
     std::vector<CChar*> seq;
 
     template<class... Args>
@@ -649,8 +671,9 @@ struct CCharSequence
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct SChar
+class SChar
 {
+public:
     using Variant = std::variant<std::monostate
         , char
         , EscapeSequence*>;
@@ -666,8 +689,9 @@ struct SChar
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct HexQuad
+class HexQuad
 {
+public:
     std::array<HexadecimalDigit*, 4> arr;
 
     template<class... Args>
@@ -679,8 +703,9 @@ struct HexQuad
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct NonzeroDigit
+class NonzeroDigit
 {
+public:
     char c;
 
     constexpr NonzeroDigit(char inc = static_cast<char>(0)) noexcept
@@ -691,8 +716,9 @@ struct NonzeroDigit
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct OctalDigit
+class OctalDigit
 {
+public:
     char c;
 
     constexpr OctalDigit(char inc = static_cast<char>(0)) noexcept
@@ -703,8 +729,9 @@ struct OctalDigit
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct HexadecimalPrefix
+class HexadecimalPrefix
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -722,8 +749,9 @@ struct HexadecimalPrefix
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct HexadecimalDigit
+class HexadecimalDigit
 {
+public:
     char c;
 
     constexpr HexadecimalDigit(char inc = static_cast<char>(0)) noexcept
@@ -734,8 +762,9 @@ struct HexadecimalDigit
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct FractionalConstant
+class FractionalConstant
 {
+public:
     struct Sds_ds
     {
         DigitSequence *ds0;
@@ -767,8 +796,9 @@ struct FractionalConstant
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct ExponentPart
+class ExponentPart
 {
+public:
     Sign *s;
     DigitSequence *ds;
 
@@ -782,8 +812,9 @@ struct ExponentPart
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Sign
+class Sign
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -801,8 +832,9 @@ struct Sign
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct DigitSequence
+class DigitSequence
 {
+public:
     std::vector<Digit*> seq;
 
     template<class... Args>
@@ -814,8 +846,9 @@ struct DigitSequence
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct HexadecimalFractionalConstant
+class HexadecimalFractionalConstant
 {
+public:
     struct Shds_hds
     {
         HexadecimalDigitSequence *hds0;
@@ -847,8 +880,9 @@ struct HexadecimalFractionalConstant
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct BinaryExponentPart
+class BinaryExponentPart
 {
+public:
     Sign *s;
     DigitSequence *ds;
 
@@ -862,8 +896,9 @@ struct BinaryExponentPart
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct HexadecimalDigitSequence
+class HexadecimalDigitSequence
 {
+public:
     std::vector<HexadecimalDigit*> seq;
 
     template<class... Args>
@@ -875,8 +910,9 @@ struct HexadecimalDigitSequence
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct FloatingSuffix
+class FloatingSuffix
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -896,8 +932,9 @@ struct FloatingSuffix
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct CChar
+class CChar
 {
+public:
     using Variant = std::variant<std::monostate
         , char
         , EscapeSequence*>;
@@ -913,8 +950,9 @@ struct CChar
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct EscapeSequence
+class EscapeSequence
 {
+public:
     using Variant = std::variant<std::monostate
         , SimpleEscapeSequence*
         , OctalEscapeSequence*
@@ -932,8 +970,9 @@ struct EscapeSequence
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct SimpleEscapeSequence
+class SimpleEscapeSequence
 {
+public:
     char c;
     
     constexpr SimpleEscapeSequence(char inc = static_cast<char>(0)) noexcept
@@ -944,8 +983,9 @@ struct SimpleEscapeSequence
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct OctalEscapeSequence
+class OctalEscapeSequence
 {
+public:
     std::vector<OctalDigit*> seq;
 
     template<class... Args>
@@ -957,8 +997,9 @@ struct OctalEscapeSequence
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct HexadecimalEscapeSequence
+class HexadecimalEscapeSequence
 {
+public:
     std::vector<HexadecimalDigit*> seq;
     
     template<class... Args>
@@ -970,8 +1011,9 @@ struct HexadecimalEscapeSequence
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct PreprocessingToken
+class PreprocessingToken
 {
+public:
     using Variant = std::variant<std::monostate
         , Identifier*
         , PPNumber*
@@ -990,8 +1032,9 @@ struct PreprocessingToken
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct PPNumber
+class PPNumber
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -1018,8 +1061,9 @@ struct PPNumber
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct IntegerSuffix
+class IntegerSuffix
 {
+public:
     struct Sus_ls
     {
         UnsignedSuffix *us;
@@ -1074,8 +1118,9 @@ struct IntegerSuffix
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct UnsignedSuffix
+class UnsignedSuffix
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -1093,8 +1138,9 @@ struct UnsignedSuffix
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct LongSuffix
+class LongSuffix
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -1112,8 +1158,9 @@ struct LongSuffix
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct LongLongSuffix
+class LongLongSuffix
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -1131,8 +1178,9 @@ struct LongLongSuffix
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct TranslationUnit
+class TranslationUnit
 {
+public:
     std::vector<ExternalDeclaration*> seq;
 
     template<class ...Args>
@@ -1144,8 +1192,9 @@ struct TranslationUnit
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct ExternalDeclaration
+class ExternalDeclaration
 {
+public:
     using Var = std::variant<std::monostate
         , FunctionDefinition*
         , Declaration*>;
@@ -1161,8 +1210,9 @@ struct ExternalDeclaration
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct FunctionDefinition
+class FunctionDefinition
 {
+public:
     DeclarationSpecifiers *ds;
     Declarator *d;
     DeclarationList *dl;
@@ -1187,8 +1237,9 @@ struct FunctionDefinition
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Declaration
+class Declaration
 {
+public:
     struct Sds_idl
     {
         DeclarationSpecifiers *ds;
@@ -1222,8 +1273,9 @@ struct Declaration
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct DeclarationSpecifiers
+class DeclarationSpecifiers
 {
+public:
     using Var = std::variant<std::monostate
         , StorageClassSpecifier*
         , TypeSpecifier*
@@ -1243,8 +1295,9 @@ struct DeclarationSpecifiers
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Declarator
+class Declarator
 {
+public:
     Pointer *p;
     DirectDeclarator *dd;
 
@@ -1258,8 +1311,9 @@ struct Declarator
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct DeclarationList
+class DeclarationList
 {
+public:
     std::vector<Declaration*> seq;
 
     template<class ...Args>
@@ -1271,8 +1325,9 @@ struct DeclarationList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct CompoundStatement
+class CompoundStatement
 {
+public:
     BlockItemList *bil;
 
     CompoundStatement(BlockItemList *inbil = nullptr) noexcept
@@ -1283,8 +1338,9 @@ struct CompoundStatement
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct InitDeclaratorList
+class InitDeclaratorList
 {
+public:
     std::vector<InitDeclarator*> seq;
 
     template<class ...Args>
@@ -1296,8 +1352,9 @@ struct InitDeclaratorList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct StaticAssertDeclaration
+class StaticAssertDeclaration
 {
+public:
     ConstantExpression *ce;
     StringLiteral *sl;
 
@@ -1311,8 +1368,9 @@ struct StaticAssertDeclaration
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct StorageClassSpecifier
+class StorageClassSpecifier
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -1334,8 +1392,9 @@ struct StorageClassSpecifier
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct TypeSpecifier
+class TypeSpecifier
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -1371,8 +1430,9 @@ struct TypeSpecifier
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct TypeQualifier
+class TypeQualifier
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -1392,8 +1452,9 @@ struct TypeQualifier
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct FunctionSpecifier
+class FunctionSpecifier
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -1411,8 +1472,9 @@ struct FunctionSpecifier
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct AlignmentSpecifier
+class AlignmentSpecifier
 {
+public:
     using Var = std::variant<std::monostate
         , TypeName*
         , ConstantExpression*>;
@@ -1428,8 +1490,9 @@ struct AlignmentSpecifier
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Pointer
+class Pointer
 {
+public:
     struct Stql
     {
         TypeQualifierList *tql;
@@ -1461,8 +1524,9 @@ struct Pointer
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct DirectDeclarator
+class DirectDeclarator
 {
+public:
     struct Si
     {
         Identifier *i;
@@ -1525,8 +1589,9 @@ struct DirectDeclarator
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct BlockItemList
+class BlockItemList
 {
+public:
     std::vector<BlockItem*> seq;
 
     template<class ...Args>
@@ -1538,8 +1603,9 @@ struct BlockItemList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct InitDeclarator
+class InitDeclarator
 {
+public:
     struct Sd
     {
         AttributeSpecifierList *asl0;
@@ -1602,8 +1668,9 @@ struct InitDeclarator
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct ConstantExpression
+class ConstantExpression
 {
+public:
     ConditionalExpression *ce;
 
     constexpr ConstantExpression(ConditionalExpression *ince = nullptr) noexcept
@@ -1614,8 +1681,9 @@ struct ConstantExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct AtomicTypeSpecifier
+class AtomicTypeSpecifier
 {
+public:
     TypeName *tn;
 
     constexpr AtomicTypeSpecifier(TypeName *intn = nullptr) noexcept
@@ -1626,8 +1694,9 @@ struct AtomicTypeSpecifier
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct StructOrUnionSpecifier
+class StructOrUnionSpecifier
 {
+public:
     struct Ssou_i_sdl
     {
         StructOrUnion *sou;
@@ -1671,8 +1740,9 @@ struct StructOrUnionSpecifier
     std::string &str(std::string &res, std::size_t &indent) const;
 };
 
-struct EnumSpecifier
+class EnumSpecifier
 {
+public:
     struct Si_el
     {
         AttributeSpecifierList *asl;
@@ -1710,8 +1780,9 @@ struct EnumSpecifier
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct TypedefName
+class TypedefName
 {
+public:
     Identifier *i;
 
     constexpr TypedefName(Identifier *ini = nullptr) noexcept
@@ -1722,8 +1793,9 @@ struct TypedefName
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct TypeName
+class TypeName
 {
+public:
     SpecifierQualifierList *sql;
     AbstractDeclarator *ad;
 
@@ -1737,8 +1809,9 @@ struct TypeName
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct TypeQualifierList
+class TypeQualifierList
 {
+public:
     std::vector<TypeQualifier*> seq;
 
     template<class ...Args>
@@ -1750,8 +1823,9 @@ struct TypeQualifierList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct AssignmentExpression
+class AssignmentExpression
 {
+public:
     struct Sce
     {
         ConditionalExpression *ce;
@@ -1786,8 +1860,9 @@ struct AssignmentExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct ParameterTypeList
+class ParameterTypeList
 {
+public:
     ParameterList *pl;
     bool isValiable;
 
@@ -1801,8 +1876,9 @@ struct ParameterTypeList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct IdentifierList
+class IdentifierList
 {
+public:
     std::vector<Identifier*> seq;
 
     template<class ...Args>
@@ -1814,8 +1890,9 @@ struct IdentifierList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct BlockItem
+class BlockItem
 {
+public:
     using Var = std::variant<std::monostate
         , Declaration*
         , Statement*>;
@@ -1831,8 +1908,9 @@ struct BlockItem
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Initializer
+class Initializer
 {
+public:
     using Var = std::variant<std::monostate
         , AssignmentExpression*
         , InitializerList*>;
@@ -1848,8 +1926,9 @@ struct Initializer
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct ConditionalExpression
+class ConditionalExpression
 {
+public:
     struct Slore
     {
         LogicalORExpression *lore;
@@ -1884,8 +1963,9 @@ struct ConditionalExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct StructOrUnion
+class StructOrUnion
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -1903,8 +1983,9 @@ struct StructOrUnion
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct StructDeclarationList
+class StructDeclarationList
 {
+public:
     std::vector<StructDeclaration*> seq;
 
     template<class ...Args>
@@ -1916,8 +1997,9 @@ struct StructDeclarationList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct EnumeratorList
+class EnumeratorList
 {
+public:
     std::vector<Enumerator*> seq;
 
     template<class ...Args>
@@ -1929,8 +2011,9 @@ struct EnumeratorList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct SpecifierQualifierList
+class SpecifierQualifierList
 {
+public:
     using Var = std::variant<std::monostate
         , TypeSpecifier*
         , TypeQualifier*
@@ -1947,8 +2030,9 @@ struct SpecifierQualifierList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct AbstractDeclarator
+class AbstractDeclarator
 {
+public:
     struct Sp
     {
         Pointer *p;
@@ -1980,8 +2064,9 @@ struct AbstractDeclarator
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct UnaryExpression
+class UnaryExpression
 {
+public:
     struct Spe
     {
         PostfixExpression *pe;
@@ -2048,8 +2133,9 @@ struct UnaryExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct AssignmentOperator
+class AssignmentOperator
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -2076,8 +2162,9 @@ struct AssignmentOperator
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct ParameterList
+class ParameterList
 {
+public:
     std::vector<ParameterDeclaration*> seq;
 
     template<class ...Args>
@@ -2089,8 +2176,9 @@ struct ParameterList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Statement
+class Statement
 {
+public:
     using Var = std::variant<std::monostate
         , LabeledStatement*
         , CompoundStatement*
@@ -2119,8 +2207,9 @@ struct Statement
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct InitializerList
+class InitializerList
 {
+public:
     struct Sd_i
     {
         Designation *d;
@@ -2142,8 +2231,9 @@ struct InitializerList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct LogicalORExpression
+class LogicalORExpression
 {
+public:
     std::vector<LogicalANDExpression*> seq;
 
     template<class ...Args>
@@ -2155,8 +2245,9 @@ struct LogicalORExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Expression
+class Expression
 {
+public:
     std::vector<AssignmentExpression*> seq;
 
     template<class ...Args>
@@ -2168,8 +2259,9 @@ struct Expression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct StructDeclaration
+class StructDeclaration
 {
+public:
     struct Ssql_sdl
     {
         SpecifierQualifierList *sql;
@@ -2201,8 +2293,9 @@ struct StructDeclaration
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Enumerator
+class Enumerator
 {
+public:
     struct Sec
     {
         EnumerationConstant *ec;
@@ -2240,8 +2333,9 @@ struct Enumerator
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct DirectAbstractDeclarator
+class DirectAbstractDeclarator
 {
+public:
     struct Sad
     {
         AbstractDeclarator *ad;
@@ -2288,8 +2382,9 @@ struct DirectAbstractDeclarator
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct PostfixExpression
+class PostfixExpression
 {
+public:
     struct Spe
     {
         PrimaryExpression *pe;
@@ -2359,8 +2454,9 @@ struct PostfixExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct UnaryOperator
+class UnaryOperator
 {
+public:
     enum class Tag : signed char
     {
         NONE
@@ -2382,8 +2478,9 @@ struct UnaryOperator
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct CastExpression
+class CastExpression
 {
+public:
     struct Sue
     {
         UnaryExpression *ue;
@@ -2415,8 +2512,9 @@ struct CastExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct ParameterDeclaration
+class ParameterDeclaration
 {
+public:
     struct Sds_d
     {
         DeclarationSpecifiers *ds;
@@ -2451,8 +2549,9 @@ struct ParameterDeclaration
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct LabeledStatement
+class LabeledStatement
 {
+public:
     struct Si_s
     {
         Identifier *i;
@@ -2497,8 +2596,9 @@ struct LabeledStatement
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct ExpressionStatement
+class ExpressionStatement
 {
+public:
     Expression *e;
     
     constexpr ExpressionStatement(Expression *ine = nullptr) noexcept
@@ -2509,8 +2609,9 @@ struct ExpressionStatement
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct SelectionStatement
+class SelectionStatement
 {
+public:
     struct Si_e_s
     {
         Expression *e;
@@ -2558,8 +2659,9 @@ struct SelectionStatement
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct IterationStatement
+class IterationStatement
 {
+public:
     struct Sw_e_s
     {
         Expression *e;
@@ -2626,8 +2728,9 @@ struct IterationStatement
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct JumpStatement
+class JumpStatement
 {
+public:
     struct Sg_i
     {
         Identifier *i;
@@ -2666,8 +2769,9 @@ struct JumpStatement
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Designation
+class Designation
 {
+public:
     DesignatorList *dl;
 
     constexpr Designation(DesignatorList *indl = nullptr) noexcept
@@ -2678,8 +2782,9 @@ struct Designation
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct LogicalANDExpression
+class LogicalANDExpression
 {
+public:
     std::vector<InclusiveORExpression*> seq;
 
     template<class ...Args>
@@ -2691,8 +2796,9 @@ struct LogicalANDExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct StructDeclaratorList
+class StructDeclaratorList
 {
+public:
     std::vector<StructDeclarator*> seq;
 
     template<class ...Args>
@@ -2704,8 +2810,9 @@ struct StructDeclaratorList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct PrimaryExpression
+class PrimaryExpression
 {
+public:
     using Var = std::variant<std::monostate
         , Identifier*
         , Constant*
@@ -2724,8 +2831,9 @@ struct PrimaryExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct ArgumentExpressionList
+class ArgumentExpressionList
 {
+public:
     std::vector<AssignmentExpression*> seq;
 
     template<class ...Args>
@@ -2737,8 +2845,9 @@ struct ArgumentExpressionList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct DesignatorList
+class DesignatorList
 {
+public:
     std::vector<Designator*> seq;
 
     template<class ...Args>
@@ -2750,8 +2859,9 @@ struct DesignatorList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct InclusiveORExpression
+class InclusiveORExpression
 {
+public:
     std::vector<ExclusiveORExpression*> seq;
 
     template<class ...Args>
@@ -2763,8 +2873,9 @@ struct InclusiveORExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct StructDeclarator
+class StructDeclarator
 {
+public:
     struct Sd
     {
         Declarator *d;
@@ -2796,8 +2907,9 @@ struct StructDeclarator
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct GenericSelection
+class GenericSelection
 {
+public:
     AssignmentExpression *ae;
     GenericAssocList *gal;
 
@@ -2811,8 +2923,9 @@ struct GenericSelection
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct Designator
+class Designator
 {
+public:
     using Var = std::variant<std::monostate
         , ConstantExpression*
         , Identifier*>;
@@ -2828,8 +2941,9 @@ struct Designator
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct ExclusiveORExpression
+class ExclusiveORExpression
 {
+public:
     std::vector<ANDExpression*> seq;
 
     template<class ...Args>
@@ -2841,8 +2955,9 @@ struct ExclusiveORExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct GenericAssocList
+class GenericAssocList
 {
+public:
     std::vector<GenericAssociation*> seq;
 
     template<class ...Args>
@@ -2854,8 +2969,9 @@ struct GenericAssocList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct ANDExpression
+class ANDExpression
 {
+public:
     std::vector<EqualityExpression*> seq;
 
     template<class ...Args>
@@ -2867,8 +2983,9 @@ struct ANDExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct GenericAssociation
+class GenericAssociation
 {
+public:
     struct Stn_ae
     {
         TypeName *tn;
@@ -2900,8 +3017,9 @@ struct GenericAssociation
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct EqualityExpression
+class EqualityExpression
 {
+public:
     struct Sre
     {
         RelationalExpression *re;
@@ -2937,8 +3055,9 @@ struct EqualityExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct RelationalExpression
+class RelationalExpression
 {
+public:
     struct Sse
     {
         ShiftExpression *se;
@@ -2988,8 +3107,9 @@ struct RelationalExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct ShiftExpression
+class ShiftExpression
 {
+public:
     struct Sae
     {
         AdditiveExpression *ae;
@@ -3025,8 +3145,9 @@ struct ShiftExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct AdditiveExpression
+class AdditiveExpression
 {
+public:
     struct Sme
     {
         MultiplicativeExpression *me;
@@ -3062,8 +3183,9 @@ struct AdditiveExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct MultiplicativeExpression
+class MultiplicativeExpression
 {
+public:
     struct Sce
     {
         CastExpression *ce;
@@ -3106,8 +3228,9 @@ struct MultiplicativeExpression
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct AttributeSpecifier
+class AttributeSpecifier
 {
+public:
     std::vector<Token*> seq;
 
     template<class ...Args>
@@ -3119,8 +3242,9 @@ struct AttributeSpecifier
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct AttributeSpecifierList
+class AttributeSpecifierList
 {
+public:
     std::vector<AttributeSpecifier*> seq;
 
     template<class ...Args>
@@ -3132,8 +3256,9 @@ struct AttributeSpecifierList
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct AttributeStatement
+class AttributeStatement
 {
+public:
     AttributeSpecifierList *asl;
 
     constexpr AttributeStatement(AttributeSpecifierList *inasl = nullptr) noexcept
@@ -3144,8 +3269,9 @@ struct AttributeStatement
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct BasicAsm
+class BasicAsm
 {
+public:
     AsmQualifiers *aq;
     StringLiteral *sl;
 
@@ -3159,8 +3285,9 @@ struct BasicAsm
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct ExtendedAsm
+class ExtendedAsm
 {
+public:
     AsmQualifiers *aq;
     StringLiteral *sl;
     std::vector<Token*> oo;
@@ -3186,8 +3313,9 @@ struct ExtendedAsm
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct AsmQualifiers
+class AsmQualifiers
 {
+public:
     enum class Tag : unsigned char
     {
         NONE
@@ -3206,8 +3334,9 @@ struct AsmQualifiers
     std::string &str(std::string&, std::size_t&) const;
 };
 
-struct AsmStatement
+class AsmStatement
 {
+public:
     using Var = std::variant<std::monostate
         , BasicAsm*
         , ExtendedAsm*>;
