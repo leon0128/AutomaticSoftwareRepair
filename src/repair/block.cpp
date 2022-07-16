@@ -5,7 +5,7 @@
 #include "../analyzer.hpp"
 #include "block.hpp"
 
-namespace GA::BLOCK
+namespace REPAIR::BLOCK
 {
 
 Block::Block()

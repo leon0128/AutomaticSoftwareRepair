@@ -6,7 +6,8 @@
 #include "utility/output.hpp"
 #include "utility/system.hpp"
 #include "similarity/controller.hpp"
-#include "ga/controller.hpp"
+#include "repair/controller.hpp"
+#include "time_measurer.hpp"
 #include "analyzer.hpp"
 #include "divider.hpp"
 #include "tree_generator.hpp"
@@ -20,6 +21,7 @@ Controller::Controller()
 
 bool Controller::execute(int argc, char **argv)
 {
+    
     // initialize
     if(!initialize(argc, argv))
         return false;
@@ -41,23 +43,31 @@ bool Controller::execute(int argc, char **argv)
     for(const auto &analyzer : pool)
         tus.emplace_back(analyzer->filename(), analyzer->translationUnit());
 
-    SIM::Controller simController;
-    if(!simController.execute(tus))
-        return false;
-    
-    return true;
+    {
+        TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::SIMILARITY};
+        SIM::Controller simController;
+        if(!simController.execute(tus))
+            return false;
+    }
 
-    // execute genetic algorithm
-    GA::Controller gaController;
-    if(!gaController.execute(source
-        , pool))
-        return false;
+    // execute repair
+    {
+        TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::REPAIR};
+        REPAIR::Controller repairController;
+        if(!repairController.execute(source
+            , pool))
+            return false;
+    }
+
+    timeMeasurer().print();
 
     return true;
 }
 
 bool Controller::initialize(int argc, char **argv)
 {
+    TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::INITIALIZING};
+
     if(!Configure::parseCommandLineArguments(argc, argv))
         return false;
     
@@ -120,6 +130,8 @@ bool Controller::createAnalyzersFromPool(std::vector<std::shared_ptr<Analyzer>> 
 
 Analyzer *Controller::createAnalyzer(const std::string &filename)
 {
+    TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::ANALYZING};
+
     Sequencer sequencer;
     if(!sequencer.execute(filename))
         return nullptr;

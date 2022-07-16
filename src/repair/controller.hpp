@@ -1,5 +1,5 @@
-#ifndef GA_CONTROLLER_HPP
-#define GA_CONTROLLER_HPP
+#ifndef REPAIR_CONTROLLER_HPP
+#define REPAIR_CONTROLLER_HPP
 
 #include <string>
 #include <vector>
@@ -9,7 +9,7 @@
 
 class Analyzer;
 
-namespace GA
+namespace REPAIR
 {
 
 namespace BLOCK

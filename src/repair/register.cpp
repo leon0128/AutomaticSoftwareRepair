@@ -3,7 +3,7 @@
 #include "../analyzer.hpp"
 #include "register.hpp"
 
-namespace GA
+namespace REPAIR
 {
 
 std::optional<std::size_t> Register::execute(TOKEN::Statement *statement)

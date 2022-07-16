@@ -12,6 +12,9 @@ bool isValid(const std::filesystem::path &path
 {
     if(type == std::filesystem::file_type::regular)
     {
+        if(path.filename() == "")
+            return false;
+
         if(isValid(path.parent_path(), std::filesystem::file_type::directory)
             && !isExist(path, std::filesystem::file_type::directory))
             return true;
@@ -20,6 +23,9 @@ bool isValid(const std::filesystem::path &path
     }
     else if(type == std::filesystem::file_type::directory)
     {
+        if(path.filename() == "")
+            return true;
+
         if(isExist(path, std::filesystem::file_type::directory))
             return true;
         else
