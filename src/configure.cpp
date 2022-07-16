@@ -250,7 +250,7 @@ bool Configure::setDefaultValue()
                 TEST_FILENAME = "__test.c";
                 break;
             case(Tag::EXECUTION):
-                EXECUTION_NAME = "test";
+                EXECUTION_NAME = "__test";
                 break;
             case(Tag::POS_PREFIX):
                 POSITIVE_TEST_PREFIX = "p";

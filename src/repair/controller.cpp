@@ -3,6 +3,7 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
+#include <iomanip>
 
 #include "../utility/file.hpp"
 #include "../utility/system.hpp"
@@ -54,8 +55,9 @@ bool Controller::execute(std::shared_ptr<Analyzer> srcAnalyzer
         std::cout << "repair:\n"
             << "    repair is " << (mIsAbleToRepair ? "SUCCEEDED" : "FAILED")
             << ".\n    compile success late: "
-            << mNumCompilationSucceededFile / mNumCreatedFile << '%'
-            << '(' << mNumCompilationSucceededFile << '/' << mNumCreatedFile << ')'
+            << std::fixed << std::setprecision(3)
+            << static_cast<double>(mNumCompilationSucceededFile) / static_cast<double>(mNumCreatedFile) * 100.0
+            << "%(" << mNumCompilationSucceededFile << '/' << mNumCreatedFile << ')'
             << std::endl;
     }
 
