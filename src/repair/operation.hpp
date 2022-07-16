@@ -1,12 +1,12 @@
-#ifndef GA_OPERATION_HPP
-#define GA_OPERATION_HPP
+#ifndef REPAIR_OPERATION_HPP
+#define REPAIR_OPERATION_HPP
 
 #include <vector>
 #include <string>
 #include <utility>
 #include <unordered_map>
 
-namespace GA
+namespace REPAIR
 {
 
 namespace BLOCK

@@ -1,11 +1,11 @@
-#ifndef GA_REGISTER_HPP
-#define GA_REGISTER_HPP
+#ifndef REPAIR_REGISTER_HPP
+#define REPAIR_REGISTER_HPP
 
 #include <optional>
 
 #include "../token.hpp"
 
-namespace GA
+namespace REPAIR
 {
 
 class Register;

@@ -98,6 +98,7 @@ public:
 
     Identifier(DerivedTag
         , const std::string&);
+    virtual ~Identifier() = default;
 
     virtual std::string key() const
         {return mStr;}

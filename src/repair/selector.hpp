@@ -1,5 +1,5 @@
-#ifndef GA_SELECTOR_HPP
-#define GA_SELECTOR_HPP
+#ifndef REPAIR_SELECTOR_HPP
+#define REPAIR_SELECTOR_HPP
 
 #include <functional>
 #include <vector>
@@ -86,7 +86,7 @@ namespace IDENTIFIER
     class Identifier;
 }
 
-namespace GA
+namespace REPAIR
 {
 
 class Selector;

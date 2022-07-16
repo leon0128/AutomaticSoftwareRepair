@@ -69,12 +69,12 @@ PPNumber *decPPNumber(const std::string &src
             seq.emplace_back(PPNumber::Tag::PERIOD);
         else if(PPNumber::Variant v = PPNumber::Tag::NONE;
             (src[idx] == 'e' && (v = PPNumber::Tag::e, true))
-            || (src[idx] == 'E' && (v = PPNumber::Tag::E, true))
-            || (src[idx] == 'p' && (v = PPNumber::Tag::p, true))
-            || (src[idx] == 'P' && (v = PPNumber::Tag::P, true))
-            , std::get<PPNumber::Tag>(v) != PPNumber::Tag::NONE
-                && (idx++, true))
+                || (src[idx] == 'E' && (v = PPNumber::Tag::E, true))
+                || (src[idx] == 'p' && (v = PPNumber::Tag::p, true))
+                || (src[idx] == 'P' && (v = PPNumber::Tag::P, true)))
         {
+            idx++;
+
             if(var = decSign(src, idx), std::get<Sign*>(var) != nullptr)
             {
                 seq.push_back(v);

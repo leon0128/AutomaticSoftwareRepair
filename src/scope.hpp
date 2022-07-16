@@ -8,6 +8,7 @@
 #include <array>
 #include <any>
 #include <memory>
+#include <vector>
 
 namespace IDENTIFIER
 {
@@ -16,6 +17,8 @@ namespace IDENTIFIER
 
 namespace SCOPE
 {
+
+class Scope;
 
 class Scope
 {
