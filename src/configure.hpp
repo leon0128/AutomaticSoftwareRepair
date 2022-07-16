@@ -20,6 +20,7 @@ private:
         , RESULT
         , COMMAND_LOG
         , TIME_LOG
+        , REPAIR_LOG
         , PREPROCESSOR
         , COMPILER
         , TEST_SCRIPT
@@ -56,6 +57,7 @@ public:
 
     inline static bool SHOULD_OUTPUT_COMMAND_LOG;
     inline static bool SHOULD_OUTPUT_TIME_LOG;
+    inline static bool SHOULD_OUTPUT_REPAIR_LOG;
 
     inline static std::string PREPROCESSOR;
     inline static std::string COMPILER;

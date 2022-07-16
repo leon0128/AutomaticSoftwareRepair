@@ -33,11 +33,8 @@ class Controller;
 
 class Controller
 {
-private:
-    BLOCK::Block *mBlock;
-    Pool mPool;
-
 public:
+    // public member function
     Controller();
     ~Controller();
 
@@ -45,11 +42,12 @@ public:
         , const std::vector<std::shared_ptr<Analyzer>> &pool);
 
 private:
+    // private member functions
     bool initialize(std::shared_ptr<Analyzer> src
         , const std::vector<std::shared_ptr<Analyzer>> &pool);
     
-    std::shared_ptr<REPRESENTATION::Representation> geneticAlgorithm() const;
-    int fitness(const REPRESENTATION::Representation*) const;
+    std::shared_ptr<REPRESENTATION::Representation> geneticAlgorithm();
+    int fitness(const REPRESENTATION::Representation*);
     bool outputToFile(const std::string &filename
         , const REPRESENTATION::Representation*) const;
     bool compile(const std::string &filename) const;
@@ -61,6 +59,14 @@ private:
     bool manipulationError(const std::string &what) const;
     bool geneticAlgorithmError(const std::string &what) const;
     bool outputError(const std::string &filename) const;
+
+    // private member variables
+    BLOCK::Block *mBlock;
+    Pool mPool;
+
+    std::size_t mNumCreatedFile;
+    std::size_t mNumCompilationSucceededFile;
+    bool mIsAbleToRepair;
 };
 
 }
