@@ -9,6 +9,7 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--result", {Tag::RESULT, true}}
     , {"--command-log", {Tag::COMMAND_LOG, false}}
     , {"--time-log", {Tag::TIME_LOG, false}}
+    , {"--repair-log", {Tag::REPAIR_LOG, false}}
     , {"--preprocessor", {Tag::PREPROCESSOR, true}}
     , {"--compiler", {Tag::COMPILER, true}}
     , {"--test-script", {Tag::TEST_SCRIPT, true}}
@@ -107,6 +108,9 @@ bool Configure::readArgument(Tag tag
             break;
         case(Tag::TIME_LOG):
             SHOULD_OUTPUT_TIME_LOG = true;
+            break;
+        case(Tag::REPAIR_LOG):
+            SHOULD_OUTPUT_REPAIR_LOG = true;
             break;
         case(Tag::PREPROCESSOR):
             if(!assignString(tag, arg, PREPROCESSOR))
@@ -229,6 +233,10 @@ bool Configure::setDefaultValue()
                 break;
             case(Tag::TIME_LOG):
                 SHOULD_OUTPUT_TIME_LOG = false;
+                break;
+            case(Tag::REPAIR_LOG):
+                SHOULD_OUTPUT_REPAIR_LOG = false;
+                break;
             case(Tag::PREPROCESSOR):
                 PREPROCESSOR = "cpp -P";
                 break;
@@ -242,7 +250,7 @@ bool Configure::setDefaultValue()
                 TEST_FILENAME = "__test.c";
                 break;
             case(Tag::EXECUTION):
-                EXECUTION_NAME = "test";
+                EXECUTION_NAME = "__test";
                 break;
             case(Tag::POS_PREFIX):
                 POSITIVE_TEST_PREFIX = "p";

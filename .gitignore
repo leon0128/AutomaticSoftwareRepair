@@ -1,4 +1,5 @@
 src/.vscode/
+__test
 result.c
 test.c
 __test.c

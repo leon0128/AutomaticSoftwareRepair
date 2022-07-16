@@ -3,6 +3,7 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
+#include <iomanip>
 
 #include "../utility/file.hpp"
 #include "../utility/system.hpp"
@@ -22,6 +23,9 @@ namespace REPAIR
 Controller::Controller()
     : mBlock{nullptr}
     , mPool{}
+    , mNumCreatedFile{0ull}
+    , mNumCompilationSucceededFile{0ull}
+    , mIsAbleToRepair{false}
 {
 }
 
@@ -45,6 +49,17 @@ bool Controller::execute(std::shared_ptr<Analyzer> srcAnalyzer
 
     outputToFile(Configure::RESULT_FILENAME
         , result.get());
+
+    if(Configure::SHOULD_OUTPUT_REPAIR_LOG)
+    {
+        std::cout << "repair:\n"
+            << "    repair is " << (mIsAbleToRepair ? "SUCCEEDED" : "FAILED")
+            << ".\n    compile success late: "
+            << std::fixed << std::setprecision(3)
+            << static_cast<double>(mNumCompilationSucceededFile) / static_cast<double>(mNumCreatedFile) * 100.0
+            << "%(" << mNumCompilationSucceededFile << '/' << mNumCreatedFile << ')'
+            << std::endl;
+    }
 
     return true;
 }
@@ -71,7 +86,7 @@ bool Controller::initialize(std::shared_ptr<Analyzer> src
     return true;
 }
 
-std::shared_ptr<REPRESENTATION::Representation> Controller::geneticAlgorithm() const
+std::shared_ptr<REPRESENTATION::Representation> Controller::geneticAlgorithm()
 {
     using namespace REPRESENTATION;
 
@@ -98,7 +113,6 @@ std::shared_ptr<REPRESENTATION::Representation> Controller::geneticAlgorithm() c
         }
     }
 
-    bool isFoundResult{false};
     std::shared_ptr<Representation> result;
     for(std::size_t gen{0ull};
         gen < Configure::MAX_GEN;
@@ -112,13 +126,13 @@ std::shared_ptr<REPRESENTATION::Representation> Controller::geneticAlgorithm() c
                 , i);
             if(scores.back().first >= Configure::GOAL_SCORE)
             {
-                isFoundResult = true;
+                mIsAbleToRepair = true;
                 result = reps[i];
                 break;
             }
         }
 
-        if(isFoundResult)
+        if(mIsAbleToRepair)
             break;
 
         std::sort(scores.begin()
@@ -150,16 +164,10 @@ std::shared_ptr<REPRESENTATION::Representation> Controller::geneticAlgorithm() c
         scores.clear();
     }
 
-    if(isFoundResult)
-        std::cout << "result is found.\n";
-    else
-        std::cout << "result is not found.\n";
-    std::cout << std::flush;
-
     return result;
 }
 
-int Controller::fitness(const REPRESENTATION::Representation *rep) const
+int Controller::fitness(const REPRESENTATION::Representation *rep)
 {
     auto &&evaluate{[](const std::string &prefix
         , std::size_t size
@@ -189,9 +197,13 @@ int Controller::fitness(const REPRESENTATION::Representation *rep) const
     if(!outputToFile(Configure::TEST_FILENAME
         , rep))
         return std::numeric_limits<int>::min();
+    else
+        mNumCreatedFile++;
 
     if(!compile(Configure::TEST_FILENAME))
         return std::numeric_limits<int>::min();
+    else
+        mNumCompilationSucceededFile++;
 
     int score{0};
     {
