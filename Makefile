@@ -53,7 +53,7 @@ $(PROGRAM): $(OBJECT_FILES)
 
 # dependency file recipe
 $(DEPENDENCY_FILES):
-	echo -n $(dir $@) > $@
+	echo -n "$(dir $@) > $@"
 	$(CXX) -MM -c $(basename $@).cpp >> $@
 	echo "	rm -rf $@" >> $@
 	echo "	$(CXX) $(CXXFLAGS) -c $(basename $@).cpp -o $(basename $@).o" >> $@

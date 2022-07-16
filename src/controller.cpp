@@ -59,7 +59,8 @@ bool Controller::execute(int argc, char **argv)
             return false;
     }
 
-    timeMeasurer().print();
+    if(Configure::SHOULD_OUTPUT_TIME_LOG)
+        timeMeasurer().print();
 
     return true;
 }

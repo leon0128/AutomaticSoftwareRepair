@@ -13,7 +13,7 @@ const Analyzer::BaseTypeMap Analyzer::BASE_TYPE_MAP
                 , BaseTypeTag::CHAR}}}
         , {ResultTypeTag::U_CHAR
             , {{BaseTypeTag::UNSIGNED
-                , {BaseTypeTag::CHAR}}}}
+                , BaseTypeTag::CHAR}}}
         , {ResultTypeTag::S_SHORT
             , {{BaseTypeTag::SHORT}
                 , {BaseTypeTag::SIGNED
