@@ -44,6 +44,10 @@ private:
         , NEW_OPERATION_PROB
         , CONCATENATION_PROB
         , MAX_RECURSION
+        , SIM_ORIGINAL
+        , SIM_TYPE1
+        , SIM_TYPE2
+        , SIM_TYPE3
         , NUM_ENUM
     };
 
@@ -87,6 +91,11 @@ public:
     inline static double CONCATENATION_PROBABILITY;
 
     inline static std::size_t MAX_RECURSION;
+
+    inline static std::size_t SIM_ORIGINAL;
+    inline static std::size_t SIM_TYPE1;
+    inline static std::size_t SIM_TYPE2;
+    inline static std::size_t SIM_TYPE3;
 
 private:
     static bool readArgument(Tag

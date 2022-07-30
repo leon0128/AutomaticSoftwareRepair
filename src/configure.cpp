@@ -32,7 +32,11 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--swap-prob", {Tag::SWAPPING_PROB, true}}
     , {"--new-operation-prob", {Tag::NEW_OPERATION_PROB, true}}
     , {"--concatenation-prob", {Tag::CONCATENATION_PROB, true}}
-    , {"--max-recursion", {Tag::MAX_RECURSION, true}}};
+    , {"--max-recursion", {Tag::MAX_RECURSION, true}}
+    , {"--original", {Tag::SIM_ORIGINAL, true}}
+    , {"--type1", {Tag::SIM_TYPE1, true}}
+    , {"--type2", {Tag::SIM_TYPE2, true}}
+    , {"--type3", {Tag::SIM_TYPE3, true}}};
 
 bool Configure::parseCommandLineArguments(int argc, char **argv)
 {
@@ -204,6 +208,22 @@ bool Configure::readArgument(Tag tag
             if(!assignSizeT(tag, arg, MAX_RECURSION))
                 return false;
             break;
+        case(Tag::SIM_ORIGINAL):
+            if(!assignSizeT(tag, arg, SIM_ORIGINAL))
+                return false;
+            break;
+        case(Tag::SIM_TYPE1):
+            if(!assignSizeT(tag, arg, SIM_TYPE1))
+                return false;
+            break;
+        case(Tag::SIM_TYPE2):
+            if(!assignSizeT(tag, arg, SIM_TYPE2))
+                return false;
+            break;
+        case(Tag::SIM_TYPE3):
+            if(!assignSizeT(tag, arg, SIM_TYPE3))
+                return false;
+            break;
         default:
             return unknownTagError(tag);
     }
@@ -305,6 +325,19 @@ bool Configure::setDefaultValue()
                 break;
             case(Tag::MAX_RECURSION):
                 MAX_RECURSION = 16ull;
+                break;
+            case(Tag::SIM_ORIGINAL):
+                SIM_ORIGINAL = 1ull;
+                break;
+            case(Tag::SIM_TYPE1):
+                SIM_TYPE1 = 4ull;
+                break;
+            case(Tag::SIM_TYPE2):
+                SIM_TYPE2 = 4ull;
+                break;
+            case(Tag::SIM_TYPE3):
+                SIM_TYPE3 = 4ull;
+                break;
             
             default:;
         }
