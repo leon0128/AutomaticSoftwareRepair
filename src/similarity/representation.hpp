@@ -8,8 +8,6 @@
 namespace SIM
 {
 
-class RepresentationCreator;
-
 class Representation
 {
 public:

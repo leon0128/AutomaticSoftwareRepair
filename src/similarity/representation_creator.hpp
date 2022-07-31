@@ -10,17 +10,48 @@
 namespace SIM
 {
 
+// base class
+class RepresentationCreator;
+// derived class
+class OriginalRepresentationCreator;
+class Type1RepresentationCreator;
+class Type2RepresentationCreator;
+class Type3RepresentationCreator;
+
 // same implementation as original
 class RepresentationCreator
 {
 public:
+    // public static member functions
+    // create representations and register it at Representation::reps
+    static bool createAndRegister(const std::string &filename
+        , const TOKEN::TranslationUnit*);
+
     // public member functions
     RepresentationCreator(std::size_t gramSize);
     virtual ~RepresentationCreator() = 0;
 
+    // move only
+    RepresentationCreator(const RepresentationCreator&) = delete;
+    RepresentationCreator(RepresentationCreator&&) = default;
+
     bool execute(const TOKEN::TranslationUnit*);
 
+    std::size_t gramSize() const noexcept
+        {return mGramSize;}
+    auto &&functionTokens() const noexcept
+        {return mFunctionTokens;}
+    auto &&functionTokens() noexcept
+        {return mFunctionTokens;}
+
 protected:
+    // example of effect:
+    //  gram size: 2
+    //  tokens:
+    //      before: {"int", "main", "(", ")"}
+    //      after: {"intmain", "main(", "()"}
+    bool concatenateTokens();
+
     // protected member functions
     virtual bool process(const TOKEN::TranslationUnit*);
     virtual bool process(const TOKEN::FunctionDefinition*);
@@ -127,6 +158,7 @@ protected:
         , const std::string &punctuator);
 
     bool variantError(const std::string &className) const;
+    bool tokenSizeError(const std::string &functionName) const;
 
     // protected member variables
     std::size_t mGramSize;
@@ -162,6 +194,38 @@ bool RepresentationCreator::processAgainstSequence(const Seq &seq
 
     return true;
 }
+
+class OriginalRepresentationCreator : public RepresentationCreator
+{
+public:
+    OriginalRepresentationCreator(std::size_t gramSize)
+        : RepresentationCreator{gramSize}{}
+    ~OriginalRepresentationCreator() = default;
+};
+
+class Type1RepresentationCreator : public RepresentationCreator
+{
+public:
+    Type1RepresentationCreator(std::size_t gramSize)
+        : RepresentationCreator{gramSize}{}
+    ~Type1RepresentationCreator() = default;
+};
+
+class Type2RepresentationCreator : public RepresentationCreator
+{
+public:
+    Type2RepresentationCreator(std::size_t gramSize)
+        : RepresentationCreator{gramSize}{}
+    ~Type2RepresentationCreator() = default;
+};
+
+class Type3RepresentationCreator : public RepresentationCreator
+{
+public:
+    Type3RepresentationCreator(std::size_t gramSize)
+        : RepresentationCreator{gramSize}{}
+    ~Type3RepresentationCreator() = default;
+};
 
 }
 

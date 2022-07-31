@@ -1,5 +1,8 @@
 #include <iostream>
+#include <utility>
 
+#include "../configure.hpp"
+#include "representation.hpp"
 #include "representation_creator.hpp"
 
 namespace SIM
@@ -11,6 +14,35 @@ namespace SIM
         if(!process(std::get<CLASS>(VARIABLE))) \
             return false; \
     }
+
+bool RepresentationCreator::createAndRegister(const std::string &filename
+    , const TOKEN::TranslationUnit *tu)
+{
+    using Rep = Representation;
+    using RC = RepresentationCreator;
+
+    std::array<RC*, Rep::castTag(Rep::Tag::SIZE_OF_TAG)> rcarr{new OriginalRepresentationCreator{Configure::SIM_ORIGINAL}
+        , new Type1RepresentationCreator{Configure::SIM_TYPE1}
+        , new Type2RepresentationCreator{Configure::SIM_TYPE2}
+        , new Type3RepresentationCreator{Configure::SIM_TYPE3}};
+
+    for(auto &&rc : rcarr)
+    {
+        if(!rc->execute(tu))
+            return false;
+    }
+
+    // move tokens from RC to Rep
+    for(std::size_t i{0ull}; i < rcarr.front()->functionTokens().size(); i++)
+    {
+        Rep::Element *element{new Rep::Element{filename, rcarr.front()->functionTokens()[i].first}};
+        for(std::size_t j{0ull}; j < rcarr.size(); j++)
+            element->mReps[j].tokens() = std::move(rcarr[j]->functionTokens()[i].second);
+        Rep::reps().push_back(element);
+    }
+
+    return true;
+}
 
 RepresentationCreator::RepresentationCreator(std::size_t gramSize)
     : mGramSize{gramSize}
@@ -26,6 +58,30 @@ bool RepresentationCreator::execute(const TOKEN::TranslationUnit *tu)
 {
     if(!process(tu))
         return false;
+
+    if(!concatenateTokens())
+        return false;
+
+    return true;
+}
+
+bool RepresentationCreator::concatenateTokens()
+{
+    for(auto &&[funcName, tokens] : mFunctionTokens)
+    {
+        if(tokens.size() < mGramSize)
+            return tokenSizeError(funcName);
+
+        std::deque<std::string> nGramTokens;
+        for(std::size_t i{0ull}; i + mGramSize <= tokens.size(); i++)
+        {
+            nGramTokens.emplace_back(tokens[i]);
+            for(std::size_t j{1ull}; j < mGramSize; j++)
+                nGramTokens.back() += tokens[i + j];
+        }
+
+        tokens = std::move(nGramTokens);
+    }
 
     return true;
 }
@@ -1565,8 +1621,18 @@ bool RepresentationCreator::setFunctionName(const TOKEN::Declarator *declarator)
 
 bool RepresentationCreator::variantError(const std::string &className) const
 {
-    std::cerr << "SIM::RepresentationCreator::variantError() error:\n"
+    std::cerr << "SIM::RepresentationCreator::variantError():\n"
         "    class: " << className
+        << std::endl;
+    return false;
+}
+
+bool RepresentationCreator::tokenSizeError(const std::string &funcName) const
+{
+    std::cerr << "SIM::RepresentationCreator::tokenSizeError():\n"
+        "    what: size of tokens is less than gram-size.\n"
+        "    function-name: " << funcName
+        << "\n    gram-size: " << mGramSize
         << std::endl;
     return false;
 }
