@@ -45,6 +45,10 @@ public:
         {return mFunctionTokens;}
 
 protected:
+    enum class TypeTag : unsigned char;
+
+    static const std::unordered_map<TypeTag, std::string> mTypeTagMap;
+
     // example of effect:
     //  gram size: 2
     //  tokens:
@@ -167,6 +171,17 @@ protected:
     std::deque<std::pair<std::string, std::deque<std::string>>> mFunctionTokens;
 };
 
+enum class RepresentationCreator::TypeTag : unsigned char
+{
+    DATA_TYPE
+    , CLASS_TYPE
+    , KEYWORD
+    , OPERATOR
+    , STRING_LITERAL
+    , NUMBER
+    , IDENTIFIER
+};
+
 template<class Seq>
 bool RepresentationCreator::processAgainstSequence(const Seq &seq)
 {
@@ -217,14 +232,63 @@ public:
     Type2RepresentationCreator(std::size_t gramSize)
         : RepresentationCreator{gramSize}{}
     ~Type2RepresentationCreator() = default;
+
+protected:
+    virtual bool process(const TOKEN::TypeSpecifier*) override;
+    virtual bool process(const TOKEN::Identifier*) override;
+    virtual bool process(const TOKEN::StringLiteral*) override;
+    virtual bool process(const TOKEN::StructOrUnionSpecifier*) override;
+    virtual bool process(const TOKEN::EnumSpecifier*) override;
+    virtual bool process(const TOKEN::TypedefName*) override;
+    virtual bool process(const TOKEN::IntegerConstant*) override;
+    virtual bool process(const TOKEN::FloatingConstant*) override;
+    virtual bool process(const TOKEN::CharacterConstant*) override;
 };
 
-class Type3RepresentationCreator : public RepresentationCreator
+class Type3RepresentationCreator : public Type2RepresentationCreator
 {
 public:
     Type3RepresentationCreator(std::size_t gramSize)
-        : RepresentationCreator{gramSize}{}
+        : Type2RepresentationCreator{gramSize}{}
     ~Type3RepresentationCreator() = default;
+
+protected:
+    virtual bool process(const TOKEN::StorageClassSpecifier*) override;
+    virtual bool process(const TOKEN::FunctionSpecifier*) override;
+    virtual bool process(const TOKEN::AlignmentSpecifier*) override;
+    virtual bool process(const TOKEN::Pointer*) override;
+    virtual bool process(const TOKEN::DirectDeclarator*) override;
+    virtual bool process(const TOKEN::ParameterTypeList*) override;
+    virtual bool process(const TOKEN::StaticAssertDeclaration*) override;
+    virtual bool process(const TOKEN::TypeQualifier*) override;
+    virtual bool process(const TOKEN::ConditionalExpression*) override;
+    virtual bool process(const TOKEN::UnaryExpression*) override;
+    virtual bool process(const TOKEN::AssignmentOperator*) override;
+    virtual bool process(const TOKEN::InitDeclarator*) override;
+    virtual bool process(const TOKEN::LogicalORExpression*) override;
+    virtual bool process(const TOKEN::PostfixExpression*) override;
+    virtual bool process(const TOKEN::UnaryOperator*) override;
+    virtual bool process(const TOKEN::LabeledStatement*) override;
+    virtual bool process(const TOKEN::SelectionStatement*) override;
+    virtual bool process(const TOKEN::IterationStatement*) override;
+    virtual bool process(const TOKEN::JumpStatement*) override;
+    virtual bool process(const TOKEN::LogicalANDExpression*) override;
+    virtual bool process(const TOKEN::InclusiveORExpression*) override;
+    virtual bool process(const TOKEN::GenericSelection*) override;
+    virtual bool process(const TOKEN::Designation*) override;
+    virtual bool process(const TOKEN::AtomicTypeSpecifier*) override;
+    virtual bool process(const TOKEN::EnumSpecifier*) override;
+    virtual bool process(const TOKEN::DirectAbstractDeclarator*) override;
+    virtual bool process(const TOKEN::ExclusiveORExpression*) override;
+    virtual bool process(const TOKEN::StructOrUnion*) override;
+    virtual bool process(const TOKEN::ANDExpression*) override;
+    virtual bool process(const TOKEN::GenericAssociation*) override;
+    virtual bool process(const TOKEN::Enumerator*) override;
+    virtual bool process(const TOKEN::EqualityExpression*) override;
+    virtual bool process(const TOKEN::RelationalExpression*) override;
+    virtual bool process(const TOKEN::ShiftExpression*) override;
+    virtual bool process(const TOKEN::AdditiveExpression*) override;
+    virtual bool process(const TOKEN::MultiplicativeExpression*) override;
 };
 
 }

@@ -15,6 +15,15 @@ namespace SIM
             return false; \
     }
 
+const std::unordered_map<RepresentationCreator::TypeTag, std::string> RepresentationCreator::mTypeTagMap
+    {{TypeTag::DATA_TYPE, "D"}
+        , {TypeTag::CLASS_TYPE, "C"}
+        , {TypeTag::KEYWORD, "K"}
+        , {TypeTag::OPERATOR, "O"}
+        , {TypeTag::STRING_LITERAL, "S"}
+        , {TypeTag::NUMBER, "N"}
+        , {TypeTag::IDENTIFIER, "I"}};
+
 bool RepresentationCreator::createAndRegister(const std::string &filename
     , const TOKEN::TranslationUnit *tu)
 {
@@ -369,14 +378,14 @@ bool RepresentationCreator::process(const TOKEN::AssignmentExpression *ae)
 
 bool RepresentationCreator::process(const TOKEN::ParameterTypeList *ptl)
 {
+    if(!process(ptl->pl))
+        return false;
+
     if(ptl->isValiable)
     {
         addToken(",");
         addToken("...");
     }
-
-    if(!process(ptl->pl))
-        return false;
     
     return true;
 }
@@ -1635,6 +1644,1081 @@ bool RepresentationCreator::tokenSizeError(const std::string &funcName) const
         << "\n    gram-size: " << mGramSize
         << std::endl;
     return false;
+}
+
+bool Type2RepresentationCreator::process(const TOKEN::TypeSpecifier *ts)
+{
+    using namespace TOKEN;
+    using RC = RepresentationCreator;
+
+    if(std::holds_alternative<TypeSpecifier::Tag>(ts->var))
+        addToken(mTypeTagMap.at(TypeTag::DATA_TYPE));
+    else if(std::holds_alternative<AtomicTypeSpecifier*>(ts->var))
+        return RC::process(std::get<AtomicTypeSpecifier*>(ts->var));
+    else if(std::holds_alternative<StructOrUnionSpecifier*>(ts->var))
+        return RC::process(std::get<StructOrUnionSpecifier*>(ts->var));
+    else if(std::holds_alternative<EnumSpecifier*>(ts->var))
+        return RC::process(std::get<EnumSpecifier*>(ts->var));
+    else if(std::holds_alternative<TypedefName*>(ts->var))
+        return RC::process(std::get<TypedefName*>(ts->var));
+    else
+        return variantError("TOKEN::TypeSpecifier");
+
+    return true;
+}
+
+bool Type2RepresentationCreator::process(const TOKEN::Identifier *identifier)
+{
+    addToken(mTypeTagMap.at(TypeTag::IDENTIFIER));
+
+    return true;
+}
+
+bool Type2RepresentationCreator::process(const TOKEN::StringLiteral *sl)
+{
+    addToken(mTypeTagMap.at(TypeTag::STRING_LITERAL));
+
+    return true;
+}
+
+bool Type2RepresentationCreator::process(const TOKEN::StructOrUnionSpecifier *sous)
+{
+    using SOUS = TOKEN::StructOrUnionSpecifier;
+    using RC = RepresentationCreator;
+
+    if(std::holds_alternative<SOUS::Ssou_i_sdl>(sous->var))
+    {
+        auto &&ssis{std::get<SOUS::Ssou_i_sdl>(sous->var)};
+        if(!RC::process(ssis.sou))
+            return false;
+        if(ssis.i != nullptr)
+            addToken(mTypeTagMap.at(TypeTag::CLASS_TYPE));
+
+        addToken("{");
+        if(!RC::process(ssis.sdl))
+            return false;
+        addToken("}");
+    }
+    else if(std::holds_alternative<SOUS::Ssou_i>(sous->var))
+    {
+        auto &&ssi{std::get<SOUS::Ssou_i>(sous->var)};
+        if(!RC::process(ssi.sou))
+            return false;
+        addToken(mTypeTagMap.at(TypeTag::CLASS_TYPE));
+    }
+    else
+        return variantError("TOKEN::StructOrUnionSpecifier");
+
+    return true;
+}
+
+bool Type2RepresentationCreator::process(const TOKEN::EnumSpecifier *es)
+{
+    using ES = TOKEN::EnumSpecifier;
+    using RC = RepresentationCreator;
+
+    if(std::holds_alternative<ES::Si_el>(es->var))
+    {
+        auto &&sie{std::get<ES::Si_el>(es->var)};
+        addToken("enum");
+        if(sie.i != nullptr)
+            addToken(mTypeTagMap.at(TypeTag::CLASS_TYPE));
+        addToken("{");
+        if(!RC::process(sie.el))
+            return false;
+        addToken("}");
+    }
+    else if(std::holds_alternative<ES::Si>(es->var))
+    {
+        addToken("enum");
+        addToken(mTypeTagMap.at(TypeTag::CLASS_TYPE));
+    }
+    else
+        return variantError("TOKEN::EnumSpecifier");
+
+    return true;
+}
+
+bool Type2RepresentationCreator::process(const TOKEN::TypedefName *tn)
+{
+    addToken(mTypeTagMap.at(TypeTag::CLASS_TYPE));
+
+    return true;
+}
+
+bool Type2RepresentationCreator::process(const TOKEN::IntegerConstant *ic)
+{
+    addToken(mTypeTagMap.at(TypeTag::NUMBER));
+
+    return true;
+}
+
+bool Type2RepresentationCreator::process(const TOKEN::FloatingConstant *fc)
+{
+    addToken(mTypeTagMap.at(TypeTag::NUMBER));
+
+    return true;
+}
+
+bool Type2RepresentationCreator::process(const TOKEN::CharacterConstant *c)
+{
+    addToken(mTypeTagMap.at(TypeTag::NUMBER));
+    
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::StorageClassSpecifier *scs)
+{
+    addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::FunctionSpecifier *fs)
+{
+    addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::AlignmentSpecifier *as)
+{
+    using namespace TOKEN;
+    using RC = RepresentationCreator;
+
+    addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+    addToken("(");
+
+    if(std::holds_alternative<TypeName*>(as->var))
+    {
+        if(!RC::process(std::get<TypeName*>(as->var)))
+            return false;
+    }
+    else if(std::holds_alternative<ConstantExpression*>(as->var))
+    {
+        if(!RC::process(std::get<ConstantExpression*>(as->var)))
+            return false;
+    }
+    else
+        variantError("TOKEN::AlignmentSpecifier");
+    
+    addToken(")");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::Pointer *pointer)
+{
+    using namespace TOKEN;
+    using RC = RepresentationCreator;
+
+    addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+
+    if(std::holds_alternative<Pointer::Stql>(pointer->var))
+    {
+        auto &&stql{std::get<Pointer::Stql>(pointer->var)};
+        if(!(stql.tql != nullptr ? RC::process(stql.tql) : true))
+            return false;
+    }
+    else if(std::holds_alternative<Pointer::Stql_p>(pointer->var))
+    {
+        auto &&stp{std::get<Pointer::Stql_p>(pointer->var)};
+        if(!(stp.tql != nullptr ? RC::process(stp.tql) : true)
+            || !RC::process(stp.p))
+            return false;
+    }
+    else
+        return variantError("TOKEN::Pointer");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::DirectDeclarator *dd)
+{
+    using DD = TOKEN::DirectDeclarator;
+    using RC = RepresentationCreator;
+    using T2 = Type2RepresentationCreator;
+
+    for(auto &&var : dd->seq)
+    {
+        if(std::holds_alternative<DD::Si>(var))
+        {
+            auto &&si{std::get<DD::Si>(var)};
+            if(!T2::process(si.i))
+                return false;
+        }
+        else if(std::holds_alternative<DD::Sd>(var))
+        {
+            auto &&sd{std::get<DD::Sd>(var)};
+            addToken("(");
+            if(!RC::process(sd.d))
+                return false;
+            addToken(")");
+        }
+        else if(std::holds_alternative<DD::Stql_ae>(var))
+        {
+            auto &&sta{std::get<DD::Stql_ae>(var)};
+            addToken("[");
+            if(sta.hasStatic)
+                addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+            if(!(sta.tql != nullptr ? RC::process(sta.tql) : true)
+                || !(sta.ae != nullptr ? RC::process(sta.ae) : true))
+                return false;
+            addToken("]");
+        }
+        else if(std::holds_alternative<DD::Stql>(var))
+        {
+            auto &&st{std::get<DD::Stql>(var)};
+            addToken("[");
+            if(!(st.tql != nullptr ? RC::process(st.tql) : true))
+                return false;
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            addToken("]");
+        }
+        else if(std::holds_alternative<DD::Sptl>(var))
+        {
+            auto &&sp{std::get<DD::Sptl>(var)};
+            addToken("(");
+            if(!process(sp.ptl))
+                return false;
+            addToken(")");
+        }
+        else if(std::holds_alternative<DD::Sil>(var))
+        {
+            auto &&si{std::get<DD::Sil>(var)};
+            addToken("(");
+            if(!(si.il != nullptr ? RC::process(si.il) : true))
+                return false;
+            addToken(")");
+        }
+        else
+            return variantError("TOKEN::DirectDeclarator");
+    }
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::ParameterTypeList *ptl)
+{
+    using RC = RepresentationCreator;
+
+    if(!RC::process(ptl->pl))
+        return false;
+
+    if(ptl->isValiable)
+    {
+        addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+        addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+    }
+    
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::StaticAssertDeclaration *sad)
+{
+    using RC = RepresentationCreator;
+    using T2 = Type2RepresentationCreator;
+
+    addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+    addToken("(");
+    if(!RC::process(sad->ce))
+        return false;
+    addToken(",");
+    if(!T2::process(sad->sl))
+        return false;
+    addToken(")");
+    addToken(";");
+    
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::TypeQualifier *tq)
+{
+    addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::ConditionalExpression *ce)
+{
+    using RC = RepresentationCreator;
+    using CE = TOKEN::ConditionalExpression;
+
+    if(std::holds_alternative<CE::Slore>(ce->var))
+    {
+        auto &&sl{std::get<CE::Slore>(ce->var)};
+        if(!process(sl.lore))
+            return false;
+    }
+    else if(std::holds_alternative<CE::Slore_e_ce>(ce->var))
+    {
+        auto &&slec{std::get<CE::Slore_e_ce>(ce->var)};
+        if(!process(slec.lore))
+            return false;
+        addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+        if(!RC::process(slec.e))
+            return false;
+        addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+        if(!process(slec.ce))
+            return false;
+    }
+    else
+        variantError("TOKEN::ConditionalExpression");
+    
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::UnaryExpression *ue)
+{
+    using RC = RepresentationCreator;
+    using UE = TOKEN::UnaryExpression;
+
+    if(std::holds_alternative<UE::Spe>(ue->var))
+    {
+        auto &&sp{std::get<UE::Spe>(ue->var)};
+        if(!process(sp.pe))
+            return false;
+    }
+    else if(std::holds_alternative<UE::Si_ue>(ue->var))
+    {
+        auto &&siu{std::get<UE::Si_ue>(ue->var)};
+        addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+        if(!process(siu.ue))
+            return false;
+    }
+    else if(std::holds_alternative<UE::Sd_ue>(ue->var))
+    {
+        auto &&sdu{std::get<UE::Sd_ue>(ue->var)};
+        addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+        if(!process(sdu.ue))
+            return false;
+    }
+    else if(std::holds_alternative<UE::Suo_ce>(ue->var))
+    {
+        auto &&suc{std::get<UE::Suo_ce>(ue->var)};
+        if(!process(suc.uo)
+            || !RC::process(suc.ce))
+            return false;
+    }
+    else if(std::holds_alternative<UE::Ss_ue>(ue->var))
+    {
+        auto &&ssu{std::get<UE::Ss_ue>(ue->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        if(!process(ssu.ue))
+            return false;
+    }
+    else if(std::holds_alternative<UE::Ss_tn>(ue->var))
+    {
+        auto &&sst{std::get<UE::Ss_tn>(ue->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken("(");
+        if(!RC::process(sst.tn))
+            return false;
+        addToken(")");
+    }
+    else if(std::holds_alternative<UE::Sa_tn>(ue->var))
+    {
+        auto &&sat{std::get<UE::Sa_tn>(ue->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken("(");
+        if(!RC::process(sat.tn))
+            return false;
+        addToken(")");
+    }
+    else
+        return variantError("TOKEN::UnaryExpression");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::AssignmentOperator *ao)
+{
+    addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::InitDeclarator *id)
+{
+    using RC = RepresentationCreator;
+    using ID = TOKEN::InitDeclarator;
+
+    if(std::holds_alternative<ID::Sd>(id->var))
+    {
+        auto &&sd{std::get<ID::Sd>(id->var)};
+        if(!RC::process(sd.d))
+            return false;
+    }
+    else if(std::holds_alternative<ID::Sd_i>(id->var))
+    {
+        auto &&sdi{std::get<ID::Sd_i>(id->var)};
+        if(!RC::process(sdi.d))
+            return false;
+        addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+        if(!RC::process(sdi.i))
+            return false;
+    }
+    else
+        return variantError("TOKEN::InitDeclarator");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::LogicalORExpression *lore)
+{
+    return processAgainstSequence(lore->seq, mTypeTagMap.at(TypeTag::OPERATOR));
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::PostfixExpression *pe)
+{
+    using RC = RepresentationCreator;
+    using T2 = Type2RepresentationCreator;
+    using PE = TOKEN::PostfixExpression;
+
+    for(auto &&var : pe->seq)
+    {
+        if(std::holds_alternative<PE::Spe>(var))
+        {
+            auto &&sp{std::get<PE::Spe>(var)};
+            if(!RC::process(sp.pe))
+                return false;
+        }
+        else if(std::holds_alternative<PE::Se>(var))
+        {
+            auto &&se{std::get<PE::Se>(var)};
+            addToken("[");
+            if(!RC::process(se.e))
+                return false;
+            addToken("]");
+        }
+        else if(std::holds_alternative<PE::Sael>(var))
+        {
+            auto &&sa{std::get<PE::Sael>(var)};
+            addToken("(");
+            if(!(sa.ael != nullptr ? RC::process(sa.ael) : true))
+                return false;
+            addToken(")");
+        }
+        else if(std::holds_alternative<PE::Sp_i>(var))
+        {
+            auto &&si{std::get<PE::Sp_i>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!T2::process(si.i))
+                return false;
+        }
+        else if(std::holds_alternative<PE::Sa_i>(var))
+        {
+            auto &&si{std::get<PE::Sa_i>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!T2::process(si.i))
+                return false;
+        }
+        else if(std::holds_alternative<PE::Si>(var))
+        {
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+        }
+        else if(std::holds_alternative<PE::Sd>(var))
+        {
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+        }
+        else if(std::holds_alternative<PE::Stn_il>(var))
+        {
+            auto &&sti{std::get<PE::Stn_il>(var)};
+            addToken("(");
+            if(!RC::process(sti.tn))
+                return false;
+            addToken(")");
+            addToken("{");
+            if(!RC::process(sti.il))
+                return false;
+            addToken("}");
+        }
+        else
+            return variantError("TOKEN::PostfixExpression");
+    }
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::UnaryOperator *uo)
+{
+    addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::LabeledStatement *ls)
+{
+    using RC = RepresentationCreator;
+    using T2 = Type2RepresentationCreator;
+    using LS = TOKEN::LabeledStatement;
+
+    if(std::holds_alternative<LS::Si_s>(ls->var))
+    {
+        auto &&sis{std::get<LS::Si_s>(ls->var)};
+        if(!T2::process(sis.i))
+            return false;
+        addToken(":");
+        if(!RC::process(sis.s))
+            return false;
+    }
+    else if(std::holds_alternative<LS::Sce_s>(ls->var))
+    {
+        auto &&scs{std::get<LS::Sce_s>(ls->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        if(!RC::process(scs.ce))
+            return false;
+        addToken(":");
+        if(!RC::process(scs.s))
+            return false;
+    }
+    else if(std::holds_alternative<LS::Ss>(ls->var))
+    {
+        auto &&ss{std::get<LS::Ss>(ls->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken(":");
+        if(!RC::process(ss.s))
+            return false;
+    }
+    else
+        return variantError("TOKEN::LabeledStatement");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::SelectionStatement *ss)
+{
+    using RC = RepresentationCreator;
+    using SS = TOKEN::SelectionStatement;
+
+    if(std::holds_alternative<SS::Si_e_s>(ss->var))
+    {
+        auto &&ses{std::get<SS::Si_e_s>(ss->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken("(");
+        if(!RC::process(ses.e))
+            return false;
+        addToken(")");
+        if(!RC::process(ses.s))
+            return false;
+    }
+    else if(std::holds_alternative<SS::Si_e_s_s>(ss->var))
+    {
+        auto &&sess{std::get<SS::Si_e_s_s>(ss->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken("(");
+        if(!RC::process(sess.e))
+            return false;
+        addToken(")");
+        if(!RC::process(sess.s0))
+            return false;
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        if(!RC::process(sess.s1))
+            return false;
+    }
+    else if(std::holds_alternative<SS::Ss_e_s>(ss->var))
+    {
+        auto &&ses{std::get<SS::Ss_e_s>(ss->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken("(");
+        if(!RC::process(ses.e))
+            return false;
+        addToken(")");
+        if(!RC::process(ses.s))
+            return false;
+    }
+    else
+        return variantError("TOKEN::SelectionStatement");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::IterationStatement *is)
+{
+    using RC = RepresentationCreator;
+    using IS = TOKEN::IterationStatement;
+
+    if(std::holds_alternative<IS::Sw_e_s>(is->var))
+    {
+        auto &&ses{std::get<IS::Sw_e_s>(is->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken("(");
+        if(!RC::process(ses.e))
+            return false;
+        addToken(")");
+        if(!RC::process(ses.s))
+            return false;
+    }
+    else if(std::holds_alternative<IS::Sd_s_e>(is->var))
+    {
+        auto &&sse{std::get<IS::Sd_s_e>(is->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        if(!RC::process(sse.s))
+            return false;
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken("(");
+        if(!RC::process(sse.e))
+            return false;
+        addToken(")");
+        addToken(";");
+    }
+    else if(std::holds_alternative<IS::Sf_e_e_e_s>(is->var))
+    {
+        auto &&seees{std::get<IS::Sf_e_e_e_s>(is->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken("(");
+        if(!(seees.e0 != nullptr ? RC::process(seees.e0) : true))
+            return false;
+        addToken(";");
+        if(!(seees.e1 != nullptr ? RC::process(seees.e1) : true))
+            return false;
+        addToken(";");
+        if(!(seees.e2 != nullptr ? RC::process(seees.e2) : true))
+            return false;
+        addToken(")");
+        if(!RC::process(seees.s))
+            return false;
+    }
+    else if(std::holds_alternative<IS::Sf_d_e_e_s>(is->var))
+    {
+        auto &&sdees{std::get<IS::Sf_d_e_e_s>(is->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken("(");
+        if(!RC::process(sdees.d)
+            || !(sdees.e0 != nullptr ? RC::process(sdees.e0) : true))
+            return false;
+        addToken(";");
+        if(!(sdees.e1 != nullptr ? RC::process(sdees.e1) : true))
+            return false;
+        addToken(")");
+        if(!RC::process(sdees.s))
+            return false;
+    }
+    else
+        return variantError("TOKEN::IterationStatement");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::JumpStatement *js)
+{
+    using RC = RepresentationCreator;
+    using T2 = RepresentationCreator;
+    using JS = TOKEN::JumpStatement;
+
+    if(std::holds_alternative<JS::Sg_i>(js->var))
+    {
+        auto &&si{std::get<JS::Sg_i>(js->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        if(!T2::process(si.i))
+            return false;
+        addToken(";");
+    }
+    else if(std::holds_alternative<JS::Sc>(js->var))
+    {
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken(";");
+    }
+    else if(std::holds_alternative<JS::Sb>(js->var))
+    {
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken(";");
+    }
+    else if(std::holds_alternative<JS::Sr_e>(js->var))
+    {
+        auto &&se{std::get<JS::Sr_e>(js->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        if(!(se.e != nullptr ? RC::process(se.e) : true))
+            return false;
+        addToken(";");
+    }
+    else
+        return variantError("TOKEN::JumpStatement");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::LogicalANDExpression *lande)
+{
+    return processAgainstSequence(lande->seq, mTypeTagMap.at(TypeTag::OPERATOR));
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::InclusiveORExpression *iore)
+{
+    return processAgainstSequence(iore->seq, mTypeTagMap.at(TypeTag::OPERATOR));
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::GenericSelection *gs)
+{
+    using RC = RepresentationCreator;
+
+    addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+    addToken("(");
+    if(!RC::process(gs->ae))
+        return false;
+    addToken(",");
+    if(!RC::process(gs->gal))
+        return false;
+    addToken(")");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::Designation *designation)
+{
+    using RC = RepresentationCreator;
+
+    if(!RC::process(designation->dl))
+        return false;
+    
+    addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+    
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::AtomicTypeSpecifier *ats)
+{
+    using RC = RepresentationCreator;
+
+    addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+    addToken("(");
+    if(!RC::process(ats->tn))
+        return false;
+    addToken(")");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::EnumSpecifier *es)
+{
+    using RC = RepresentationCreator;
+    using ES = TOKEN::EnumSpecifier;
+
+    if(std::holds_alternative<ES::Si_el>(es->var))
+    {
+        auto &&sie{std::get<ES::Si_el>(es->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        if(sie.i != nullptr)
+            addToken(mTypeTagMap.at(TypeTag::CLASS_TYPE));
+        addToken("{");
+        if(!RC::process(sie.el))
+            return false;
+        addToken("}");
+    }
+    else if(std::holds_alternative<ES::Si>(es->var))
+    {
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken(mTypeTagMap.at(TypeTag::CLASS_TYPE));
+    }
+    else
+        return variantError("TOKEN::EnumSpecifier");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::DirectAbstractDeclarator *dad)
+{
+    using RC = RepresentationCreator;
+    using DAD = TOKEN::DirectAbstractDeclarator;
+
+    for(auto &&var : dad->seq)
+    {
+        if(std::holds_alternative<DAD::Sad>(var))
+        {
+            auto &&sa{std::get<DAD::Sad>(var)};
+            addToken("(");
+            if(!RC::process(sa.ad))
+                return false;
+            addToken(")");
+        }
+        else if(std::holds_alternative<DAD::Stql_ae>(var))
+        {
+            auto &&sta{std::get<DAD::Stql_ae>(var)};
+            addToken("[");
+            if(sta.hasStatic)
+                addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+            if(!(sta.tql != nullptr ? RC::process(sta.tql) : true)
+                || !(sta.ae != nullptr ? RC::process(sta.ae) : true))
+                return false;
+            addToken("]");
+        }
+        else if(std::holds_alternative<DAD::Sp>(var))
+        {
+            addToken("[");
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            addToken("]");
+        }
+        else if(std::holds_alternative<DAD::Sptl>(var))
+        {
+            auto &&sp{std::get<DAD::Sptl>(var)};
+            addToken("(");
+            if(!(sp.ptl != nullptr ? process(sp.ptl) : true))
+                return false;
+            addToken(")");
+        }
+        else
+            return variantError("TOKEN::DirectAbstractDeclarator");
+    }
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::ExclusiveORExpression *eore)
+{
+    return processAgainstSequence(eore->seq, mTypeTagMap.at(TypeTag::OPERATOR));
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::StructOrUnion *sou)
+{
+    addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+    
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::ANDExpression *ande)
+{
+    return processAgainstSequence(ande->seq, mTypeTagMap.at(TypeTag::OPERATOR));
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::GenericAssociation *ga)
+{
+    using RC = RepresentationCreator;
+    using GA = TOKEN::GenericAssociation;
+
+    if(std::holds_alternative<GA::Stn_ae>(ga->var))
+    {
+        auto &&sta{std::get<GA::Stn_ae>(ga->var)};
+        if(!RC::process(sta.tn))
+            return false;
+        addToken(":");
+        if(!RC::process(sta.ae))
+            return false;
+    }
+    else if(std::holds_alternative<GA::Sae>(ga->var))
+    {
+        auto &&sa{std::get<GA::Sae>(ga->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        addToken(":");
+        if(!RC::process(sa.ae))
+            return false;
+    }
+    else
+        return variantError("TOKEN::GEnericAssociation");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::Enumerator *enumerator)
+{
+    using RC = RepresentationCreator;
+    using E = TOKEN::Enumerator;
+
+    if(std::holds_alternative<E::Sec>(enumerator->var))
+    {
+        auto &&se{std::get<E::Sec>(enumerator->var)};
+        if(!RC::process(se.ec))
+            return false;
+    }
+    else if(std::holds_alternative<E::Sec_ce>(enumerator->var))
+    {
+        auto &&sec{std::get<E::Sec_ce>(enumerator->var)};
+        if(!RC::process(sec.ec))
+            return false;
+        addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+        if(!RC::process(sec.ce))
+            return false;
+    }
+    else
+        return variantError("TOKEN::Enumerator");
+
+    return true;    
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::EqualityExpression *ee)
+{
+    using EE = TOKEN::EqualityExpression;
+
+    for(auto &&var : ee->seq)
+    {
+        if(std::holds_alternative<EE::Sre>(var))
+        {
+            auto &&sr{std::get<EE::Sre>(var)};
+            if(!process(sr.re))
+                return false;
+        }
+        else if(std::holds_alternative<EE::Se_re>(var))
+        {
+            auto &&sr{std::get<EE::Se_re>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!process(sr.re))
+                return false;
+        }
+        else if(std::holds_alternative<EE::Sne_re>(var))
+        {
+            auto &&sr{std::get<EE::Sne_re>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!process(sr.re))
+                return false;
+        }
+        else
+            return variantError("TOKEN::EqualityExpression");
+    }
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::RelationalExpression *re)
+{
+    using RE = TOKEN::RelationalExpression;
+
+    for(auto &&var : re->seq)
+    {
+        if(std::holds_alternative<RE::Sse>(var))
+        {
+            auto &&ss{std::get<RE::Sse>(var)};
+            if(!process(ss.se))
+                return false;
+        }
+        else if(std::holds_alternative<RE::Sl_se>(var))
+        {
+            auto &&ss{std::get<RE::Sl_se>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!process(ss.se))
+                return false;
+        }
+        else if(std::holds_alternative<RE::Sg_se>(var))
+        {
+            auto &&ss{std::get<RE::Sg_se>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!process(ss.se))
+                return false;
+        }
+        else if(std::holds_alternative<RE::Sle_se>(var))
+        {
+            auto &&ss{std::get<RE::Sle_se>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!process(ss.se))
+                return false;
+        }
+        else if(std::holds_alternative<RE::Sge_se>(var))
+        {
+            auto &&ss{std::get<RE::Sge_se>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!process(ss.se))
+                return false;
+        }
+        else
+            return variantError("TOKEN::RelationalExpression");
+    }
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::ShiftExpression *se)
+{
+    using SE = TOKEN::ShiftExpression;
+
+    for(auto &&var : se->seq)
+    {
+        if(std::holds_alternative<SE::Sae>(var))
+        {
+            auto &&sa{std::get<SE::Sae>(var)};
+            if(!process(sa.ae))
+                return false;
+        }
+        else if(std::holds_alternative<SE::Sl_ae>(var))
+        {
+            auto &&sa{std::get<SE::Sl_ae>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!process(sa.ae))
+                return false;
+        }
+        else if(std::holds_alternative<SE::Sr_ae>(var))
+        {
+            auto &&sa{std::get<SE::Sr_ae>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!process(sa.ae))
+                return false;
+        }
+        else
+            return variantError("TOKEN::ShiftExpression");
+    }
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::AdditiveExpression *ae)
+{
+    using AE = TOKEN::AdditiveExpression;
+
+    for(auto &&var : ae->seq)
+    {
+        if(std::holds_alternative<AE::Sme>(var))
+        {
+            auto &&sm{std::get<AE::Sme>(var)};
+            if(!process(sm.me))
+                return false;
+        }
+        else if(std::holds_alternative<AE::Sa_me>(var))
+        {
+            auto &&sm{std::get<AE::Sa_me>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!process(sm.me))
+                return false;
+        }
+        else if(std::holds_alternative<AE::Ss_me>(var))
+        {
+            auto &&sm{std::get<AE::Ss_me>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!process(sm.me))
+                return false;
+        }
+        else
+            return variantError("TOKEN::AdditiveExpression");
+    }
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::MultiplicativeExpression *me)
+{
+    using RC = RepresentationCreator;
+    using ME = TOKEN::MultiplicativeExpression;
+
+    for(auto &&var : me->seq)
+    {
+        if(std::holds_alternative<ME::Sce>(var))
+        {
+            auto &&sc{std::get<ME::Sce>(var)};
+            if(!RC::process(sc.ce))
+                return false;
+        }
+        else if(std::holds_alternative<ME::Sm_ce>(var))
+        {
+            auto &&sc{std::get<ME::Sm_ce>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!RC::process(sc.ce))
+                return false;
+        }
+        else if(std::holds_alternative<ME::Sd_ce>(var))
+        {
+            auto &&sc{std::get<ME::Sd_ce>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!RC::process(sc.ce))
+                return false;
+        }
+        else if(std::holds_alternative<ME::Sr_ce>(var))
+        {
+            auto &&sc{std::get<ME::Sr_ce>(var)};
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            if(!RC::process(sc.ce))
+                return false;
+        }
+        else
+            return variantError("TOKEN::MultiplicativeExpression");
+    }
+
+    return true;
 }
 
 }
