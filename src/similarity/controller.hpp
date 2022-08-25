@@ -19,10 +19,13 @@ public:
     Controller();
     ~Controller();
 
+    Controller(const Controller&) = delete;
+    Controller(Controller&&) = delete;
+
     bool execute(const std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>>&);
 
 private:
-
+    bool createAndRegisterReps(const std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>>&);
 };
 
 }

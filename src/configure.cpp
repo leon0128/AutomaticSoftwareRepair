@@ -36,7 +36,8 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--original", {Tag::SIM_ORIGINAL, true}}
     , {"--type1", {Tag::SIM_TYPE1, true}}
     , {"--type2", {Tag::SIM_TYPE2, true}}
-    , {"--type3", {Tag::SIM_TYPE3, true}}};
+    , {"--type3", {Tag::SIM_TYPE3, true}}
+    , {"--capacity", {Tag::SIM_CAPACITY, true}}};
 
 bool Configure::parseCommandLineArguments(int argc, char **argv)
 {
@@ -224,6 +225,10 @@ bool Configure::readArgument(Tag tag
             if(!assignSizeT(tag, arg, SIM_TYPE3))
                 return false;
             break;
+        case(Tag::SIM_CAPACITY):
+            if(!assignDouble(tag, arg, SIM_CAPACITY))
+                return false;
+            break;
         default:
             return unknownTagError(tag);
     }
@@ -338,7 +343,10 @@ bool Configure::setDefaultValue()
             case(Tag::SIM_TYPE3):
                 SIM_TYPE3 = 4ull;
                 break;
-            
+            case(Tag::SIM_CAPACITY):
+                SIM_CAPACITY = 0.10;
+                break;
+
             default:;
         }
     }

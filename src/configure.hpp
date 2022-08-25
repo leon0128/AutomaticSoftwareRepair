@@ -48,6 +48,7 @@ private:
         , SIM_TYPE1
         , SIM_TYPE2
         , SIM_TYPE3
+        , SIM_CAPACITY
         , NUM_ENUM
     };
 
@@ -96,6 +97,7 @@ public:
     inline static std::size_t SIM_TYPE1;
     inline static std::size_t SIM_TYPE2;
     inline static std::size_t SIM_TYPE3;
+    inline static double SIM_CAPACITY;
 
 private:
     static bool readArgument(Tag
