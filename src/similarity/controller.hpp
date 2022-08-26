@@ -25,7 +25,10 @@ public:
     bool execute(const std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>>&);
 
 private:
-    bool createAndRegisterReps(const std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>>&);
+    bool initialize(const std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>>&);
+    void finalize();
+
+    
 };
 
 }

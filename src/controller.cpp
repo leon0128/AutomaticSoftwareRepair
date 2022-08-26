@@ -6,6 +6,7 @@
 #include "utility/output.hpp"
 #include "utility/system.hpp"
 #include "similarity/controller.hpp"
+#include "similarity/representation.hpp"
 #include "repair/controller.hpp"
 #include "time_measurer.hpp"
 #include "analyzer.hpp"

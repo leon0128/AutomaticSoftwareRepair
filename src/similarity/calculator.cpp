@@ -1,5 +1,7 @@
 #include <cmath>
 #include <limits>
+#include <iostream>
+#include <algorithm>
 
 #include "../configure.hpp"
 #include "calculator.hpp"
@@ -44,6 +46,19 @@ std::deque<double> Calculator::calculateSimilarity(const Representation::Element
     }
 
     return similarity;
+}
+
+bool Calculator::normalize(std::deque<double> &scores)
+{
+    double maxScore{*std::max_element(scores.begin(), scores.end())};
+
+    if(std::fabs(maxScore - 0.0) < std::numeric_limits<double>::epsilon())
+        return normalizationError("max score is 0.");
+
+    for(auto &&score : scores)
+        score = score / maxScore;
+
+    return true;
 }
 
 bool Calculator::calculateAndRegisterInfo()
@@ -312,6 +327,15 @@ void Calculator::deleteInfo()
     
         map.clear();
     }
+}
+
+bool Calculator::normalizationError(const std::string &what)
+{
+    std::cerr << "SIM::Calculator::normalizationError():\n"
+        "    what: " << what
+        << std::endl;
+    
+    return false;
 }
 
 }

@@ -23,6 +23,12 @@ public:
 
     static std::deque<double> calculateSimilarity(const Representation::Element*);
 
+    // normalization
+    // only if pool contains same as query,
+    // it function is effective.
+    // if not, this function should not be used.
+    static bool normalize(std::deque<double> &scores);
+
 private:
     // this class is used as map::element
     class Element;
@@ -70,6 +76,10 @@ private:
     // delete mInfo
     static void deleteInfo();
 
+    // output error
+    static bool normalizationError(const std::string &what);
+    
+    // static member variables
     inline static std::array<std::unordered_map<std::string, Element*>, Representation::castTag(Representation::Tag::SIZE_OF_TAG)> mInfo{};
 };
 
