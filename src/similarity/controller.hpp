@@ -27,8 +27,6 @@ public:
 private:
     bool initialize(const std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>>&);
     void finalize();
-
-    
 };
 
 }

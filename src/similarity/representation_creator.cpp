@@ -133,6 +133,7 @@ bool RepresentationCreator::process(const TOKEN::DeclarationSpecifiers *ds)
     using TQ = TypeQualifier;
     using FS = FunctionSpecifier;
     using AS = AlignmentSpecifier;
+    using ASL = AttributeSpecifierList;
 
     for(auto &&var : ds->seq)
     {
@@ -141,6 +142,7 @@ bool RepresentationCreator::process(const TOKEN::DeclarationSpecifiers *ds)
         else IF_HOLDS_IF_PROCESS_RETURN_FALSE(TQ*, var)
         else IF_HOLDS_IF_PROCESS_RETURN_FALSE(FS*, var)
         else IF_HOLDS_IF_PROCESS_RETURN_FALSE(AS*, var)
+        else IF_HOLDS_IF_PROCESS_RETURN_FALSE(ASL*, var)
         else
             return variantError("TOKEN::DeclarationSpecifiers");
     }
@@ -543,16 +545,30 @@ bool RepresentationCreator::process(const TOKEN::InitDeclarator *id)
     if(std::holds_alternative<ID::Sd>(id->var))
     {
         auto &&sd{std::get<ID::Sd>(id->var)};
-        if(!process(sd.d))
+        if(!(sd.asl0 != nullptr ? process(sd.asl0) : true)
+            || !process(sd.d)
+            || !(sd.asl1 != nullptr ? process(sd.asl1) : true))
             return false;
     }
     else if(std::holds_alternative<ID::Sd_i>(id->var))
     {
         auto &&sdi{std::get<ID::Sd_i>(id->var)};
-        if(!process(sdi.d))
+        if(!(sdi.asl0 != nullptr ? process(sdi.asl0) : true)
+            || !process(sdi.d)
+            || !(sdi.asl1 != nullptr ? process(sdi.asl1) : true))
             return false;
         addToken("=");
         if(!process(sdi.i))
+            return false;
+    }
+    else if(std::holds_alternative<ID::Sd_ba>(id->var))
+    {
+        auto &&sdb{std::get<ID::Sd_ba>(id->var)};
+        if(!(sdb.asl0 != nullptr ? process(sdb.asl0) : true)
+            || !process(sdb.d)
+            || !(sdb.asl1 != nullptr ? process(sdb.asl1) : true)
+            || !process(sdb.ba)
+            || !(sdb.asl2 != nullptr ? process(sdb.asl2) : true))
             return false;
     }
     else
@@ -591,6 +607,8 @@ bool RepresentationCreator::process(const TOKEN::Statement *statement)
     else IF_HOLDS_IF_PROCESS_RETURN_FALSE(SelectionStatement*, statement->var)
     else IF_HOLDS_IF_PROCESS_RETURN_FALSE(IterationStatement*, statement->var)
     else IF_HOLDS_IF_PROCESS_RETURN_FALSE(JumpStatement*, statement->var)
+    else IF_HOLDS_IF_PROCESS_RETURN_FALSE(AttributeStatement*, statement->var)
+    else IF_HOLDS_IF_PROCESS_RETURN_FALSE(AsmStatement*, statement->var)
     else
         return variantError("TOKEN::Statement");
     
@@ -778,7 +796,8 @@ bool RepresentationCreator::process(const TOKEN::LabeledStatement *ls)
     if(std::holds_alternative<LS::Si_s>(ls->var))
     {
         auto &&sis{std::get<LS::Si_s>(ls->var)};
-        if(!process(sis.i))
+        if(!process(sis.i)
+            || !(sis.asl != nullptr ? process(sis.asl) : true))
             return false;
         addToken(":");
         if(!process(sis.s))
@@ -1027,6 +1046,7 @@ bool RepresentationCreator::process(const TOKEN::SpecifierQualifierList *sql)
     {
         IF_HOLDS_IF_PROCESS_RETURN_FALSE(TypeSpecifier*, var)
         else IF_HOLDS_IF_PROCESS_RETURN_FALSE(TypeQualifier*, var)
+        else IF_HOLDS_IF_PROCESS_RETURN_FALSE(AttributeSpecifierList*, var)
         else
             return variantError("TOKEN::SpecifierQualifierList");
     }
@@ -1119,6 +1139,7 @@ bool RepresentationCreator::process(const TOKEN::StructOrUnionSpecifier *sous)
     {
         auto &&ssis{std::get<SOUS::Ssou_i_sdl>(sous->var)};
         if(!process(ssis.sou)
+            || !(ssis.asl != nullptr ? process(ssis.asl) : true)
             || !(ssis.i != nullptr ? process(ssis.i) : true))
             return false;
         addToken("{");
@@ -1130,6 +1151,7 @@ bool RepresentationCreator::process(const TOKEN::StructOrUnionSpecifier *sous)
     {
         auto &&ssi{std::get<SOUS::Ssou_i>(sous->var)};
         if(!process(ssi.sou)
+            || !(ssi.asl != nullptr ? process(ssi.asl) : true)
             || !process(ssi.i))
             return false;
     }
@@ -1147,7 +1169,8 @@ bool RepresentationCreator::process(const TOKEN::EnumSpecifier *es)
     {
         auto &&sie{std::get<ES::Si_el>(es->var)};
         addToken("enum");
-        if(!(sie.i != nullptr ? process(sie.i) : true))
+        if(!(sie.asl != nullptr ? process(sie.asl) : true)
+            || !(sie.i != nullptr ? process(sie.i) : true))
             return false;
         addToken("{");
         if(!process(sie.el))
@@ -1158,7 +1181,8 @@ bool RepresentationCreator::process(const TOKEN::EnumSpecifier *es)
     {
         auto &&si{std::get<ES::Si>(es->var)};
         addToken("enum");
-        if(!process(si.i))
+        if(!(si.asl != nullptr ? process(si.asl) : true)
+            || !process(si.i))
             return false;
     }
     else
@@ -1368,13 +1392,15 @@ bool RepresentationCreator::process(const TOKEN::Enumerator *enumerator)
     if(std::holds_alternative<E::Sec>(enumerator->var))
     {
         auto &&se{std::get<E::Sec>(enumerator->var)};
-        if(!process(se.ec))
+        if(!process(se.ec)
+            || !(se.asl != nullptr ? process(se.asl) : true))
             return false;
     }
     else if(std::holds_alternative<E::Sec_ce>(enumerator->var))
     {
         auto &&sec{std::get<E::Sec_ce>(enumerator->var)};
-        if(!process(sec.ec))
+        if(!process(sec.ec)
+            || !(sec.asl != nullptr ? process(sec.asl) : true))
             return false;
         addToken("=");
         if(!process(sec.ce))
@@ -1602,6 +1628,195 @@ bool RepresentationCreator::process(const TOKEN::MultiplicativeExpression *me)
     return true;
 }
 
+bool RepresentationCreator::process(const TOKEN::Token *token)
+{
+    using namespace TOKEN;
+
+    if(std::holds_alternative<Keyword*>(token->var))
+        return process(std::get<Keyword*>(token->var));
+    else if(std::holds_alternative<Identifier*>(token->var))
+        return process(std::get<Identifier*>(token->var));
+    else if(std::holds_alternative<Constant*>(token->var))
+        return process(std::get<Constant*>(token->var));
+    else if(std::holds_alternative<StringLiteral*>(token->var))
+        return process(std::get<StringLiteral*>(token->var));
+    else if(std::holds_alternative<Punctuator*>(token->var))
+        return process(std::get<Punctuator*>(token->var));
+    else
+        return variantError("TOKEN::Token");
+
+    return true;
+}
+
+bool RepresentationCreator::process(const TOKEN::Keyword *keyword)
+{
+    addToken(TOKEN::str(keyword));
+
+    return true;
+}
+
+bool RepresentationCreator::process(const TOKEN::Punctuator *punctuator)
+{
+    addToken(TOKEN::str(punctuator));
+    
+    return true;
+}
+
+bool RepresentationCreator::process(const TOKEN::AttributeSpecifier *as)
+{
+    addToken("__attribute__");
+    addToken("(");
+    addToken("(");
+
+    for(auto &&t : as->seq)
+    {
+        if(!process(t))
+            return false;
+    }
+
+    addToken(")");
+    addToken(")");
+
+    return true;
+}
+
+bool RepresentationCreator::process(const TOKEN::AttributeSpecifierList *asl)
+{
+    for(auto &&as : asl->seq)
+    {
+        if(!process(as))
+            return false;
+    }
+
+    return true;
+}
+
+bool RepresentationCreator::process(const TOKEN::AttributeStatement *as)
+{
+    if(!process(as->asl))
+        return false;
+    
+    addToken(";");
+
+    return true;
+}
+
+bool RepresentationCreator::process(const TOKEN::BasicAsm *ba)
+{
+    addToken("__asm__");
+    
+    if(ba->aq != nullptr
+        && !process(ba->aq))
+        return false;
+    
+    addToken("(");
+    if(!process(ba->sl))
+        return false;
+    addToken(")");
+
+    return true;
+}
+
+bool RepresentationCreator::process(const TOKEN::ExtendedAsm *ea)
+{
+    addToken("__asm__");
+
+    if(ea->aq != nullptr
+        && !process(ea->aq))
+        return false;
+    
+    addToken("(");
+    
+    if(!process(ea->sl))
+        return false;
+    
+    addToken(":");
+    for(auto &&t : ea->oo)
+    {
+        if(!process(t))
+            return false;
+    }
+
+    if(!ea->io.empty() || !ea->gl.empty())
+    {
+        addToken(":");
+        for(auto &&t : ea->io)
+        {
+            if(!process(t))
+                return false;
+        }
+    }
+
+    if(!ea->clobbers.empty() || !ea->clobbers.empty())
+    {
+        addToken(":");
+        for(auto &&t : ea->clobbers)
+        {
+            if(!process(t))
+                return false;
+        }
+    }
+
+    if(!ea->gl.empty())
+    {
+        addToken(":");
+        for(auto &&t : ea->gl)
+        {
+            if(!process(t))
+                return false;
+        }
+    }
+
+    return true;
+}
+
+bool RepresentationCreator::process(const TOKEN::AsmQualifiers *aq)
+{
+    using AQ = TOKEN::AsmQualifiers;
+
+    for(auto &&tag : aq->seq)
+    {
+        switch(tag)
+        {
+            case(AQ::Tag::VOLATILE):
+                addToken("volatile");
+                break;
+            case(AQ::Tag::INLINE):
+                addToken("inline");
+                break;
+            case(AQ::Tag::GOTO):
+                addToken("goto");
+                break;
+            
+            default:;
+        }
+    }
+
+    return true;
+}
+
+bool RepresentationCreator::process(const TOKEN::AsmStatement *as)
+{
+    using namespace TOKEN;
+
+    if(std::holds_alternative<BasicAsm*>(as->var))
+    {
+        if(!process(std::get<BasicAsm*>(as->var)))
+            return false;
+    }
+    else if(std::holds_alternative<ExtendedAsm*>(as->var))
+    {
+        if(!process(std::get<ExtendedAsm*>(as->var)))
+            return false;
+    }
+    else
+        return variantError("TOKEN::AsmStatement");
+
+    addToken(";");
+
+    return true;
+}
+
 bool RepresentationCreator::setFunctionName(const TOKEN::Declarator *declarator)
 {
     using DD = TOKEN::DirectDeclarator;
@@ -1689,7 +1904,8 @@ bool Type2RepresentationCreator::process(const TOKEN::StructOrUnionSpecifier *so
     if(std::holds_alternative<SOUS::Ssou_i_sdl>(sous->var))
     {
         auto &&ssis{std::get<SOUS::Ssou_i_sdl>(sous->var)};
-        if(!RC::process(ssis.sou))
+        if(!RC::process(ssis.sou)
+            || !(ssis.asl != nullptr ? RC::process(ssis.asl) : true))
             return false;
         if(ssis.i != nullptr)
             addToken(mTypeTagMap.at(TypeTag::CLASS_TYPE));
@@ -1702,7 +1918,8 @@ bool Type2RepresentationCreator::process(const TOKEN::StructOrUnionSpecifier *so
     else if(std::holds_alternative<SOUS::Ssou_i>(sous->var))
     {
         auto &&ssi{std::get<SOUS::Ssou_i>(sous->var)};
-        if(!RC::process(ssi.sou))
+        if(!RC::process(ssi.sou)
+            || !(ssi.asl != nullptr ? RC::process(ssi.asl) : true))
             return false;
         addToken(mTypeTagMap.at(TypeTag::CLASS_TYPE));
     }
@@ -1721,6 +1938,8 @@ bool Type2RepresentationCreator::process(const TOKEN::EnumSpecifier *es)
     {
         auto &&sie{std::get<ES::Si_el>(es->var)};
         addToken("enum");
+        if(!(sie.asl != nullptr ? RC::process(sie.asl) : true))
+            return false;
         if(sie.i != nullptr)
             addToken(mTypeTagMap.at(TypeTag::CLASS_TYPE));
         addToken("{");
@@ -1730,7 +1949,10 @@ bool Type2RepresentationCreator::process(const TOKEN::EnumSpecifier *es)
     }
     else if(std::holds_alternative<ES::Si>(es->var))
     {
+        auto &&si{std::get<ES::Si>(es->var)};
         addToken("enum");
+        if(!(si.asl != nullptr ? RC::process(si.asl) : true))
+            return false;
         addToken(mTypeTagMap.at(TypeTag::CLASS_TYPE));
     }
     else
@@ -2718,6 +2940,142 @@ bool Type3RepresentationCreator::process(const TOKEN::MultiplicativeExpression *
             return variantError("TOKEN::MultiplicativeExpression");
     }
 
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::Keyword *keyword)
+{
+    addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::Punctuator *punctuator)
+{
+    using namespace TOKEN;
+
+    switch(punctuator->tag)
+    {
+        case(Punctuator::Tag::L_SQUARE_BRACKET):
+        case(Punctuator::Tag::R_SQUARE_BRACKET):
+        case(Punctuator::Tag::L_PARENTHESIS):
+        case(Punctuator::Tag::R_PARENTHESIS):
+        case(Punctuator::Tag::L_CURLY_BRACKET):
+        case(Punctuator::Tag::R_CURLY_BRACKET):
+        case(Punctuator::Tag::COLON):
+        case(Punctuator::Tag::SEMICOLON):
+        case(Punctuator::Tag::COMMA):
+        case(Punctuator::Tag::TRIPLE_PERIOD):
+            addToken(str(punctuator));
+            break;
+        
+        default:
+            addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+            break;
+    }
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::AttributeSpecifier *as)
+{
+    using RC = RepresentationCreator;
+
+    addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+    addToken("(");
+    addToken("(");
+    
+    for(auto &&t : as->seq)
+    {
+        if(!RC::process(t))
+            return false;
+    }
+
+    addToken(")");
+    addToken(")");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::BasicAsm *ba)
+{
+    using T2 = Type2RepresentationCreator;
+
+    addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+
+    if(ba->aq != nullptr
+        && !process(ba->aq))
+        return false;
+    
+    addToken("(");
+    if(!T2::process(ba->sl))
+        return false;
+    addToken(")");
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::ExtendedAsm *ea)
+{
+    using RC = RepresentationCreator;
+    using T2 = Type2RepresentationCreator;
+
+    addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+
+    if(ea->aq != nullptr
+        && !process(ea->aq))
+        return false;
+    
+    addToken("(");
+    
+    if(!T2::process(ea->sl))
+        return false;
+    
+    addToken(":");
+    for(auto &&t : ea->oo)
+    {
+        if(!RC::process(t))
+            return false;
+    }
+
+    if(!ea->io.empty() || !ea->gl.empty())
+    {
+        addToken(":");
+        for(auto &&t : ea->io)
+        {
+            if(!RC::process(t))
+                return false;
+        }
+    }
+
+    if(!ea->clobbers.empty() || !ea->clobbers.empty())
+    {
+        addToken(":");
+        for(auto &&t : ea->clobbers)
+        {
+            if(!RC::process(t))
+                return false;
+        }
+    }
+
+    if(!ea->gl.empty())
+    {
+        addToken(":");
+        for(auto &&t : ea->gl)
+        {
+            if(!RC::process(t))
+                return false;
+        }
+    }
+
+    return true;
+}
+
+bool Type3RepresentationCreator::process(const TOKEN::AsmQualifiers *aq)
+{
+    for(std::size_t i{0ull}; i < aq->seq.size(); i++)
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+    
     return true;
 }
 

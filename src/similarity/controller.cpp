@@ -18,7 +18,7 @@ Controller::~Controller()
 bool Controller::execute(const std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>> &tus)
 {
     // initialize and 
-    bool isSucceessfull{initialize()};
+    bool isSucceessfull{initialize(tus)};
 
 
 

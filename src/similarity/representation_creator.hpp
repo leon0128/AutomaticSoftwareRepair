@@ -141,6 +141,19 @@ protected:
     virtual bool process(const TOKEN::AdditiveExpression*);
     virtual bool process(const TOKEN::MultiplicativeExpression*);
 
+    virtual bool process(const TOKEN::Token*);
+    virtual bool process(const TOKEN::Keyword*);
+    virtual bool process(const TOKEN::Punctuator*);
+
+    virtual bool process(const TOKEN::AttributeSpecifier*);
+    virtual bool process(const TOKEN::AttributeSpecifierList*);
+    virtual bool process(const TOKEN::AttributeStatement*);
+
+    virtual bool process(const TOKEN::BasicAsm*);
+    virtual bool process(const TOKEN::ExtendedAsm*);
+    virtual bool process(const TOKEN::AsmQualifiers*);
+    virtual bool process(const TOKEN::AsmStatement*);
+
     // effects:
     //  mFunctionTokens.push_back();
     //  mFunctionTokens.back().first = [function-name];
@@ -243,6 +256,7 @@ protected:
     virtual bool process(const TOKEN::IntegerConstant*) override;
     virtual bool process(const TOKEN::FloatingConstant*) override;
     virtual bool process(const TOKEN::CharacterConstant*) override;
+    
 };
 
 class Type3RepresentationCreator : public Type2RepresentationCreator
@@ -289,6 +303,15 @@ protected:
     virtual bool process(const TOKEN::ShiftExpression*) override;
     virtual bool process(const TOKEN::AdditiveExpression*) override;
     virtual bool process(const TOKEN::MultiplicativeExpression*) override;
+
+    virtual bool process(const TOKEN::Keyword*) override;
+    virtual bool process(const TOKEN::Punctuator*) override;
+
+    virtual bool process(const TOKEN::AttributeSpecifier*) override;
+
+    virtual bool process(const TOKEN::BasicAsm*) override;
+    virtual bool process(const TOKEN::ExtendedAsm*) override;
+    virtual bool process(const TOKEN::AsmQualifiers*) override;
 };
 
 }
