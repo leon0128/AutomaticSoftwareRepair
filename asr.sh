@@ -58,6 +58,7 @@ $EXECUTION_NAME \
     $POOL \
     --result "$RESULT_FILENAME" \
     --command-log \
+    --time-log \
     --preprocessor "$PREPROCESSOR" \
     --compiler "$COMPILER" \
     --test-script "$TEST_SCRIPT_FILENAME" \
