@@ -185,6 +185,9 @@ std::deque<std::size_t> Calculator::calculateIndicesToUse(Representation::Tag ty
             idxToUse.push_back(idx);
     }
 
+    if(idxToUse.empty())
+        reductionWarning();
+
     return idxToUse;
 }
 
@@ -327,6 +330,16 @@ void Calculator::deleteInfo()
     
         map.clear();
     }
+}
+
+bool Calculator::reductionWarning()
+{
+    std::cerr << "SIM::Calculator::reductionWarning():\n"
+        "    what: indices to use is empty.\n"
+        "          reduction threshold should be changed.\n"
+        << std::flush;
+    
+    return false;
 }
 
 bool Calculator::normalizationError(const std::string &what)

@@ -42,6 +42,7 @@ const std::unordered_map<std::string, TOKEN::Keyword::Tag> TreeGenerator::KEYWOR
         , {"unsigned", TOKEN::Keyword::Tag::UNSIGNED}
         , {"void", TOKEN::Keyword::Tag::VOID}
         , {"volatile", TOKEN::Keyword::Tag::VOLATILE}
+        , {"__volatile__", TOKEN::Keyword::Tag::VOLATILE}
         , {"while", TOKEN::Keyword::Tag::WHILE}
         , {"_Alignas", TOKEN::Keyword::Tag::ALIGNAS}
         , {"_Alignof", TOKEN::Keyword::Tag::ALIGNOF}
@@ -2040,7 +2041,7 @@ TOKEN::ExclusiveORExpression *TreeGenerator::tokExclusiveORExpression()
 TOKEN::PrimaryExpression *TreeGenerator::tokPrimaryExpression()
 {
     std::size_t pre = mIdx;
-    
+
     if(TOKEN::Identifier *i = tokIdentifier();
         i != nullptr)
         return new TOKEN::PrimaryExpression(i);
@@ -2861,7 +2862,7 @@ bool TreeGenerator::isMatch(TOKEN::Punctuator::Tag tag)
 
 bool TreeGenerator::noEvaluatedError() const
 {
-    static const constexpr std::size_t numMaxOutputTokens{15ull};
+    static const constexpr std::size_t numMaxOutputTokens{60ull};
 
     std::cerr << "TreeGenerator error:\n"
         "    what: token-sequence has not been evaluated to the end.\n"

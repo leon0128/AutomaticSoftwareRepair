@@ -24,6 +24,39 @@ const std::unordered_map<RepresentationCreator::TypeTag, std::string> Representa
         , {TypeTag::NUMBER, "N"}
         , {TypeTag::IDENTIFIER, "I"}};
 
+std::deque<Representation::Element*> RepresentationCreator::create(const std::string &filename
+    , const TOKEN::TranslationUnit *tu)
+{
+    using Rep = Representation;
+    using RC = RepresentationCreator;
+
+    std::array<RC*, Rep::castTag(Rep::Tag::SIZE_OF_TAG)> rcarr{new OriginalRepresentationCreator{Configure::SIM_ORIGINAL}
+        , new Type1RepresentationCreator{Configure::SIM_TYPE1}
+        , new Type2RepresentationCreator{Configure::SIM_TYPE2}
+        , new Type3RepresentationCreator{Configure::SIM_TYPE3}};
+
+    for(auto &&rc : rcarr)
+    {
+        if(!rc->execute(tu))
+            return {};
+    }
+
+    // move tokens from RC to Rep
+    std::deque<Rep::Element*> reps;
+    for(std::size_t i{0ull}; i < rcarr.front()->functionTokens().size(); i++)
+    {
+        Rep::Element *element{new Rep::Element{filename, rcarr.front()->functionTokens()[i].first}};
+        for(std::size_t j{0ull}; j < rcarr.size(); j++)
+        {
+            element->mReps[j].gramSize() = rcarr[j]->gramSize();
+            element->mReps[j].tokens() = std::move(rcarr[j]->functionTokens()[i].second);
+        }
+        reps.push_back(element);
+    }
+
+    return reps;
+}
+
 bool RepresentationCreator::createAndRegister(const std::string &filename
     , const TOKEN::TranslationUnit *tu)
 {
@@ -46,7 +79,10 @@ bool RepresentationCreator::createAndRegister(const std::string &filename
     {
         Rep::Element *element{new Rep::Element{filename, rcarr.front()->functionTokens()[i].first}};
         for(std::size_t j{0ull}; j < rcarr.size(); j++)
+        {
+            element->mReps[j].gramSize() = rcarr[j]->gramSize();
             element->mReps[j].tokens() = std::move(rcarr[j]->functionTokens()[i].second);
+        }
         Rep::reps().push_back(element);
     }
 

@@ -5,7 +5,7 @@
 EXECUTION_NAME="./asr"
 TARGET_FILENAME="test/test.c"
 TARGET_FUNCTIONS=()
-EXTERNAL_PATHS=()
+EXTERNAL_PATHS=("../linux/")
 RESULT_FILENAME="test/result.c"
 TEMPORARY_FILENAME="test/__test.c"
 TEMPORARY_EXECUTION_NAME="test/__test"
@@ -35,6 +35,13 @@ POPULATION=100
 GENERATION=10
 NUMBER_OF_ELITE=2
 TOURNAMENT_SIZE=3
+
+## similarity
+ORIGINAL_GRAM_SIZE=1
+TYPE1_GRAM_SIZE=4
+TYPE2_GRAM_SIZE=4
+TYPE3_GRAM_SIZE=4
+REDUCTION_THRESHOLD=1.0
 
 ## others
 MAX_RECURSION=16
@@ -79,4 +86,9 @@ $EXECUTION_NAME \
     --add-prob "$ADD_PROBABILITY" \
     --sub-prob "$SUB_PROBABILITY" \
     --swap-prob "$SWAP_PROBABILITY" \
-    --max-recursion "$MAX_RECURSION"
+    --max-recursion "$MAX_RECURSION" \
+    --original "$ORIGINAL_GRAM_SIZE" \
+    --type1 "$TYPE1_GRAM_SIZE" \
+    --type2 "$TYPE2_GRAM_SIZE" \
+    --type3 "$TYPE3_GRAM_SIZE" \
+    --capacity "$REDUCTION_THRESHOLD"

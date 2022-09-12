@@ -71,6 +71,9 @@ bool Sequencer::preprocess()
     std::string command{SYSTEM::command(Configure::PREPROCESSOR
         , "-P"
         , mFile
+        , "-D__extension__="
+        , "-D__builtin_expect\\(exp,c\\)=\\(exp\\)"
+        , "-D__builtin_offsetof\\(TYPE,MEMBER\\)=\\(\\(size_t\\)\\&\\(\\(TYPE*\\)0\\)-\\>MEMBER\\)"
         , "-o"
         , Configure::TEST_FILENAME
         , ">"

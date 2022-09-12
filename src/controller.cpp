@@ -22,7 +22,6 @@ Controller::Controller()
 
 bool Controller::execute(int argc, char **argv)
 {
-    
     // initialize
     if(!initialize(argc, argv))
         return false;
@@ -40,16 +39,16 @@ bool Controller::execute(int argc, char **argv)
         return emptyPoolError();
 
     // calculate similarity
-    // std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>> tus;
-    // for(const auto &analyzer : pool)
-    //     tus.emplace_back(analyzer->filename(), analyzer->translationUnit());
+    std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>> tus;
+    for(const auto &analyzer : pool)
+        tus.emplace_back(analyzer->filename(), analyzer->translationUnit());
 
-    // {
-    //     TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::SIMILARITY};
-    //     SIM::Controller simController;
-    //     if(!simController.execute(tus))
-    //         return false;
-    // }
+    {
+        TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::SIMILARITY};
+        SIM::Controller simController;
+        if(!simController.execute(tus))
+            return false;
+    }
 
     // execute repair
     {

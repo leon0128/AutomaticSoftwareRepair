@@ -23,6 +23,11 @@ class RepresentationCreator
 {
 public:
     // public static member functions
+    // create representataion
+    // empty if error has occured.
+    static std::deque<Representation::Element*> create(const std::string &filename
+        , const TOKEN::TranslationUnit*);
+    
     // create representations and register it at Representation::reps
     static bool createAndRegister(const std::string &filename
         , const TOKEN::TranslationUnit*);

@@ -76,6 +76,8 @@ private:
     // delete mInfo
     static void deleteInfo();
 
+    // output warning
+    static bool reductionWarning();
     // output error
     static bool normalizationError(const std::string &what);
     
