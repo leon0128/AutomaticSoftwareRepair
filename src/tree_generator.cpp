@@ -65,12 +65,19 @@ TreeGenerator::TreeGenerator(const std::string &file
     , mSeq(seq)
     , mIdx(0)
     , mTranslationUnit(nullptr)
+    , mCacheMap{}
 {
 }
 
 TreeGenerator::~TreeGenerator()
 {
     delete mTranslationUnit;
+    for(auto &&[pos, element] : mCacheMap)
+    {
+        std::visit([](auto &&token){delete token;}
+            , element->mToken);
+        delete element;
+    }
 }
 
 bool TreeGenerator::execute()

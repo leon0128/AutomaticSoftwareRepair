@@ -143,7 +143,7 @@ private:
     const Sequence &mSeq;
     std::size_t mIdx;
     TOKEN::TranslationUnit *mTranslationUnit;
-    std::unordered_multimap<std::size_t, MapElement*>;
+    std::unordered_multimap<std::size_t, MapElement*> mCacheMap;
 };
 
 // this class has token's beginning position, end position and Token itself.
@@ -151,8 +151,7 @@ class TreeGenerator::MapElement
 {
 public:
     // this variant class is able to contain any tokens.
-    using Var = std::variant<std::monostate
-        , TOKEN::Token*
+    using Var = std::variant<TOKEN::Token*
         , TOKEN::Keyword*
         , TOKEN::Identifier*
         , TOKEN::Constant*
@@ -280,10 +279,11 @@ public:
         , TOKEN::BasicAsm*
         , TOKEN::ExtendedAsm*
         , TOKEN::AsmQualifiers*
-        , TOKEN::AsmStatement*>
+        , TOKEN::AsmStatement*>;
 
-    std::size_t mBegin;
-    std::size_t mEnd;
+    std::size_t mBegin{0ull};
+    std::size_t mEnd{0ull};
+    Var mToken = TOKEN::Token{nullptr};
 };
 
 #endif
