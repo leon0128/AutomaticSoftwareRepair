@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <variant>
+#include <utility>
 
 #include "token.hpp"
 
@@ -283,7 +284,7 @@ public:
 
     std::size_t mBegin{0ull};
     std::size_t mEnd{0ull};
-    Var mToken = TOKEN::Token{nullptr};
+    Var mToken{std::in_place_type<TOKEN::Token*>, nullptr};
 };
 
 #endif
