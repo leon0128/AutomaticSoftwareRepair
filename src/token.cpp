@@ -152,7 +152,7 @@ std::string &Token::str(std::string &res, std::size_t &indent) const
     else if(std::holds_alternative<Constant*>(var))
         std::get<Constant*>(var)->str(res, indent);
     else if(std::holds_alternative<StringLiteral*>(var))
-        std::get<Punctuator*>(var)->str(res, indent);
+        std::get<StringLiteral*>(var)->str(res, indent);
     else if(std::holds_alternative<Punctuator*>(var))
         std::get<Punctuator*>(var)->str(res, indent);
     

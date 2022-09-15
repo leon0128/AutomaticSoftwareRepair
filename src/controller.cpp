@@ -6,6 +6,7 @@
 #include "utility/output.hpp"
 #include "utility/system.hpp"
 #include "similarity/controller.hpp"
+#include "similarity/representation.hpp"
 #include "repair/controller.hpp"
 #include "time_measurer.hpp"
 #include "analyzer.hpp"
@@ -21,7 +22,6 @@ Controller::Controller()
 
 bool Controller::execute(int argc, char **argv)
 {
-    
     // initialize
     if(!initialize(argc, argv))
         return false;

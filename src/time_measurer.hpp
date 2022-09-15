@@ -98,7 +98,6 @@ public:
         {mTimer.stop();}
 
 private:
-
     Timer &mTimer;
 };
 
