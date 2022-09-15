@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <variant>
 
 #include "token.hpp"
 
@@ -31,11 +32,10 @@ public:
         {mTranslationUnit = tu;}
 
 private:
-    std::string mFile;
-    const Sequence &mSeq;
-    std::size_t mIdx;
-    TOKEN::TranslationUnit *mTranslationUnit;
+    // this class is used to mCacheMap's value_type.
+    class MapElement;
 
+    // member functions
     TOKEN::TranslationUnit *tokTranslationUnit();
     TOKEN::ExternalDeclaration *tokExternalDeclaration();
     TOKEN::FunctionDefinition *tokFunctionDefinition();
@@ -137,6 +137,153 @@ private:
 
     // error
     bool noEvaluatedError() const;
+
+    // member variables
+    std::string mFile;
+    const Sequence &mSeq;
+    std::size_t mIdx;
+    TOKEN::TranslationUnit *mTranslationUnit;
+    std::unordered_multimap<std::size_t, MapElement*>;
+};
+
+// this class has token's beginning position, end position and Token itself.
+class TreeGenerator::MapElement
+{
+public:
+    // this variant class is able to contain any tokens.
+    using Var = std::variant<std::monostate
+        , TOKEN::Token*
+        , TOKEN::Keyword*
+        , TOKEN::Identifier*
+        , TOKEN::Constant*
+        , TOKEN::StringLiteral*
+        , TOKEN::Punctuator*
+        , TOKEN::IdentifierNondigit*
+        , TOKEN::Digit*
+        , TOKEN::IntegerConstant*
+        , TOKEN::FloatingConstant*
+        , TOKEN::EnumerationConstant*
+        , TOKEN::CharacterConstant*
+        , TOKEN::EncodingPrefix*
+        , TOKEN::SCharSequence*
+        , TOKEN::Nondigit*
+        , TOKEN::UniversalCharacterName*
+        , TOKEN::DecimalConstant*
+        , TOKEN::IntegerSuffix*
+        , TOKEN::OctalConstant*
+        , TOKEN::HexadecimalConstant*
+        , TOKEN::DecimalFloatingConstant*
+        , TOKEN::HexadecimalFloatingConstant*
+        , TOKEN::CCharSequence*
+        , TOKEN::SChar*
+        , TOKEN::HexQuad*
+        , TOKEN::NonzeroDigit*
+        , TOKEN::OctalDigit*
+        , TOKEN::HexadecimalPrefix*
+        , TOKEN::HexadecimalDigit*
+        , TOKEN::FractionalConstant*
+        , TOKEN::ExponentPart*
+        , TOKEN::FloatingSuffix*
+        , TOKEN::DigitSequence*
+        , TOKEN::HexadecimalFractionalConstant*
+        , TOKEN::BinaryExponentPart*
+        , TOKEN::HexadecimalDigitSequence*
+        , TOKEN::Sign*
+        , TOKEN::CChar*
+        , TOKEN::EscapeSequence*
+        , TOKEN::SimpleEscapeSequence*
+        , TOKEN::OctalEscapeSequence*
+        , TOKEN::HexadecimalEscapeSequence*
+        , TOKEN::PreprocessingToken*
+        , TOKEN::PPNumber*
+        , TOKEN::UnsignedSuffix*
+        , TOKEN::LongSuffix*
+        , TOKEN::LongLongSuffix*
+        , TOKEN::TranslationUnit*
+        , TOKEN::ExternalDeclaration*
+        , TOKEN::FunctionDefinition*
+        , TOKEN::Declaration*
+        , TOKEN::DeclarationSpecifiers*
+        , TOKEN::Declarator*
+        , TOKEN::DeclarationList*
+        , TOKEN::CompoundStatement*
+        , TOKEN::InitDeclaratorList*
+        , TOKEN::StaticAssertDeclaration*
+        , TOKEN::StorageClassSpecifier*
+        , TOKEN::TypeSpecifier*
+        , TOKEN::TypeQualifier*
+        , TOKEN::FunctionSpecifier*
+        , TOKEN::AlignmentSpecifier*
+        , TOKEN::Pointer*
+        , TOKEN::DirectDeclarator*
+        , TOKEN::BlockItemList*
+        , TOKEN::InitDeclarator*
+        , TOKEN::ConstantExpression*
+        , TOKEN::AtomicTypeSpecifier*
+        , TOKEN::StructOrUnionSpecifier*
+        , TOKEN::EnumSpecifier*
+        , TOKEN::TypedefName*
+        , TOKEN::TypeName*
+        , TOKEN::TypeQualifierList*
+        , TOKEN::AssignmentExpression*
+        , TOKEN::ParameterTypeList*
+        , TOKEN::IdentifierList*
+        , TOKEN::BlockItem*
+        , TOKEN::Initializer*
+        , TOKEN::ConditionalExpression*
+        , TOKEN::StructOrUnion*
+        , TOKEN::StructDeclarationList*
+        , TOKEN::EnumeratorList*
+        , TOKEN::SpecifierQualifierList*
+        , TOKEN::AbstractDeclarator*
+        , TOKEN::UnaryExpression*
+        , TOKEN::AssignmentOperator*
+        , TOKEN::ParameterList*
+        , TOKEN::Statement*
+        , TOKEN::InitializerList*
+        , TOKEN::LogicalORExpression*
+        , TOKEN::Expression*
+        , TOKEN::StructDeclaration*
+        , TOKEN::Enumerator*
+        , TOKEN::DirectAbstractDeclarator*
+        , TOKEN::PostfixExpression*
+        , TOKEN::UnaryOperator*
+        , TOKEN::CastExpression*
+        , TOKEN::ParameterDeclaration*
+        , TOKEN::LabeledStatement*
+        , TOKEN::ExpressionStatement*
+        , TOKEN::SelectionStatement*
+        , TOKEN::IterationStatement*
+        , TOKEN::JumpStatement*
+        , TOKEN::Designation*
+        , TOKEN::LogicalANDExpression*
+        , TOKEN::StructDeclaratorList*
+        , TOKEN::PrimaryExpression*
+        , TOKEN::ArgumentExpressionList*
+        , TOKEN::DesignatorList*
+        , TOKEN::InclusiveORExpression*
+        , TOKEN::StructDeclarator*
+        , TOKEN::GenericSelection*
+        , TOKEN::Designator*
+        , TOKEN::ExclusiveORExpression*
+        , TOKEN::GenericAssocList*
+        , TOKEN::ANDExpression*
+        , TOKEN::GenericAssociation*
+        , TOKEN::EqualityExpression*
+        , TOKEN::RelationalExpression*
+        , TOKEN::ShiftExpression*
+        , TOKEN::AdditiveExpression*
+        , TOKEN::MultiplicativeExpression*
+        , TOKEN::AttributeSpecifier*
+        , TOKEN::AttributeSpecifierList*
+        , TOKEN::AttributeStatement*
+        , TOKEN::BasicAsm*
+        , TOKEN::ExtendedAsm*
+        , TOKEN::AsmQualifiers*
+        , TOKEN::AsmStatement*>
+
+    std::size_t mBegin;
+    std::size_t mEnd;
 };
 
 #endif
