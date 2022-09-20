@@ -35,24 +35,34 @@ std::deque<Representation::Element*> RepresentationCreator::create(const std::st
         , new Type2RepresentationCreator{Configure::SIM_TYPE2}
         , new Type3RepresentationCreator{Configure::SIM_TYPE3}};
 
+    bool isSuccessful{true};
     for(auto &&rc : rcarr)
     {
         if(!rc->execute(tu))
-            return {};
+        {
+            isSuccessful = false;
+            break;
+        }
     }
 
-    // move tokens from RC to Rep
     std::deque<Rep::Element*> reps;
-    for(std::size_t i{0ull}; i < rcarr.front()->functionTokens().size(); i++)
+    if(isSuccessful)
     {
-        Rep::Element *element{new Rep::Element{filename, rcarr.front()->functionTokens()[i].first}};
-        for(std::size_t j{0ull}; j < rcarr.size(); j++)
+        // move tokens from RC to Rep
+        for(std::size_t i{0ull}; i < rcarr.front()->functionTokens().size(); i++)
         {
-            element->mReps[j].gramSize() = rcarr[j]->gramSize();
-            element->mReps[j].tokens() = std::move(rcarr[j]->functionTokens()[i].second);
+            Rep::Element *element{new Rep::Element{filename, rcarr.front()->functionTokens()[i].first}};
+            for(std::size_t j{0ull}; j < rcarr.size(); j++)
+            {
+                element->mReps[j].gramSize() = rcarr[j]->gramSize();
+                element->mReps[j].tokens() = std::move(rcarr[j]->functionTokens()[i].second);
+            }
+            reps.push_back(element);
         }
-        reps.push_back(element);
     }
+
+    for(auto &&rc : rcarr)
+        delete rc;
 
     return reps;
 }
@@ -68,25 +78,35 @@ bool RepresentationCreator::createAndRegister(const std::string &filename
         , new Type2RepresentationCreator{Configure::SIM_TYPE2}
         , new Type3RepresentationCreator{Configure::SIM_TYPE3}};
 
+    bool isSuccessful{true};
     for(auto &&rc : rcarr)
     {
         if(!rc->execute(tu))
-            return false;
-    }
-
-    // move tokens from RC to Rep
-    for(std::size_t i{0ull}; i < rcarr.front()->functionTokens().size(); i++)
-    {
-        Rep::Element *element{new Rep::Element{filename, rcarr.front()->functionTokens()[i].first}};
-        for(std::size_t j{0ull}; j < rcarr.size(); j++)
         {
-            element->mReps[j].gramSize() = rcarr[j]->gramSize();
-            element->mReps[j].tokens() = std::move(rcarr[j]->functionTokens()[i].second);
+            isSuccessful = false;
+            break;
         }
-        Rep::reps().push_back(element);
     }
 
-    return true;
+    if(isSuccessful)
+    {
+        // move tokens from RC to Rep
+        for(std::size_t i{0ull}; i < rcarr.front()->functionTokens().size(); i++)
+        {
+            Rep::Element *element{new Rep::Element{filename, rcarr.front()->functionTokens()[i].first}};
+            for(std::size_t j{0ull}; j < rcarr.size(); j++)
+            {
+                element->mReps[j].gramSize() = rcarr[j]->gramSize();
+                element->mReps[j].tokens() = std::move(rcarr[j]->functionTokens()[i].second);
+            }
+            Rep::reps().push_back(element);
+        }
+    }
+
+    for(auto &&rc : rcarr)
+        delete rc;
+
+    return isSuccessful;
 }
 
 RepresentationCreator::RepresentationCreator(std::size_t gramSize)
