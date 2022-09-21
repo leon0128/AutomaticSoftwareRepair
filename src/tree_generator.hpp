@@ -136,6 +136,19 @@ private:
     bool isMatch(TOKEN::Keyword::Tag);
     bool isMatch(TOKEN::Punctuator::Tag);
 
+    // copy token from cache.
+    // this function reference mIdx.
+    // if copy is successful, mIdx is updated.
+    // otherwise, this returns nullptr
+    template<class Token>
+    Token *createFromCache();
+    // register token to cache.
+    // this function references mIdx to determine MapElement::mEnd.
+    // this function returns argument's value.
+    template<class Token>
+    Token *registerToCache(Token*
+        , std::size_t beginIdx); 
+
     // error
     bool noEvaluatedError() const;
 
@@ -286,5 +299,29 @@ public:
     std::size_t mEnd{0ull};
     Var mToken{std::in_place_type<TOKEN::Token*>, nullptr};
 };
+
+template<class Token>
+Token *TreeGenerator::createFromCache()
+{
+    for(auto &&[iter, last]{mCacheMap.equal_range(mIdx)}; iter != last; iter++)
+    {
+        if(std::holds_alternative<Token*>(iter->second->mToken))
+        {
+            mIdx = iter->second->mEnd;
+            return std::get<Token*>(iter->second->mToken)->copy();
+        }
+    }
+
+    return nullptr;
+}
+
+template<class Token>
+Token *TreeGenerator::registerToCache(Token *token
+    , std::size_t beginIdx)
+{
+    auto &&element{new MapElement{beginIdx, mIdx, token->copy()}};
+    mCacheMap.emplace(beginIdx, element);
+    return token;
+}
 
 #endif
