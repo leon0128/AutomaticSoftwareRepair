@@ -29,8 +29,6 @@ TimeMeasurer::TimeMeasurer()
 
 void TimeMeasurer::print()
 {
-    std::cout << "time:\n" << std::flush;
-
     // this variable is reused sim-tag and repair-tag.
     // don't forget to initialize.
     Timer::Rep total{0};
