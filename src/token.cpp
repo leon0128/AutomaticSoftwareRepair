@@ -1610,7 +1610,7 @@ IntegerSuffix *IntegerSuffix::copy() const
             , s.us != nullptr ? s.us->copy() : nullptr);
     }
 
-    return new IntegerSuffix(var);
+    return new IntegerSuffix(cvar);
 }
 
 std::string &IntegerSuffix::str(std::string &res, std::size_t &indent) const

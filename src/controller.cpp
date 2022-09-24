@@ -51,13 +51,13 @@ bool Controller::execute(int argc, char **argv)
     }
 
     // execute repair
-    {
-        TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::REPAIR};
-        REPAIR::Controller repairController;
-        if(!repairController.execute(source
-            , pool))
-            return false;
-    }
+    // {
+    //     TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::REPAIR};
+    //     REPAIR::Controller repairController;
+    //     if(!repairController.execute(source
+    //         , pool))
+    //         return false;
+    // }
 
     if(Configure::SHOULD_OUTPUT_TIME_LOG)
         timeMeasurer().print();
