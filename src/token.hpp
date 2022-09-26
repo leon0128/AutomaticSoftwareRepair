@@ -1299,11 +1299,14 @@ class Declarator
 {
 public:
     Pointer *p;
+    AttributeSpecifierList *asl;
     DirectDeclarator *dd;
 
     constexpr Declarator(Pointer *inp = nullptr
+        , AttributeSpecifierList *inasl = nullptr
         , DirectDeclarator *indd = nullptr) noexcept
         : p(inp)
+        , asl(inasl)
         , dd(indd){}
     ~Declarator();
 
@@ -2573,6 +2576,18 @@ public:
             : ce(ince)
             , s(ins){}
     };
+    struct Sce_ce_s
+    {
+        ConstantExpression *ce0;
+        ConstantExpression *ce1;
+        Statement *s;
+        constexpr Sce_ce_s(ConstantExpression *ince0 = nullptr
+            , ConstantExpression *ince1 = nullptr
+            , Statement *ins = nullptr) noexcept
+            : ce0{ince0}
+            , ce1{ince1}
+            , s{ins}{}
+    };
     struct Ss
     {
         Statement *s;
@@ -2583,6 +2598,7 @@ public:
     using Var = std::variant<std::monostate
         , Si_s
         , Sce_s
+        , Sce_ce_s
         , Ss>;
 
     Var var;

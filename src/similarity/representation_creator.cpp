@@ -200,6 +200,7 @@ bool RepresentationCreator::process(const TOKEN::DeclarationSpecifiers *ds)
 bool RepresentationCreator::process(const TOKEN::Declarator *declarator)
 {
     if(!(declarator->p != nullptr ? process(declarator->p) : true)
+        || !(declarator->asl != nullptr ? process(declarator->asl) : true)
         || !process(declarator->dd))
         return false;
 
@@ -858,6 +859,19 @@ bool RepresentationCreator::process(const TOKEN::LabeledStatement *ls)
             return false;
         addToken(":");
         if(!process(scs.s))
+            return false;
+    }
+    else if(std::holds_alternative<LS::Sce_ce_s>(ls->var))
+    {
+        auto &&sccs{std::get<LS::Sce_ce_s>(ls->var)};
+        addToken("case");
+        if(!process(sccs.ce0))
+            return false;
+        addToken("...");
+        if(!process(sccs.ce1))
+            return false;
+        addToken(":");
+        if(!process(sccs.s))
             return false;
     }
     else if(std::holds_alternative<LS::Ss>(ls->var))
@@ -2439,6 +2453,19 @@ bool Type3RepresentationCreator::process(const TOKEN::LabeledStatement *ls)
             return false;
         addToken(":");
         if(!RC::process(scs.s))
+            return false;
+    }
+    else if(std::holds_alternative<LS::Sce_ce_s>(ls->var))
+    {
+        auto &&sccs{std::get<LS::Sce_ce_s>(ls->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        if(!RC::process(sccs.ce0))
+            return false;
+        addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+        if(!RC::process(sccs.ce1))
+            return false;
+        addToken(":");
+        if(!RC::process(sccs.s))
             return false;
     }
     else if(std::holds_alternative<LS::Ss>(ls->var))

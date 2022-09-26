@@ -46,6 +46,7 @@ const std::unordered_map<std::string, TOKEN::Keyword::Tag> TreeGenerator::KEYWOR
         , {"while", TOKEN::Keyword::Tag::WHILE}
         , {"_Alignas", TOKEN::Keyword::Tag::ALIGNAS}
         , {"_Alignof", TOKEN::Keyword::Tag::ALIGNOF}
+        , {"__alignof__", TOKEN::Keyword::Tag::ALIGNOF}
         , {"_Atomic", TOKEN::Keyword::Tag::ATOMIC}
         , {"_Bool", TOKEN::Keyword::Tag::BOOL}
         , {"_Complex", TOKEN::Keyword::Tag::COMPLEX}
@@ -310,15 +311,18 @@ TOKEN::Declarator *TreeGenerator::tokDeclarator()
 
     std::size_t pre = mIdx;
     TOKEN::Pointer *p = nullptr;
+    TOKEN::AttributeSpecifierList *asl{nullptr};
     TOKEN::DirectDeclarator *dd = nullptr;
     
     if((p = tokPointer(), true)
+        && (asl = tokAttributeSpecifierList(), true)
         && (dd = tokDirectDeclarator()) != nullptr)
-        return registerToCache(new TOKEN::Declarator(p, dd), beginIdx);
+        return registerToCache(new TOKEN::Declarator(p, asl, dd), beginIdx);
     else
     {
         mIdx = pre;
         delete p;
+        delete asl;
         delete dd;
     }
 
@@ -1949,6 +1953,22 @@ TOKEN::LabeledStatement *TreeGenerator::tokLabeledStatement()
     {
         mIdx = pre;
         delete s.ce;
+        delete s.s;
+    }
+
+    if(TOKEN::LabeledStatement::Sce_ce_s s;
+        isMatch(TOKEN::Keyword::Tag::CASE)
+            && (s.ce0 = tokConstantExpression()) != nullptr
+            && isMatch(TOKEN::Punctuator::Tag::TRIPLE_PERIOD)
+            && (s.ce1 = tokConstantExpression()) != nullptr
+            && isMatch(TOKEN::Punctuator::Tag::COLON)
+            && (s.s = tokStatement()) != nullptr)
+        return registerToCache(new TOKEN::LabeledStatement{s}, beginIdx);
+    else
+    {
+        mIdx = pre;
+        delete s.ce0;
+        delete s.ce1;
         delete s.s;
     }
 

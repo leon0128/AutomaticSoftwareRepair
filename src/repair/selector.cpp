@@ -325,6 +325,14 @@ bool Selector::select(const TOKEN::LabeledStatement *ls)
         if(!select(s.s))
             return false;
     }
+    else if(std::holds_alternative<LS::Sce_ce_s>(ls->var))
+    {
+        auto &&s{std::get<LS::Sce_ce_s>(ls->var)};
+        if(!select(s.ce0)
+            || !select(s.ce1)
+            || !select(s.s))
+            return false;
+    }
     else if(std::holds_alternative<LS::Ss>(ls->var))
     {
         auto &&s{std::get<LS::Ss>(ls->var)};
@@ -1208,6 +1216,9 @@ bool Selector::select(const TOKEN::Declarator *declarator)
     if(bool(declarator->p))
         if(!select(declarator->p))
             return false;
+    if(declarator->asl != nullptr
+        && !select(declarator->asl))
+        return false;
     if(!select(declarator->dd))
         return false;
     
