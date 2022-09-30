@@ -2,83 +2,97 @@
 #define SIMILARITY_CALCULATOR_HPP
 
 #include <deque>
-#include <memory>
-#include <cmath>
-#include <valarray>
+#include <unordered_map>
+#include <string>
+#include <array>
 
-#include "structure_token_metrics.hpp"
+#include "representation.hpp"
 
 namespace SIM
 {
 
-template<class>
-class StructureTokenMetrics;
-
 class Calculator
 {
-private:
-    template<class ValueType>
-    using STM = StructureTokenMetrics<ValueType>;
-    template<class ValueType>
-    using STMs = std::deque<std::shared_ptr<STM<ValueType>>>;
-
 public:
-    Calculator();
+    Calculator() = delete;
 
-    bool execute(const STMs<std::size_t>&);
+    // use Representation::reps to calculate similarity
+    // result of calculation is stored to Calculator::mSimilarity
+    static bool initialize();
+    static void finalize();
 
-    const auto &functionNames() const noexcept
-        {return mFunctionNames;}
-    const auto &result() const noexcept
-        {return mResult;}
+    static std::deque<double> calculateSimilarity(const Representation::Element*);
+
+    // normalization
+    // only if pool contains same as query,
+    // it function is effective.
+    // if not, this function should not be used.
+    static bool normalize(std::deque<double> &scores);
 
 private:
-    std::shared_ptr<STM<double>> calculateTF(const std::shared_ptr<STM<std::size_t>>&) const;
-    std::shared_ptr<STM<double>> calculateIDF(const STMs<std::size_t>&) const;
-    std::size_t calculateDL(const std::shared_ptr<STM<std::size_t>>&) const;
-    STMs<double> calculateOkapiBM25(const STMs<std::size_t>&) const;
-    // result: [0, 1]
-    template<class BaseType, class ResultType = double>
-    ResultType calculateCosineSimilarity(const std::shared_ptr<STM<BaseType>> &lhs
-        , const std::shared_ptr<STM<BaseType>> &rhs) const;
+    // this class is used as map::element
+    class Element;
 
-    bool emptyError(const std::string &what) const;
+    // initialization
+    // calculate and register information to mInfo.
+    static bool calculateAndRegisterInfo();
+    static bool calculateAndRegisterTF();
+    static bool calculateAndRegisterDF();
+    static bool calculateAndRegisterIDF();
+    static bool calculateAndRegisterBoost();
 
-    std::deque<std::string> mFunctionNames;
-    std::valarray<std::valarray<double>> mResult;
+    // query reduction
+    // if term that is contained tokens is not exist in mInfo,
+    // that term is not used.
+    static std::deque<std::size_t> calculateIndicesToUse(Representation::Tag
+        , const std::deque<std::string> &tokens);
+
+    // score calculation
+    // result is calculated by mInfo and Rep::reps()
+    static double calculateScoreSiamese(const Representation::Element *queries
+        , const std::array<std::deque<std::size_t>, Representation::castTag(Representation::Tag::SIZE_OF_TAG)> &idxToUseArray
+        , std::size_t docIdx);
+    static double calculateScore(Representation::Tag
+        , const std::deque<std::string> &query
+        , const std::deque<std::size_t> &idxToUse
+        , std::size_t docIdx);
+    static double calculateTF(Representation::Tag
+        , const std::string &term
+        , std::size_t docIdx);
+    static double calculateIDF(Representation::Tag
+        , const std::string &term);
+    static double calculateBoost(Representation::Tag
+        , const std::string &term);
+    static double calculateNorm(Representation::Tag
+        , std::size_t docIdx);
+    static double calculateQueryNorm(Representation::Tag
+        , const std::deque<std::string> &query
+        , const std::deque<std::size_t> &idxToUse);
+    static double calculateCoord(Representation::Tag
+        , const std::deque<std::string> &query
+        , const std::deque<std::size_t> &idxToUse
+        , std::size_t docIdx);
+
+    // delete mInfo
+    static void deleteInfo();
+
+    // output warning
+    static bool reductionWarning();
+    // output error
+    static bool normalizationError(const std::string &what);
+    
+    // static member variables
+    inline static std::array<std::unordered_map<std::string, Element*>, Representation::castTag(Representation::Tag::SIZE_OF_TAG)> mInfo{};
 };
 
-template<class BaseType, class ResultType>
-ResultType Calculator::calculateCosineSimilarity(const std::shared_ptr<STM<BaseType>> &lhs
-    , const std::shared_ptr<STM<BaseType>> &rhs) const
+class Calculator::Element
 {
-    ResultType numerator{static_cast<ResultType>(0)};
-    ResultType denominator{static_cast<ResultType>(0)};
-
-    ResultType lden{static_cast<ResultType>(0)};
-    ResultType rden{static_cast<ResultType>(0)};
-
-    for(std::size_t i{0ull};
-        i < STM<BaseType>::NUM_OF_ENUM;
-        i++)
-    {
-        numerator
-            += static_cast<ResultType>(lhs->array()[i])
-                * static_cast<ResultType>(rhs->array()[i]);
-        lden += std::pow(static_cast<ResultType>(lhs->array()[i])
-            , static_cast<ResultType>(2));
-        rden += std::pow(static_cast<ResultType>(rhs->array()[i])
-            , static_cast<ResultType>(2));
-    }
-    denominator = static_cast<ResultType>(std::sqrt(lden) * std::sqrt(rden));
-
-    // result: [-1, 1]
-    ResultType result = numerator / denominator;
-    // result: [0, 1]
-    result = (result + static_cast<ResultType>(1)) / static_cast<ResultType>(2);
-
-    return result;
-}
+public:
+    std::deque<double> mTF{};
+    std::size_t mDF{0ull};
+    double mIDF{0.0};
+    double mBoost{0.0};
+};
 
 }
 

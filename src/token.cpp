@@ -152,7 +152,7 @@ std::string &Token::str(std::string &res, std::size_t &indent) const
     else if(std::holds_alternative<Constant*>(var))
         std::get<Constant*>(var)->str(res, indent);
     else if(std::holds_alternative<StringLiteral*>(var))
-        std::get<Punctuator*>(var)->str(res, indent);
+        std::get<StringLiteral*>(var)->str(res, indent);
     else if(std::holds_alternative<Punctuator*>(var))
         std::get<Punctuator*>(var)->str(res, indent);
     
@@ -1610,7 +1610,7 @@ IntegerSuffix *IntegerSuffix::copy() const
             , s.us != nullptr ? s.us->copy() : nullptr);
     }
 
-    return new IntegerSuffix(var);
+    return new IntegerSuffix(cvar);
 }
 
 std::string &IntegerSuffix::str(std::string &res, std::size_t &indent) const
@@ -1966,12 +1966,14 @@ std::string &DeclarationSpecifiers::str(std::string &res, std::size_t &indent) c
 Declarator::~Declarator()
 {
     delete p;
+    delete asl;
     delete dd;
 }
 
 Declarator *Declarator::copy() const
 {
     return new Declarator(p != nullptr ? p->copy() : nullptr
+        , asl != nullptr ? asl->copy() : nullptr
         , dd->copy());
 }
 
@@ -1980,6 +1982,11 @@ std::string &Declarator::str(std::string &res, std::size_t &indent) const
     if(p != nullptr)
     {
         p->str(res, indent);
+        res.push_back(' ');
+    }
+    if(asl != nullptr)
+    {
+        asl->str(res, indent);
         res.push_back(' ');
     }
     dd->str(res, indent);
@@ -4377,6 +4384,13 @@ LabeledStatement::~LabeledStatement()
         delete s.ce;
         delete s.s;
     }
+    else if(std::holds_alternative<Sce_ce_s>(var))
+    {
+        auto &&s{std::get<Sce_ce_s>(var)};
+        delete s.ce0;
+        delete s.ce1;
+        delete s.s;
+    }
     else if(std::holds_alternative<Ss>(var))
     {
         auto &&s = std::get<Ss>(var);
@@ -4400,6 +4414,13 @@ LabeledStatement *LabeledStatement::copy() const
     {
         auto &&s = std::get<Sce_s>(var);
         cvar.emplace<Sce_s>(s.ce->copy()
+            , s.s->copy());
+    }
+    else if(std::holds_alternative<Sce_ce_s>(var))
+    {
+        auto &&s{std::get<Sce_ce_s>(var)};
+        cvar.emplace<Sce_ce_s>(s.ce0->copy()
+            , s.ce1->copy()
             , s.s->copy());
     }
     else if(std::holds_alternative<Ss>(var))
@@ -4431,6 +4452,17 @@ std::string &LabeledStatement::str(std::string &res, std::size_t &indent) const
         auto &&s = std::get<Sce_s>(var);
         res += "case ";
         s.ce->str(res, indent);
+        res.push_back(':');
+        addLine(res, indent);
+        s.s->str(res, indent);
+    }
+    else if(std::holds_alternative<Sce_ce_s>(var))
+    {
+        auto &&s{std::get<Sce_ce_s>(var)};
+        res += "case ";
+        s.ce0->str(res, indent);
+        res += " ... ";
+        s.ce1->str(res, indent);
         res.push_back(':');
         addLine(res, indent);
         s.s->str(res, indent);

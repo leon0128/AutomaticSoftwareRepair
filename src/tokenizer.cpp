@@ -571,17 +571,6 @@ IntegerSuffix *decIntegerSuffix(const std::string &src
         delete s.ls;
     }
 
-    if(IntegerSuffix::Sls_us s;
-        (s.ls = decLongSuffix(src, idx)) != nullptr
-            && (s.us = decUnsignedSuffix(src, idx), true))
-        return new IntegerSuffix(s);
-    else
-    {
-        idx = pre;
-        delete s.ls;
-        delete s.us;
-    }
-
     if(IntegerSuffix::Slls_us s;
         (s.lls = decLongLongSuffix(src, idx)) != nullptr
             && (s.us = decUnsignedSuffix(src, idx), true))
@@ -590,6 +579,17 @@ IntegerSuffix *decIntegerSuffix(const std::string &src
     {
         idx = pre;
         delete s.lls;
+        delete s.us;
+    }
+
+    if(IntegerSuffix::Sls_us s;
+        (s.ls = decLongSuffix(src, idx)) != nullptr
+            && (s.us = decUnsignedSuffix(src, idx), true))
+        return new IntegerSuffix(s);
+    else
+    {
+        idx = pre;
+        delete s.ls;
         delete s.us;
     }
 

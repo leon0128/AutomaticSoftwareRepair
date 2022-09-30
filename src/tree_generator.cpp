@@ -42,9 +42,11 @@ const std::unordered_map<std::string, TOKEN::Keyword::Tag> TreeGenerator::KEYWOR
         , {"unsigned", TOKEN::Keyword::Tag::UNSIGNED}
         , {"void", TOKEN::Keyword::Tag::VOID}
         , {"volatile", TOKEN::Keyword::Tag::VOLATILE}
+        , {"__volatile__", TOKEN::Keyword::Tag::VOLATILE}
         , {"while", TOKEN::Keyword::Tag::WHILE}
         , {"_Alignas", TOKEN::Keyword::Tag::ALIGNAS}
         , {"_Alignof", TOKEN::Keyword::Tag::ALIGNOF}
+        , {"__alignof__", TOKEN::Keyword::Tag::ALIGNOF}
         , {"_Atomic", TOKEN::Keyword::Tag::ATOMIC}
         , {"_Bool", TOKEN::Keyword::Tag::BOOL}
         , {"_Complex", TOKEN::Keyword::Tag::COMPLEX}
@@ -58,18 +60,31 @@ const std::unordered_map<std::string, TOKEN::Keyword::Tag> TreeGenerator::KEYWOR
         , {"asm", TOKEN::Keyword::Tag::ASM}
         , {"__builtin_va_list", TOKEN::Keyword::Tag::BUILTIN_VA_LIST}};
 
+// if cache has specific token, its token is returned.
+#define IF_CACHE_HAS_TOKEN_RETURN(Type) \
+    if(auto &&cache{createFromCache<Type>()}; \
+        cache != nullptr) \
+        return cache;
+
 TreeGenerator::TreeGenerator(const std::string &file
     , const Sequence &seq)
     : mFile(file)
     , mSeq(seq)
     , mIdx(0)
     , mTranslationUnit(nullptr)
+    , mCacheMap{}
 {
 }
 
 TreeGenerator::~TreeGenerator()
 {
     delete mTranslationUnit;
+    for(auto &&[pos, element] : mCacheMap)
+    {
+        std::visit([](auto &&token){delete token;}
+            , element->mToken);
+        delete element;
+    }
 }
 
 bool TreeGenerator::execute()
@@ -85,30 +100,39 @@ bool TreeGenerator::execute()
 
 TOKEN::TranslationUnit *TreeGenerator::tokTranslationUnit()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::TranslationUnit)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::ExternalDeclaration*> seq;
     for(auto ed = tokExternalDeclaration(); ed != nullptr; ed = tokExternalDeclaration())
         seq.push_back(ed);
 
     if(!seq.empty())
-        return new TOKEN::TranslationUnit(std::move(seq));
+        return registerToCache(new TOKEN::TranslationUnit(std::move(seq)), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::ExternalDeclaration *TreeGenerator::tokExternalDeclaration()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::ExternalDeclaration)
+    std::size_t beginIdx{mIdx};
+
     if(TOKEN::Declaration *d = tokDeclaration();
         d != nullptr)
-        return new TOKEN::ExternalDeclaration(d);
+        return registerToCache(new TOKEN::ExternalDeclaration(d), beginIdx);
     else if(TOKEN::FunctionDefinition *fd = tokFunctionDefinition();
         fd != nullptr)
-        return new TOKEN::ExternalDeclaration(fd);
+        return registerToCache(new TOKEN::ExternalDeclaration(fd), beginIdx);
 
     return nullptr;
 }
 
 TOKEN::FunctionDefinition *TreeGenerator::tokFunctionDefinition()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::FunctionDefinition)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
     TOKEN::DeclarationSpecifiers *ds = nullptr;
     TOKEN::Declarator *d = nullptr;
@@ -119,7 +143,7 @@ TOKEN::FunctionDefinition *TreeGenerator::tokFunctionDefinition()
         && (d = tokDeclarator()) != nullptr
         && (dl = tokDeclarationList(), true)
         && (cs = tokCompoundStatement()) != nullptr)
-        return new TOKEN::FunctionDefinition(ds, d, dl, cs);
+        return registerToCache(new TOKEN::FunctionDefinition(ds, d, dl, cs), beginIdx);
     else
     {
         mIdx = pre;
@@ -134,6 +158,9 @@ TOKEN::FunctionDefinition *TreeGenerator::tokFunctionDefinition()
 
 TOKEN::Declaration *TreeGenerator::tokDeclaration()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::Declaration)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
     
     // declaration-specifiers init-declarator-list
@@ -141,7 +168,7 @@ TOKEN::Declaration *TreeGenerator::tokDeclaration()
         (sds_idl.ds = tokDeclarationSpecifiers()) != nullptr
         && (sds_idl.idl = tokInitDeclaratorList(), true)
         && isMatch(TOKEN::Punctuator::Tag::SEMICOLON))
-        return new TOKEN::Declaration(sds_idl);
+        return registerToCache(new TOKEN::Declaration(sds_idl), beginIdx);
     else
     {
         mIdx = pre;
@@ -151,13 +178,16 @@ TOKEN::Declaration *TreeGenerator::tokDeclaration()
     // static_assert-declaration
     if(TOKEN::Declaration::Ssad ssad;
         (ssad.sad = tokStaticAssertDeclaration()) != nullptr)
-        return new TOKEN::Declaration(ssad);
+        return registerToCache(new TOKEN::Declaration(ssad), beginIdx);
 
     return nullptr;
 }
 
 TOKEN::DeclarationSpecifiers *TreeGenerator::tokDeclarationSpecifiers()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::DeclarationSpecifiers)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::DeclarationSpecifiers::Var> seq;
     
     bool hasTypeSpecifier = false;
@@ -185,13 +215,16 @@ TOKEN::DeclarationSpecifiers *TreeGenerator::tokDeclarationSpecifiers()
     }
 
     if(!seq.empty())
-        return new TOKEN::DeclarationSpecifiers(std::move(seq));
+        return registerToCache(new TOKEN::DeclarationSpecifiers(std::move(seq)), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::InitDeclaratorList *TreeGenerator::tokInitDeclaratorList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::InitDeclaratorList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::InitDeclarator*> seq;
     TOKEN::InitDeclarator *id = tokInitDeclarator();
     if(id != nullptr)
@@ -216,13 +249,16 @@ TOKEN::InitDeclaratorList *TreeGenerator::tokInitDeclaratorList()
     }
 
     if(!seq.empty())
-        return new TOKEN::InitDeclaratorList(std::move(seq));
+        return registerToCache(new TOKEN::InitDeclaratorList(std::move(seq)), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::StaticAssertDeclaration *TreeGenerator::tokStaticAssertDeclaration()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::StaticAssertDeclaration)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
     TOKEN::ConstantExpression *ce = nullptr;
     TOKEN::StringLiteral *sl = nullptr;
@@ -233,7 +269,7 @@ TOKEN::StaticAssertDeclaration *TreeGenerator::tokStaticAssertDeclaration()
         && (sl = tokStringLiteral()) != nullptr
         && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS)
         && isMatch(TOKEN::Punctuator::Tag::SEMICOLON))
-        return new TOKEN::StaticAssertDeclaration(ce, sl);
+        return registerToCache(new TOKEN::StaticAssertDeclaration(ce, sl), beginIdx);
     else
     {
         mIdx = pre;
@@ -246,35 +282,47 @@ TOKEN::StaticAssertDeclaration *TreeGenerator::tokStaticAssertDeclaration()
 
 TOKEN::ConstantExpression *TreeGenerator::tokConstantExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::ConstantExpression)
+    std::size_t beginIdx{mIdx};
+
     if(TOKEN::ConditionalExpression *ce = tokConditionalExpression();
         ce != nullptr)
-        return new TOKEN::ConstantExpression(ce);
+        return registerToCache(new TOKEN::ConstantExpression(ce), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::StringLiteral *TreeGenerator::tokStringLiteral()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::StringLiteral)
+    std::size_t beginIdx{mIdx};
+
     if(mIdx < mSeq.size()
         && std::holds_alternative<TOKEN::StringLiteral*>(mSeq[mIdx]->var))
-        return mIdx++, std::get<TOKEN::StringLiteral*>(mSeq[mIdx - 1]->var)->copy();
+        return mIdx++, registerToCache(std::get<TOKEN::StringLiteral*>(mSeq[mIdx - 1]->var)->copy(), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::Declarator *TreeGenerator::tokDeclarator()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::Declarator)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
     TOKEN::Pointer *p = nullptr;
+    TOKEN::AttributeSpecifierList *asl{nullptr};
     TOKEN::DirectDeclarator *dd = nullptr;
     
     if((p = tokPointer(), true)
+        && (asl = tokAttributeSpecifierList(), true)
         && (dd = tokDirectDeclarator()) != nullptr)
-        return new TOKEN::Declarator(p, dd);
+        return registerToCache(new TOKEN::Declarator(p, asl, dd), beginIdx);
     else
     {
         mIdx = pre;
         delete p;
+        delete asl;
         delete dd;
     }
 
@@ -283,25 +331,31 @@ TOKEN::Declarator *TreeGenerator::tokDeclarator()
 
 TOKEN::DeclarationList *TreeGenerator::tokDeclarationList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::DeclarationList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::Declaration*> seq;
     for(TOKEN::Declaration *d = tokDeclaration(); d != nullptr; d = tokDeclaration())
         seq.push_back(d);
 
     if(!seq.empty())
-        return new TOKEN::DeclarationList(std::move(seq));
+        return registerToCache(new TOKEN::DeclarationList(std::move(seq)), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::CompoundStatement *TreeGenerator::tokCompoundStatement()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::CompoundStatement)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
     TOKEN::BlockItemList *bil = nullptr;
     
     if(isMatch(TOKEN::Punctuator::Tag::L_CURLY_BRACKET)
         && (bil = tokBlockItemList(), true)
         && isMatch(TOKEN::Punctuator::Tag::R_CURLY_BRACKET))
-        return new TOKEN::CompoundStatement(bil);
+        return registerToCache(new TOKEN::CompoundStatement(bil), beginIdx);
     else
     {
         mIdx = pre;
@@ -313,6 +367,9 @@ TOKEN::CompoundStatement *TreeGenerator::tokCompoundStatement()
 
 TOKEN::StorageClassSpecifier *TreeGenerator::tokStorageClassSpecifier()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::StorageClassSpecifier)
+    std::size_t beginIdx{mIdx};
+
     TOKEN::StorageClassSpecifier::Tag tag = TOKEN::StorageClassSpecifier::Tag::NONE;
 
     if(isMatch(TOKEN::Keyword::Tag::TYPEDEF))
@@ -329,13 +386,16 @@ TOKEN::StorageClassSpecifier *TreeGenerator::tokStorageClassSpecifier()
         tag = TOKEN::StorageClassSpecifier::Tag::REGISTER;
 
     if(tag != TOKEN::StorageClassSpecifier::Tag::NONE)
-        return new TOKEN::StorageClassSpecifier(tag);
+        return registerToCache(new TOKEN::StorageClassSpecifier(tag), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::TypeSpecifier *TreeGenerator::tokTypeSpecifier()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::TypeSpecifier)
+    std::size_t beginIdx{mIdx};
+
     TOKEN::TypeSpecifier::Var var;
     
     if(isMatch(TOKEN::Keyword::Tag::VOID))
@@ -366,16 +426,19 @@ TOKEN::TypeSpecifier *TreeGenerator::tokTypeSpecifier()
         || var.emplace<TOKEN::StructOrUnionSpecifier*>(tokStructOrUnionSpecifier()) != nullptr
         || var.emplace<TOKEN::EnumSpecifier*>(tokEnumSpecifier()) != nullptr
         || var.emplace<TOKEN::TypedefName*>(tokTypedefName()) != nullptr)
-        return new TOKEN::TypeSpecifier(var);
+        return registerToCache(new TOKEN::TypeSpecifier(var), beginIdx);
     
     if(std::holds_alternative<TOKEN::TypeSpecifier::Tag>(var))
-        return new TOKEN::TypeSpecifier(var);
+        return registerToCache(new TOKEN::TypeSpecifier(var), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::TypeQualifier *TreeGenerator::tokTypeQualifier()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::TypeQualifier)
+    std::size_t beginIdx{mIdx};
+
     TOKEN::TypeQualifier::Tag tag = TOKEN::TypeQualifier::Tag::NONE;
     
     if(isMatch(TOKEN::Keyword::Tag::CONST))
@@ -388,13 +451,16 @@ TOKEN::TypeQualifier *TreeGenerator::tokTypeQualifier()
         tag = TOKEN::TypeQualifier::Tag::ATOMIC;
 
     if(tag != TOKEN::TypeQualifier::Tag::NONE)
-        return new TOKEN::TypeQualifier(tag);
+        return registerToCache(new TOKEN::TypeQualifier(tag), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::FunctionSpecifier *TreeGenerator::tokFunctionSpecifier()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::FunctionSpecifier)
+    std::size_t beginIdx{mIdx};
+
     TOKEN::FunctionSpecifier::Tag tag = TOKEN::FunctionSpecifier::Tag::NONE;
 
     if(isMatch(TOKEN::Keyword::Tag::INLINE))
@@ -403,13 +469,16 @@ TOKEN::FunctionSpecifier *TreeGenerator::tokFunctionSpecifier()
         tag = TOKEN::FunctionSpecifier::Tag::NORETURN;
     
     if(tag != TOKEN::FunctionSpecifier::Tag::NONE)
-        return new TOKEN::FunctionSpecifier(tag);
+        return registerToCache(new TOKEN::FunctionSpecifier(tag), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::AlignmentSpecifier *TreeGenerator::tokAlignmentSpecifier()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::AlignmentSpecifier)
+    std::size_t beginIdx{mIdx};
+
     TOKEN::AlignmentSpecifier::Var var;
     std::size_t pre = mIdx;
 
@@ -417,7 +486,7 @@ TOKEN::AlignmentSpecifier *TreeGenerator::tokAlignmentSpecifier()
         && isMatch(TOKEN::Punctuator::Tag::L_PARENTHESIS)
         && var.emplace<TOKEN::TypeName*>(tokTypeName()) != nullptr
         && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS))
-        return new TOKEN::AlignmentSpecifier(var);
+        return registerToCache(new TOKEN::AlignmentSpecifier(var), beginIdx);
     else
     {
         mIdx = pre;
@@ -429,7 +498,7 @@ TOKEN::AlignmentSpecifier *TreeGenerator::tokAlignmentSpecifier()
         && isMatch(TOKEN::Punctuator::Tag::L_PARENTHESIS)
         && var.emplace<TOKEN::ConstantExpression*>(tokConstantExpression()) != nullptr
         && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS))
-        return new TOKEN::AlignmentSpecifier(var);
+        return registerToCache(new TOKEN::AlignmentSpecifier(var), beginIdx);
     else
     {
         mIdx = pre;
@@ -442,6 +511,9 @@ TOKEN::AlignmentSpecifier *TreeGenerator::tokAlignmentSpecifier()
 
 TOKEN::InitDeclarator *TreeGenerator::tokInitDeclarator()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::InitDeclarator)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::InitDeclarator::Sd_i s;
@@ -450,7 +522,7 @@ TOKEN::InitDeclarator *TreeGenerator::tokInitDeclarator()
             && (s.asl1 = tokAttributeSpecifierList(), true)
             && isMatch(TOKEN::Punctuator::Tag::ASSIGNMENT)
             && (s.i = tokInitializer()) != nullptr)
-        return new TOKEN::InitDeclarator(s);
+        return registerToCache(new TOKEN::InitDeclarator(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -466,7 +538,7 @@ TOKEN::InitDeclarator *TreeGenerator::tokInitDeclarator()
             && (s.asl1 = tokAttributeSpecifierList(), true)
             && (s.ba = tokBasicAsm())
             && (s.asl2 = tokAttributeSpecifierList(), true))
-        return new TOKEN::InitDeclarator{s};
+        return registerToCache(new TOKEN::InitDeclarator{s}, beginIdx);
     else
     {
         mIdx = pre;
@@ -480,7 +552,7 @@ TOKEN::InitDeclarator *TreeGenerator::tokInitDeclarator()
         (s.asl0 = tokAttributeSpecifierList(), true)
             && (s.d = tokDeclarator()) != nullptr
             && (s.asl1 = tokAttributeSpecifierList(), true))
-        return new TOKEN::InitDeclarator(s);
+        return registerToCache(new TOKEN::InitDeclarator(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -494,6 +566,9 @@ TOKEN::InitDeclarator *TreeGenerator::tokInitDeclarator()
 
 TOKEN::ConditionalExpression *TreeGenerator::tokConditionalExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::ConditionalExpression)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::ConditionalExpression::Slore_e_ce s;
@@ -502,7 +577,7 @@ TOKEN::ConditionalExpression *TreeGenerator::tokConditionalExpression()
             && (s.e = tokExpression()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::COLON)
             && (s.ce = tokConditionalExpression()) != nullptr)
-        return new TOKEN::ConditionalExpression(s);
+        return registerToCache(new TOKEN::ConditionalExpression(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -513,7 +588,7 @@ TOKEN::ConditionalExpression *TreeGenerator::tokConditionalExpression()
 
     if(TOKEN::ConditionalExpression::Slore s;
         (s.lore = tokLogicalORExpression()) != nullptr)
-        return new TOKEN::ConditionalExpression(s);
+        return registerToCache(new TOKEN::ConditionalExpression(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -525,13 +600,16 @@ TOKEN::ConditionalExpression *TreeGenerator::tokConditionalExpression()
 
 TOKEN::Pointer *TreeGenerator::tokPointer()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::Pointer)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::Pointer::Stql_p s;
         isMatch(TOKEN::Punctuator::Tag::ASTERISK)
             && (s.tql = tokTypeQualifierList(), true)
             && (s.p = tokPointer()) != nullptr)
-        return new TOKEN::Pointer(s);
+        return registerToCache(new TOKEN::Pointer(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -542,7 +620,7 @@ TOKEN::Pointer *TreeGenerator::tokPointer()
     if(TOKEN::Pointer::Stql s;
         isMatch(TOKEN::Punctuator::Tag::ASTERISK)
             && (s.tql = tokTypeQualifierList(), true))
-        return new TOKEN::Pointer(s);
+        return registerToCache(new TOKEN::Pointer(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -554,6 +632,9 @@ TOKEN::Pointer *TreeGenerator::tokPointer()
 
 TOKEN::DirectDeclarator *TreeGenerator::tokDirectDeclarator()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::DirectDeclarator)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::DirectDeclarator::Var> seq;
     std::size_t pre = mIdx;
 
@@ -675,11 +756,14 @@ TOKEN::DirectDeclarator *TreeGenerator::tokDirectDeclarator()
         break;
     }
 
-    return new TOKEN::DirectDeclarator(std::move(seq));
+    return registerToCache(new TOKEN::DirectDeclarator(std::move(seq)), beginIdx);
 }
 
 TOKEN::BlockItemList *TreeGenerator::tokBlockItemList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::BlockItemList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::BlockItem*> seq;
     for(TOKEN::BlockItem *bi = tokBlockItem();
         bi != nullptr;
@@ -687,13 +771,16 @@ TOKEN::BlockItemList *TreeGenerator::tokBlockItemList()
         seq.push_back(bi);
     
     if(!seq.empty())
-        return new TOKEN::BlockItemList(std::move(seq));
+        return registerToCache(new TOKEN::BlockItemList(std::move(seq)), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::AtomicTypeSpecifier *TreeGenerator::tokAtomicTypeSpecifier()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::AtomicTypeSpecifier)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
     
     if(TOKEN::TypeName *tn = nullptr;
@@ -701,7 +788,7 @@ TOKEN::AtomicTypeSpecifier *TreeGenerator::tokAtomicTypeSpecifier()
             && isMatch(TOKEN::Punctuator::Tag::L_PARENTHESIS)
             && (tn = tokTypeName()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS))
-        return new TOKEN::AtomicTypeSpecifier(tn);
+        return registerToCache(new TOKEN::AtomicTypeSpecifier(tn), beginIdx);
     else
     {
         mIdx = pre;
@@ -713,6 +800,9 @@ TOKEN::AtomicTypeSpecifier *TreeGenerator::tokAtomicTypeSpecifier()
 
 TOKEN::StructOrUnionSpecifier *TreeGenerator::tokStructOrUnionSpecifier()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::StructOrUnionSpecifier)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::StructOrUnionSpecifier::Ssou_i_sdl s;
@@ -722,7 +812,7 @@ TOKEN::StructOrUnionSpecifier *TreeGenerator::tokStructOrUnionSpecifier()
             && isMatch(TOKEN::Punctuator::Tag::L_CURLY_BRACKET)
             && (s.sdl = tokStructDeclarationList()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::R_CURLY_BRACKET))
-        return new TOKEN::StructOrUnionSpecifier(s);
+        return registerToCache(new TOKEN::StructOrUnionSpecifier(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -736,7 +826,7 @@ TOKEN::StructOrUnionSpecifier *TreeGenerator::tokStructOrUnionSpecifier()
         (s.sou = tokStructOrUnion()) != nullptr
             && (s.asl = tokAttributeSpecifierList(), true)
             && (s.i = tokIdentifier()) != nullptr)
-        return new TOKEN::StructOrUnionSpecifier(s);
+        return registerToCache(new TOKEN::StructOrUnionSpecifier(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -750,6 +840,9 @@ TOKEN::StructOrUnionSpecifier *TreeGenerator::tokStructOrUnionSpecifier()
 
 TOKEN::EnumSpecifier *TreeGenerator::tokEnumSpecifier()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::EnumSpecifier)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::EnumSpecifier::Si_el s;
@@ -760,7 +853,7 @@ TOKEN::EnumSpecifier *TreeGenerator::tokEnumSpecifier()
             && (s.el = tokEnumeratorList()) != nullptr
             && (isMatch(TOKEN::Punctuator::Tag::COMMA), true)
             && isMatch(TOKEN::Punctuator::Tag::R_CURLY_BRACKET))
-        return new TOKEN::EnumSpecifier(s);
+        return registerToCache(new TOKEN::EnumSpecifier(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -773,7 +866,7 @@ TOKEN::EnumSpecifier *TreeGenerator::tokEnumSpecifier()
         isMatch(TOKEN::Keyword::Tag::ENUM)
             && (s.asl = tokAttributeSpecifierList(), true)
             && (s.i = tokIdentifier()) != nullptr)
-        return new TOKEN::EnumSpecifier(s);
+        return registerToCache(new TOKEN::EnumSpecifier(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -786,22 +879,28 @@ TOKEN::EnumSpecifier *TreeGenerator::tokEnumSpecifier()
 
 TOKEN::TypedefName *TreeGenerator::tokTypedefName()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::TypedefName)
+    std::size_t beginIdx{mIdx};
+
     if(TOKEN::Identifier *i = tokIdentifier();
         i != nullptr)
-        return new TOKEN::TypedefName(i);
+        return registerToCache(new TOKEN::TypedefName(i), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::TypeName *TreeGenerator::tokTypeName()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::TypeName)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
     TOKEN::SpecifierQualifierList *sql = nullptr;
     TOKEN::AbstractDeclarator *ad = nullptr;
 
     if((sql = tokSpecifierQualifierList()) != nullptr
         && (ad = tokAbstractDeclarator(), true))
-        return new TOKEN::TypeName(sql, ad);
+        return registerToCache(new TOKEN::TypeName(sql, ad), beginIdx);
     else
     {
         mIdx = pre;
@@ -814,11 +913,14 @@ TOKEN::TypeName *TreeGenerator::tokTypeName()
 
 TOKEN::Initializer *TreeGenerator::tokInitializer()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::Initializer)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::AssignmentExpression *ae = nullptr;
         (ae = tokAssignmentExpression()) != nullptr)
-        return new TOKEN::Initializer(ae);
+        return registerToCache(new TOKEN::Initializer(ae), beginIdx);
     else
     {
         mIdx = pre;
@@ -830,7 +932,7 @@ TOKEN::Initializer *TreeGenerator::tokInitializer()
             && (il = tokInitializerList()) != nullptr
             && (isMatch(TOKEN::Punctuator::Tag::COMMA), true)
             && isMatch(TOKEN::Punctuator::Tag::R_CURLY_BRACKET))
-        return new TOKEN::Initializer(il);
+        return registerToCache(new TOKEN::Initializer(il), beginIdx);
     else
     {
         mIdx = pre;
@@ -842,6 +944,9 @@ TOKEN::Initializer *TreeGenerator::tokInitializer()
 
 TOKEN::LogicalORExpression *TreeGenerator::tokLogicalORExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::LogicalORExpression)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::LogicalANDExpression*> seq;
 
     TOKEN::LogicalANDExpression *lande = tokLogicalANDExpression();
@@ -863,11 +968,14 @@ TOKEN::LogicalORExpression *TreeGenerator::tokLogicalORExpression()
         }
     }
 
-    return new TOKEN::LogicalORExpression(std::move(seq));
+    return registerToCache(new TOKEN::LogicalORExpression(std::move(seq)), beginIdx);
 }
 
 TOKEN::Expression *TreeGenerator::tokExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::Expression)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::AssignmentExpression*> seq;
     
     TOKEN::AssignmentExpression *ae = tokAssignmentExpression();
@@ -889,11 +997,14 @@ TOKEN::Expression *TreeGenerator::tokExpression()
         }
     }
 
-    return new TOKEN::Expression(std::move(seq));
+    return registerToCache(new TOKEN::Expression(std::move(seq)), beginIdx);
 }
 
 TOKEN::TypeQualifierList *TreeGenerator::tokTypeQualifierList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::TypeQualifierList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::TypeQualifier*> seq;
     for(TOKEN::TypeQualifier *tq = tokTypeQualifier();
         tq != nullptr;
@@ -901,20 +1012,23 @@ TOKEN::TypeQualifierList *TreeGenerator::tokTypeQualifierList()
         seq.push_back(tq);
     
     if(!seq.empty())
-        return new TOKEN::TypeQualifierList(std::move(seq));
+        return registerToCache(new TOKEN::TypeQualifierList(std::move(seq)), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::AssignmentExpression *TreeGenerator::tokAssignmentExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::AssignmentExpression)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::AssignmentExpression::Sue_ao_ae s;
         (s.ue = tokUnaryExpression()) != nullptr
             && (s.ao = tokAssignmentOperator()) != nullptr
             && (s.ae = tokAssignmentExpression()) != nullptr)
-        return new TOKEN::AssignmentExpression(s);
+        return registerToCache(new TOKEN::AssignmentExpression(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -925,7 +1039,7 @@ TOKEN::AssignmentExpression *TreeGenerator::tokAssignmentExpression()
 
     if(TOKEN::AssignmentExpression::Sce s;
         (s.ce = tokConditionalExpression()) != nullptr)
-        return new TOKEN::AssignmentExpression(s);
+        return registerToCache(new TOKEN::AssignmentExpression(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -937,15 +1051,18 @@ TOKEN::AssignmentExpression *TreeGenerator::tokAssignmentExpression()
 
 TOKEN::ParameterTypeList *TreeGenerator::tokParameterTypeList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::ParameterTypeList)
+    std::size_t beginIdx{mIdx};
+
     if(TOKEN::ParameterList *pl = tokParameterList();
         pl != nullptr)
     {
         std::size_t pre = mIdx;
         if(isMatch(TOKEN::Punctuator::Tag::COMMA)
             && isMatch(TOKEN::Punctuator::Tag::TRIPLE_PERIOD))
-            return new TOKEN::ParameterTypeList(pl, true);
+            return registerToCache(new TOKEN::ParameterTypeList(pl, true), beginIdx);
         else if(mIdx = pre, true)
-            return new TOKEN::ParameterTypeList(pl, false);
+            return registerToCache(new TOKEN::ParameterTypeList(pl, false), beginIdx);
     }
 
     return nullptr;
@@ -953,6 +1070,9 @@ TOKEN::ParameterTypeList *TreeGenerator::tokParameterTypeList()
 
 TOKEN::IdentifierList *TreeGenerator::tokIdentifierList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::IdentifierList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::Identifier*> seq;
 
     TOKEN::Identifier *i = tokIdentifier();
@@ -974,16 +1094,19 @@ TOKEN::IdentifierList *TreeGenerator::tokIdentifierList()
         }
     }
 
-    return new TOKEN::IdentifierList(std::move(seq));
+    return registerToCache(new TOKEN::IdentifierList(std::move(seq)), beginIdx);
 }
 
 TOKEN::Identifier *TreeGenerator::tokIdentifier()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::Identifier)
+    std::size_t beginIdx{mIdx};
+
     if(mIdx < mSeq.size()
         && std::holds_alternative<TOKEN::Identifier*>(mSeq[mIdx]->var))
     {
         if(KEYWORD_MAP.find(TOKEN::str(mSeq[mIdx])) == KEYWORD_MAP.end())
-            return mIdx++, std::get<TOKEN::Identifier*>(mSeq[mIdx - 1]->var)->copy();
+            return mIdx++, registerToCache(std::get<TOKEN::Identifier*>(mSeq[mIdx - 1]->var)->copy(), beginIdx);
     }
 
     return nullptr;
@@ -991,18 +1114,24 @@ TOKEN::Identifier *TreeGenerator::tokIdentifier()
 
 TOKEN::BlockItem *TreeGenerator::tokBlockItem()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::BlockItem)
+    std::size_t beginIdx{mIdx};
+
     if(auto *s{tokStatement()};
         bool(s))
-        return new TOKEN::BlockItem{s};
+        return registerToCache(new TOKEN::BlockItem{s}, beginIdx);
     else if(auto *d{tokDeclaration()};
         bool(d))
-        return new TOKEN::BlockItem{d};
+        return registerToCache(new TOKEN::BlockItem{d}, beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::StructOrUnion *TreeGenerator::tokStructOrUnion()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::StructOrUnion)
+    std::size_t beginIdx{mIdx};
+
     TOKEN::StructOrUnion::Tag tag = TOKEN::StructOrUnion::Tag::NONE;
 
     if(isMatch(TOKEN::Keyword::Tag::STRUCT))
@@ -1011,13 +1140,16 @@ TOKEN::StructOrUnion *TreeGenerator::tokStructOrUnion()
         tag = TOKEN::StructOrUnion::Tag::UNION;
     
     if(tag != TOKEN::StructOrUnion::Tag::NONE)
-        return new TOKEN::StructOrUnion(tag);
+        return registerToCache(new TOKEN::StructOrUnion(tag), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::StructDeclarationList *TreeGenerator::tokStructDeclarationList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::StructDeclarationList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::StructDeclaration*> seq;
     
     for(TOKEN::StructDeclaration *sd = tokStructDeclaration();
@@ -1026,13 +1158,16 @@ TOKEN::StructDeclarationList *TreeGenerator::tokStructDeclarationList()
         seq.push_back(sd);
     
     if(!seq.empty())
-        return new TOKEN::StructDeclarationList(std::move(seq));
+        return registerToCache(new TOKEN::StructDeclarationList(std::move(seq)), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::EnumeratorList *TreeGenerator::tokEnumeratorList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::EnumeratorList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::Enumerator*> seq;
 
     TOKEN::Enumerator *e = tokEnumerator();
@@ -1054,11 +1189,14 @@ TOKEN::EnumeratorList *TreeGenerator::tokEnumeratorList()
         }
     }
 
-    return new TOKEN::EnumeratorList(std::move(seq));
+    return registerToCache(new TOKEN::EnumeratorList(std::move(seq)), beginIdx);
 }
 
 TOKEN::SpecifierQualifierList *TreeGenerator::tokSpecifierQualifierList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::SpecifierQualifierList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::SpecifierQualifierList::Var> seq;
 
     bool hasTypeSpecifier{false};
@@ -1093,19 +1231,22 @@ TOKEN::SpecifierQualifierList *TreeGenerator::tokSpecifierQualifierList()
     }
 
     if(!seq.empty())
-        return new TOKEN::SpecifierQualifierList(std::move(seq));
+        return registerToCache(new TOKEN::SpecifierQualifierList(std::move(seq)), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::AbstractDeclarator *TreeGenerator::tokAbstractDeclarator()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::AbstractDeclarator)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::AbstractDeclarator::Sp_dad s;
         (s = tokPointer(), true)
             && (s.dad = tokDirectAbstractDeclarator()) != nullptr)
-        return new TOKEN::AbstractDeclarator(s);
+        return registerToCache(new TOKEN::AbstractDeclarator(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1115,7 +1256,7 @@ TOKEN::AbstractDeclarator *TreeGenerator::tokAbstractDeclarator()
 
     if(TOKEN::AbstractDeclarator::Sp s;
         (s.p = tokPointer()) != nullptr)
-        return new TOKEN::AbstractDeclarator(s);
+        return registerToCache(new TOKEN::AbstractDeclarator(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1127,6 +1268,9 @@ TOKEN::AbstractDeclarator *TreeGenerator::tokAbstractDeclarator()
 
 TOKEN::InitializerList *TreeGenerator::tokInitializerList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::InitializerList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::InitializerList::Sd_i> seq;
 
     while(true)
@@ -1146,13 +1290,16 @@ TOKEN::InitializerList *TreeGenerator::tokInitializerList()
     }
 
     if(!seq.empty())
-        return new TOKEN::InitializerList(std::move(seq));
+        return registerToCache(new TOKEN::InitializerList(std::move(seq)), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::LogicalANDExpression *TreeGenerator::tokLogicalANDExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::LogicalANDExpression)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::InclusiveORExpression*> seq;
 
     TOKEN::InclusiveORExpression *iore = tokInclusiveORExpression();
@@ -1174,16 +1321,19 @@ TOKEN::LogicalANDExpression *TreeGenerator::tokLogicalANDExpression()
         }
     }
 
-    return new TOKEN::LogicalANDExpression(std::move(seq));
+    return registerToCache(new TOKEN::LogicalANDExpression(std::move(seq)), beginIdx);
 }
 
 TOKEN::UnaryExpression *TreeGenerator::tokUnaryExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::UnaryExpression)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::UnaryExpression::Spe s;
         (s.pe = tokPostfixExpression()) != nullptr)
-        return new TOKEN::UnaryExpression(s);
+        return registerToCache(new TOKEN::UnaryExpression(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1193,7 +1343,7 @@ TOKEN::UnaryExpression *TreeGenerator::tokUnaryExpression()
     if(TOKEN::UnaryExpression::Si_ue s;
         isMatch(TOKEN::Punctuator::Tag::INCREMENT)
             && (s.ue = tokUnaryExpression()) != nullptr)
-        return new TOKEN::UnaryExpression(s);
+        return registerToCache(new TOKEN::UnaryExpression(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1203,7 +1353,7 @@ TOKEN::UnaryExpression *TreeGenerator::tokUnaryExpression()
     if(TOKEN::UnaryExpression::Sd_ue s;
         isMatch(TOKEN::Punctuator::Tag::DECREMENT)
             && (s.ue = tokUnaryExpression()) != nullptr)
-        return new TOKEN::UnaryExpression(s);
+        return registerToCache(new TOKEN::UnaryExpression(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1213,7 +1363,7 @@ TOKEN::UnaryExpression *TreeGenerator::tokUnaryExpression()
     if(TOKEN::UnaryExpression::Suo_ce s;
         (s.uo = tokUnaryOperator()) != nullptr
         && (s.ce = tokCastExpression()) != nullptr)
-        return new TOKEN::UnaryExpression(s);
+        return registerToCache(new TOKEN::UnaryExpression(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1224,7 +1374,7 @@ TOKEN::UnaryExpression *TreeGenerator::tokUnaryExpression()
     if(TOKEN::UnaryExpression::Ss_ue s;
         isMatch(TOKEN::Keyword::Tag::SIZEOF)
             && (s.ue = tokUnaryExpression()) != nullptr)
-        return new TOKEN::UnaryExpression(s);
+        return registerToCache(new TOKEN::UnaryExpression(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1236,7 +1386,7 @@ TOKEN::UnaryExpression *TreeGenerator::tokUnaryExpression()
             && isMatch(TOKEN::Punctuator::Tag::L_PARENTHESIS)
             && (s.tn = tokTypeName()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS))
-        return new TOKEN::UnaryExpression(s);
+        return registerToCache(new TOKEN::UnaryExpression(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1248,7 +1398,7 @@ TOKEN::UnaryExpression *TreeGenerator::tokUnaryExpression()
             && isMatch(TOKEN::Punctuator::Tag::L_PARENTHESIS)
             && (s.tn = tokTypeName()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS))
-        return new TOKEN::UnaryExpression(s);
+        return registerToCache(new TOKEN::UnaryExpression(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1260,6 +1410,9 @@ TOKEN::UnaryExpression *TreeGenerator::tokUnaryExpression()
 
 TOKEN::AssignmentOperator *TreeGenerator::tokAssignmentOperator()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::AssignmentOperator)
+    std::size_t beginIdx{mIdx};
+
     TOKEN::AssignmentOperator::Tag tag = TOKEN::AssignmentOperator::Tag::NONE;
 
     if(isMatch(TOKEN::Punctuator::Tag::ASSIGNMENT))
@@ -1286,13 +1439,16 @@ TOKEN::AssignmentOperator *TreeGenerator::tokAssignmentOperator()
         tag = TOKEN::AssignmentOperator::Tag::OR;
 
     if(tag != TOKEN::AssignmentOperator::Tag::NONE)
-        return new TOKEN::AssignmentOperator(tag);
+        return registerToCache(new TOKEN::AssignmentOperator(tag), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::ParameterList *TreeGenerator::tokParameterList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::ParameterList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::ParameterDeclaration*> seq;
 
     TOKEN::ParameterDeclaration *pd = tokParameterDeclaration();
@@ -1314,48 +1470,54 @@ TOKEN::ParameterList *TreeGenerator::tokParameterList()
         }
     }
 
-    return new TOKEN::ParameterList(std::move(seq));
+    return registerToCache(new TOKEN::ParameterList(std::move(seq)), beginIdx);
 }
 
 TOKEN::Statement *TreeGenerator::tokStatement()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::Statement)
+    std::size_t beginIdx{mIdx};
+
     if(TOKEN::LabeledStatement *ls = tokLabeledStatement();
         ls != nullptr)
-        return new TOKEN::Statement(ls);
+        return registerToCache(new TOKEN::Statement(ls), beginIdx);
     else if(TOKEN::CompoundStatement *cs = tokCompoundStatement();
         cs != nullptr)
-        return new TOKEN::Statement(cs);
+        return registerToCache(new TOKEN::Statement(cs), beginIdx);
     else if(TOKEN::ExpressionStatement *es = tokExpressionStatement();
         es != nullptr)
-        return new TOKEN::Statement(es);
+        return registerToCache(new TOKEN::Statement(es), beginIdx);
     else if(TOKEN::SelectionStatement *ss = tokSelectionStatement();
         ss != nullptr)
-        return new TOKEN::Statement(ss);
+        return registerToCache(new TOKEN::Statement(ss), beginIdx);
     else if(TOKEN::IterationStatement *is = tokIterationStatement();
         is != nullptr)
-        return new TOKEN::Statement(is);
+        return registerToCache(new TOKEN::Statement(is), beginIdx);
     else if(TOKEN::JumpStatement *js = tokJumpStatement();
         js != nullptr)
-        return new TOKEN::Statement(js);
+        return registerToCache(new TOKEN::Statement(js), beginIdx);
     else if(TOKEN::AttributeStatement *as{tokAttributeStatement()};
         as != nullptr)
-        return new TOKEN::Statement{as};
+        return registerToCache(new TOKEN::Statement{as}, beginIdx);
     else if(TOKEN::AsmStatement *as{tokAsmStatement()};
         as != nullptr)
-        return new TOKEN::Statement{as};
+        return registerToCache(new TOKEN::Statement{as}, beginIdx);
     
     return nullptr;
 }
 
 TOKEN::StructDeclaration *TreeGenerator::tokStructDeclaration()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::StructDeclaration)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::StructDeclaration::Ssql_sdl s;
         (s.sql = tokSpecifierQualifierList()) != nullptr
             && (s.sdl = tokStructDeclaratorList(), true)
             && isMatch(TOKEN::Punctuator::Tag::SEMICOLON))
-        return new TOKEN::StructDeclaration(s);
+        return registerToCache(new TOKEN::StructDeclaration(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1365,7 +1527,7 @@ TOKEN::StructDeclaration *TreeGenerator::tokStructDeclaration()
 
     if(TOKEN::StructDeclaration::Ssad s;
         (s.sad = tokStaticAssertDeclaration()) != nullptr)
-        return new TOKEN::StructDeclaration(s);
+        return registerToCache(new TOKEN::StructDeclaration(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1377,6 +1539,9 @@ TOKEN::StructDeclaration *TreeGenerator::tokStructDeclaration()
 
 TOKEN::Enumerator *TreeGenerator::tokEnumerator()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::Enumerator)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::Enumerator::Sec_ce s;
@@ -1384,7 +1549,7 @@ TOKEN::Enumerator *TreeGenerator::tokEnumerator()
             && (s.asl = tokAttributeSpecifierList(), true)
             && isMatch(TOKEN::Punctuator::Tag::ASSIGNMENT)
             && (s.ce = tokConstantExpression()) != nullptr)
-        return new TOKEN::Enumerator(s);
+        return registerToCache(new TOKEN::Enumerator(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1396,7 +1561,7 @@ TOKEN::Enumerator *TreeGenerator::tokEnumerator()
     if(TOKEN::Enumerator::Sec s;
         (s.ec = tokEnumerationConstant()) != nullptr
         && (s.asl = tokAttributeSpecifierList(), true))
-        return new TOKEN::Enumerator(s);
+        return registerToCache(new TOKEN::Enumerator(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1409,6 +1574,9 @@ TOKEN::Enumerator *TreeGenerator::tokEnumerator()
 
 TOKEN::DirectAbstractDeclarator *TreeGenerator::tokDirectAbstractDeclarator()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::DirectAbstractDeclarator)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
     std::vector<TOKEN::DirectAbstractDeclarator::Var> seq;
 
@@ -1505,19 +1673,22 @@ TOKEN::DirectAbstractDeclarator *TreeGenerator::tokDirectAbstractDeclarator()
     }
 
     if(!seq.empty())
-        return new TOKEN::DirectAbstractDeclarator(std::move(seq));
+        return registerToCache(new TOKEN::DirectAbstractDeclarator(std::move(seq)), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::Designation *TreeGenerator::tokDesignation()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::Designation)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
     TOKEN::DesignatorList *dl = nullptr;
     
     if((dl = tokDesignatorList()) != nullptr
         && isMatch(TOKEN::Punctuator::Tag::ASSIGNMENT))
-        return new TOKEN::Designation(dl);
+        return registerToCache(new TOKEN::Designation(dl), beginIdx);
     else
     {
         mIdx = pre;
@@ -1529,6 +1700,9 @@ TOKEN::Designation *TreeGenerator::tokDesignation()
 
 TOKEN::InclusiveORExpression *TreeGenerator::tokInclusiveORExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::InclusiveORExpression)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::ExclusiveORExpression*> seq;
 
     TOKEN::ExclusiveORExpression *eore = tokExclusiveORExpression();
@@ -1551,11 +1725,14 @@ TOKEN::InclusiveORExpression *TreeGenerator::tokInclusiveORExpression()
         }
     }
 
-    return new TOKEN::InclusiveORExpression(std::move(seq));
+    return registerToCache(new TOKEN::InclusiveORExpression(std::move(seq)), beginIdx);
 }
 
 TOKEN::PostfixExpression *TreeGenerator::tokPostfixExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::PostfixExpression)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::PostfixExpression::Var> seq;
     std::size_t pre = mIdx;
 
@@ -1652,11 +1829,14 @@ TOKEN::PostfixExpression *TreeGenerator::tokPostfixExpression()
         break;
     }
 
-    return new TOKEN::PostfixExpression(std::move(seq));
+    return registerToCache(new TOKEN::PostfixExpression(std::move(seq)), beginIdx);
 }
 
 TOKEN::CastExpression *TreeGenerator::tokCastExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::CastExpression)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::CastExpression::Stn_ce s;
@@ -1664,7 +1844,7 @@ TOKEN::CastExpression *TreeGenerator::tokCastExpression()
             && (s.tn = tokTypeName()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS)
             && (s.ce = tokCastExpression()) != nullptr)
-        return new TOKEN::CastExpression(s);
+        return registerToCache(new TOKEN::CastExpression(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1674,7 +1854,7 @@ TOKEN::CastExpression *TreeGenerator::tokCastExpression()
 
     if(TOKEN::CastExpression::Sue s;
         (s.ue = tokUnaryExpression()) != nullptr)
-        return new TOKEN::CastExpression(s);
+        return registerToCache(new TOKEN::CastExpression(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1686,6 +1866,9 @@ TOKEN::CastExpression *TreeGenerator::tokCastExpression()
 
 TOKEN::UnaryOperator *TreeGenerator::tokUnaryOperator()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::UnaryOperator)
+    std::size_t beginIdx{mIdx};
+
     TOKEN::UnaryOperator::Tag tag = TOKEN::UnaryOperator::Tag::NONE;
 
     if(isMatch(TOKEN::Punctuator::Tag::BITAND))
@@ -1702,19 +1885,22 @@ TOKEN::UnaryOperator *TreeGenerator::tokUnaryOperator()
         tag = TOKEN::UnaryOperator::Tag::NOT;
     
     if(tag != TOKEN::UnaryOperator::Tag::NONE)
-        return new TOKEN::UnaryOperator(tag);
+        return registerToCache(new TOKEN::UnaryOperator(tag), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::ParameterDeclaration *TreeGenerator::tokParameterDeclaration()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::ParameterDeclaration)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::ParameterDeclaration::Sds_d s;
         (s.ds = tokDeclarationSpecifiers()) != nullptr
             && (s.d = tokDeclarator()) != nullptr)
-        return new TOKEN::ParameterDeclaration(s);
+        return registerToCache(new TOKEN::ParameterDeclaration(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1725,7 +1911,7 @@ TOKEN::ParameterDeclaration *TreeGenerator::tokParameterDeclaration()
     if(TOKEN::ParameterDeclaration::Sds_ad s;
         (s.ds = tokDeclarationSpecifiers()) != nullptr
             && (s.ad = tokAbstractDeclarator(), true))
-        return new TOKEN::ParameterDeclaration(s);
+        return registerToCache(new TOKEN::ParameterDeclaration(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1738,6 +1924,9 @@ TOKEN::ParameterDeclaration *TreeGenerator::tokParameterDeclaration()
 
 TOKEN::LabeledStatement *TreeGenerator::tokLabeledStatement()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::LabeledStatement)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::LabeledStatement::Si_s s;
@@ -1745,7 +1934,7 @@ TOKEN::LabeledStatement *TreeGenerator::tokLabeledStatement()
             && (s.asl = tokAttributeSpecifierList(), true)
             && isMatch(TOKEN::Punctuator::Tag::COLON)
             && (s.s = tokStatement()) != nullptr)
-        return new TOKEN::LabeledStatement(s);
+        return registerToCache(new TOKEN::LabeledStatement(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1759,7 +1948,7 @@ TOKEN::LabeledStatement *TreeGenerator::tokLabeledStatement()
             && (s.ce = tokConstantExpression()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::COLON)
             && (s.s = tokStatement()) != nullptr)
-        return new TOKEN::LabeledStatement(s);
+        return registerToCache(new TOKEN::LabeledStatement(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1767,11 +1956,27 @@ TOKEN::LabeledStatement *TreeGenerator::tokLabeledStatement()
         delete s.s;
     }
 
+    if(TOKEN::LabeledStatement::Sce_ce_s s;
+        isMatch(TOKEN::Keyword::Tag::CASE)
+            && (s.ce0 = tokConstantExpression()) != nullptr
+            && isMatch(TOKEN::Punctuator::Tag::TRIPLE_PERIOD)
+            && (s.ce1 = tokConstantExpression()) != nullptr
+            && isMatch(TOKEN::Punctuator::Tag::COLON)
+            && (s.s = tokStatement()) != nullptr)
+        return registerToCache(new TOKEN::LabeledStatement{s}, beginIdx);
+    else
+    {
+        mIdx = pre;
+        delete s.ce0;
+        delete s.ce1;
+        delete s.s;
+    }
+
     if(TOKEN::LabeledStatement::Ss s;
         isMatch(TOKEN::Keyword::Tag::DEFAULT)
             && isMatch(TOKEN::Punctuator::Tag::COLON)
             && (s.s = tokStatement()) != nullptr)
-        return new TOKEN::LabeledStatement(s);
+        return registerToCache(new TOKEN::LabeledStatement(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1783,18 +1988,24 @@ TOKEN::LabeledStatement *TreeGenerator::tokLabeledStatement()
 
 TOKEN::ExpressionStatement *TreeGenerator::tokExpressionStatement()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::ExpressionStatement)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
     TOKEN::Expression *e = nullptr;
 
     if((e = tokExpression(), true)
         && isMatch(TOKEN::Punctuator::Tag::SEMICOLON))
-        return new TOKEN::ExpressionStatement(e);
+        return registerToCache(new TOKEN::ExpressionStatement(e), beginIdx);
     else
         return mIdx = pre, nullptr;
 }
 
 TOKEN::SelectionStatement *TreeGenerator::tokSelectionStatement()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::SelectionStatement)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::SelectionStatement::Si_e_s_s s;
@@ -1805,7 +2016,7 @@ TOKEN::SelectionStatement *TreeGenerator::tokSelectionStatement()
             && (s.s0 = tokStatement()) != nullptr
             && isMatch(TOKEN::Keyword::Tag::ELSE)
             && (s.s1 = tokStatement()) != nullptr)
-        return new TOKEN::SelectionStatement(s);
+        return registerToCache(new TOKEN::SelectionStatement(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1820,7 +2031,7 @@ TOKEN::SelectionStatement *TreeGenerator::tokSelectionStatement()
             && (s.e = tokExpression()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS)
             && (s.s = tokStatement()) != nullptr)
-        return new TOKEN::SelectionStatement(s);
+        return registerToCache(new TOKEN::SelectionStatement(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1834,7 +2045,7 @@ TOKEN::SelectionStatement *TreeGenerator::tokSelectionStatement()
             && (s.e = tokExpression()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS)
             && (s.s = tokStatement()) != nullptr)
-        return new TOKEN::SelectionStatement(s);
+        return registerToCache(new TOKEN::SelectionStatement(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1847,6 +2058,9 @@ TOKEN::SelectionStatement *TreeGenerator::tokSelectionStatement()
 
 TOKEN::IterationStatement *TreeGenerator::tokIterationStatement()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::IterationStatement)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::IterationStatement::Sw_e_s s;
@@ -1855,7 +2069,7 @@ TOKEN::IterationStatement *TreeGenerator::tokIterationStatement()
             && (s.e = tokExpression()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS)
             && (s.s = tokStatement()) != nullptr)
-        return new TOKEN::IterationStatement(s);
+        return registerToCache(new TOKEN::IterationStatement(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1871,7 +2085,7 @@ TOKEN::IterationStatement *TreeGenerator::tokIterationStatement()
             && (s.e = tokExpression()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS)
             && isMatch(TOKEN::Punctuator::Tag::SEMICOLON))
-        return new TOKEN::IterationStatement(s);
+        return registerToCache(new TOKEN::IterationStatement(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1889,7 +2103,7 @@ TOKEN::IterationStatement *TreeGenerator::tokIterationStatement()
             && (s.e2 = tokExpression(), true)
             && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS)
             && (s.s = tokStatement()) != nullptr)
-        return new TOKEN::IterationStatement(s);
+        return registerToCache(new TOKEN::IterationStatement(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1908,7 +2122,7 @@ TOKEN::IterationStatement *TreeGenerator::tokIterationStatement()
             && (s.e1 = tokExpression(), true)
             && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS)
             && (s.s = tokStatement()) != nullptr)
-        return new TOKEN::IterationStatement(s);
+        return registerToCache(new TOKEN::IterationStatement(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1923,13 +2137,16 @@ TOKEN::IterationStatement *TreeGenerator::tokIterationStatement()
 
 TOKEN::JumpStatement *TreeGenerator::tokJumpStatement()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::JumpStatement)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::JumpStatement::Sg_i s;
         isMatch(TOKEN::Keyword::Tag::GOTO)
             && (s.i = tokIdentifier()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::SEMICOLON))
-        return new TOKEN::JumpStatement(s);
+        return registerToCache(new TOKEN::JumpStatement(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1938,13 +2155,13 @@ TOKEN::JumpStatement *TreeGenerator::tokJumpStatement()
 
     if(isMatch(TOKEN::Keyword::Tag::CONTINUE)
         && isMatch(TOKEN::Punctuator::Tag::SEMICOLON))
-        return new TOKEN::JumpStatement(TOKEN::JumpStatement::Sc());
+        return registerToCache(new TOKEN::JumpStatement(TOKEN::JumpStatement::Sc()), beginIdx);
     else
         mIdx = pre;
     
     if(isMatch(TOKEN::Keyword::Tag::BREAK)
         && isMatch(TOKEN::Punctuator::Tag::SEMICOLON))
-        return new TOKEN::JumpStatement(TOKEN::JumpStatement::Sb());
+        return registerToCache(new TOKEN::JumpStatement(TOKEN::JumpStatement::Sb()), beginIdx);
     else
         mIdx = pre;
 
@@ -1952,7 +2169,7 @@ TOKEN::JumpStatement *TreeGenerator::tokJumpStatement()
         isMatch(TOKEN::Keyword::Tag::RETURN)
             && (s.e = tokExpression(), true)
             && isMatch(TOKEN::Punctuator::Tag::SEMICOLON))
-        return new TOKEN::JumpStatement(s);
+        return registerToCache(new TOKEN::JumpStatement(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -1964,6 +2181,9 @@ TOKEN::JumpStatement *TreeGenerator::tokJumpStatement()
 
 TOKEN::StructDeclaratorList *TreeGenerator::tokStructDeclaratorList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::StructDeclaratorList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::StructDeclarator*> seq;
     
     TOKEN::StructDeclarator *sd = tokStructDeclarator();
@@ -1985,20 +2205,26 @@ TOKEN::StructDeclaratorList *TreeGenerator::tokStructDeclaratorList()
         }
     }
 
-    return new TOKEN::StructDeclaratorList(std::move(seq));
+    return registerToCache(new TOKEN::StructDeclaratorList(std::move(seq)), beginIdx);
 }
 
 TOKEN::EnumerationConstant *TreeGenerator::tokEnumerationConstant()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::EnumerationConstant)
+    std::size_t beginIdx{mIdx};
+
     if(TOKEN::Identifier *i = tokIdentifier();
         i != nullptr)
-        return new TOKEN::EnumerationConstant(i);
+        return registerToCache(new TOKEN::EnumerationConstant(i), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::DesignatorList *TreeGenerator::tokDesignatorList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::DesignatorList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::Designator*> seq;
     for(TOKEN::Designator *d = tokDesignator();
         d != nullptr;
@@ -2006,13 +2232,16 @@ TOKEN::DesignatorList *TreeGenerator::tokDesignatorList()
         seq.push_back(d);
     
     if(!seq.empty())
-        return new TOKEN::DesignatorList(std::move(seq));
+        return registerToCache(new TOKEN::DesignatorList(std::move(seq)), beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::ExclusiveORExpression *TreeGenerator::tokExclusiveORExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::ExclusiveORExpression)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::ANDExpression*> seq;
 
     TOKEN::ANDExpression *ande = tokANDExpression();
@@ -2034,28 +2263,31 @@ TOKEN::ExclusiveORExpression *TreeGenerator::tokExclusiveORExpression()
         }
     }
 
-    return new TOKEN::ExclusiveORExpression(std::move(seq));
+    return registerToCache(new TOKEN::ExclusiveORExpression(std::move(seq)), beginIdx);
 }
 
 TOKEN::PrimaryExpression *TreeGenerator::tokPrimaryExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::PrimaryExpression)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
-    
+
     if(TOKEN::Identifier *i = tokIdentifier();
         i != nullptr)
-        return new TOKEN::PrimaryExpression(i);
+        return registerToCache(new TOKEN::PrimaryExpression(i), beginIdx);
     else if(TOKEN::Constant *c = tokConstant();
         c != nullptr)
-        return new TOKEN::PrimaryExpression(c);
+        return registerToCache(new TOKEN::PrimaryExpression(c), beginIdx);
     else if(TOKEN::StringLiteral *sl = tokStringLiteral();
         sl != nullptr)
-        return new TOKEN::PrimaryExpression(sl);
+        return registerToCache(new TOKEN::PrimaryExpression(sl), beginIdx);
     
     if(TOKEN::Expression *e = nullptr;
         isMatch(TOKEN::Punctuator::Tag::L_PARENTHESIS)
             && (e = tokExpression()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS))
-        return new TOKEN::PrimaryExpression(e);
+        return registerToCache(new TOKEN::PrimaryExpression(e), beginIdx);
     else
     {
         mIdx = pre;
@@ -2064,13 +2296,16 @@ TOKEN::PrimaryExpression *TreeGenerator::tokPrimaryExpression()
 
     if(TOKEN::GenericSelection *gs = tokGenericSelection();
         gs != nullptr)
-        return new TOKEN::PrimaryExpression(gs);
+        return registerToCache(new TOKEN::PrimaryExpression(gs), beginIdx);
     
     return nullptr;
 }
 
 TOKEN::ArgumentExpressionList *TreeGenerator::tokArgumentExpressionList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::ArgumentExpressionList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::AssignmentExpression*> seq;
 
     TOKEN::AssignmentExpression *ae = tokAssignmentExpression();
@@ -2093,18 +2328,21 @@ TOKEN::ArgumentExpressionList *TreeGenerator::tokArgumentExpressionList()
         }
     }
 
-    return new TOKEN::ArgumentExpressionList(std::move(seq));
+    return registerToCache(new TOKEN::ArgumentExpressionList(std::move(seq)), beginIdx);
 }
 
 TOKEN::StructDeclarator *TreeGenerator::tokStructDeclarator()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::StructDeclarator)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::StructDeclarator::Sd_ce s;
         (s.d = tokDeclarator(), true)
             && isMatch(TOKEN::Punctuator::Tag::COLON)
             && (s.ce = tokConstantExpression()) != nullptr)
-        return new TOKEN::StructDeclarator(s);
+        return registerToCache(new TOKEN::StructDeclarator(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -2114,7 +2352,7 @@ TOKEN::StructDeclarator *TreeGenerator::tokStructDeclarator()
 
     if(TOKEN::StructDeclarator::Sd s;
         (s.d = tokDeclarator()) != nullptr)
-        return new TOKEN::StructDeclarator(s);
+        return registerToCache(new TOKEN::StructDeclarator(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -2126,13 +2364,16 @@ TOKEN::StructDeclarator *TreeGenerator::tokStructDeclarator()
 
 TOKEN::Designator *TreeGenerator::tokDesignator()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::Designator)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::ConstantExpression *ce = nullptr;
         isMatch(TOKEN::Punctuator::Tag::L_SQUARE_BRACKET)
             && (ce = tokConstantExpression()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::R_SQUARE_BRACKET))
-        return new TOKEN::Designator(ce);
+        return registerToCache(new TOKEN::Designator(ce), beginIdx);
     else
     {
         mIdx = pre;
@@ -2142,7 +2383,7 @@ TOKEN::Designator *TreeGenerator::tokDesignator()
     if(TOKEN::Identifier *i = nullptr;
         isMatch(TOKEN::Punctuator::Tag::PERIOD)
             && (i = tokIdentifier()) != nullptr)
-        return new TOKEN::Designator(i);
+        return registerToCache(new TOKEN::Designator(i), beginIdx);
     else
     {
         mIdx = pre;
@@ -2154,6 +2395,9 @@ TOKEN::Designator *TreeGenerator::tokDesignator()
 
 TOKEN::ANDExpression *TreeGenerator::tokANDExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::ANDExpression)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::EqualityExpression*> seq;
 
     TOKEN::EqualityExpression *ee = tokEqualityExpression();
@@ -2175,29 +2419,35 @@ TOKEN::ANDExpression *TreeGenerator::tokANDExpression()
         }
     }
 
-    return new TOKEN::ANDExpression(std::move(seq));
+    return registerToCache(new TOKEN::ANDExpression(std::move(seq)), beginIdx);
 }
 
 TOKEN::Constant *TreeGenerator::tokConstant()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::Constant)
+    std::size_t beginIdx{mIdx};
+
     if(TOKEN::IntegerConstant *ic = convIntegerConstant();
         ic != nullptr)
-        return new TOKEN::Constant(ic);
+        return registerToCache(new TOKEN::Constant(ic), beginIdx);
     else if(TOKEN::FloatingConstant *fc = convFloatingConstant();
         fc != nullptr)
-        return new TOKEN::Constant(fc);
+        return registerToCache(new TOKEN::Constant(fc), beginIdx);
     else if(TOKEN::EnumerationConstant *ec = convEnumerationConstant();
         ec != nullptr)
-        return new TOKEN::Constant(ec);
+        return registerToCache(new TOKEN::Constant(ec), beginIdx);
     else if(TOKEN::CharacterConstant *cc = convCharacterConstant();
         cc != nullptr)
-        return new TOKEN::Constant(cc);
+        return registerToCache(new TOKEN::Constant(cc), beginIdx);
     
     return nullptr;
 }
 
 TOKEN::GenericSelection *TreeGenerator::tokGenericSelection()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::GenericSelection)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
     TOKEN::AssignmentExpression *ae = nullptr;
     TOKEN::GenericAssocList *gal = nullptr;
@@ -2208,7 +2458,7 @@ TOKEN::GenericSelection *TreeGenerator::tokGenericSelection()
         && isMatch(TOKEN::Punctuator::Tag::COMMA)
         && (gal = tokGenericAssocList()) != nullptr
         && isMatch(TOKEN::Punctuator::Tag::R_PARENTHESIS))
-        return new TOKEN::GenericSelection(ae, gal);
+        return registerToCache(new TOKEN::GenericSelection(ae, gal), beginIdx);
     else
     {
         mIdx = pre;
@@ -2221,6 +2471,9 @@ TOKEN::GenericSelection *TreeGenerator::tokGenericSelection()
 
 TOKEN::EqualityExpression *TreeGenerator::tokEqualityExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::EqualityExpression)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::EqualityExpression::Var> seq;
 
     TOKEN::RelationalExpression *re = tokRelationalExpression();
@@ -2254,11 +2507,14 @@ TOKEN::EqualityExpression *TreeGenerator::tokEqualityExpression()
         break;
     }
 
-    return new TOKEN::EqualityExpression(std::move(seq));
+    return registerToCache(new TOKEN::EqualityExpression(std::move(seq)), beginIdx);
 }
 
 TOKEN::GenericAssocList *TreeGenerator::tokGenericAssocList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::GenericAssocList)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::GenericAssociation*> seq;
 
     TOKEN::GenericAssociation *ga = tokGenericAssociation();
@@ -2280,11 +2536,14 @@ TOKEN::GenericAssocList *TreeGenerator::tokGenericAssocList()
         }
     }
 
-    return new TOKEN::GenericAssocList(std::move(seq));
+    return registerToCache(new TOKEN::GenericAssocList(std::move(seq)), beginIdx);
 }
 
 TOKEN::RelationalExpression *TreeGenerator::tokRelationalExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::RelationalExpression)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::RelationalExpression::Var> seq;
     
     TOKEN::ShiftExpression *se = tokShiftExpression();
@@ -2336,18 +2595,21 @@ TOKEN::RelationalExpression *TreeGenerator::tokRelationalExpression()
         break;
     }
 
-    return new TOKEN::RelationalExpression(std::move(seq));
+    return registerToCache(new TOKEN::RelationalExpression(std::move(seq)), beginIdx);
 }
 
 TOKEN::GenericAssociation *TreeGenerator::tokGenericAssociation()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::GenericAssociation)
+    std::size_t beginIdx{mIdx};
+
     std::size_t pre = mIdx;
 
     if(TOKEN::GenericAssociation::Stn_ae s;
         (s.tn = tokTypeName()) != nullptr
             && isMatch(TOKEN::Punctuator::Tag::COLON)
             && (s.ae = tokAssignmentExpression()) != nullptr)
-        return new TOKEN::GenericAssociation(s);
+        return registerToCache(new TOKEN::GenericAssociation(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -2357,7 +2619,7 @@ TOKEN::GenericAssociation *TreeGenerator::tokGenericAssociation()
 
     if(TOKEN::GenericAssociation::Sae s;
         (s.ae = tokAssignmentExpression()) != nullptr)
-        return new TOKEN::GenericAssociation(s);
+        return registerToCache(new TOKEN::GenericAssociation(s), beginIdx);
     else
     {
         mIdx = pre;
@@ -2369,6 +2631,9 @@ TOKEN::GenericAssociation *TreeGenerator::tokGenericAssociation()
 
 TOKEN::ShiftExpression *TreeGenerator::tokShiftExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::ShiftExpression)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::ShiftExpression::Var> seq;
 
     TOKEN::AdditiveExpression *ae = tokAdditiveExpression();
@@ -2402,11 +2667,14 @@ TOKEN::ShiftExpression *TreeGenerator::tokShiftExpression()
         break;
     }
 
-    return new TOKEN::ShiftExpression(std::move(seq));
+    return registerToCache(new TOKEN::ShiftExpression(std::move(seq)), beginIdx);
 }
 
 TOKEN::AdditiveExpression *TreeGenerator::tokAdditiveExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::AdditiveExpression)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::AdditiveExpression::Var> seq;
 
     TOKEN::MultiplicativeExpression *me = tokMultiplicativeExpression();
@@ -2440,11 +2708,14 @@ TOKEN::AdditiveExpression *TreeGenerator::tokAdditiveExpression()
         break;
     }
 
-    return new TOKEN::AdditiveExpression(std::move(seq));
+    return registerToCache(new TOKEN::AdditiveExpression(std::move(seq)), beginIdx);
 }
 
 TOKEN::MultiplicativeExpression *TreeGenerator::tokMultiplicativeExpression()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::MultiplicativeExpression)
+    std::size_t beginIdx{mIdx};
+
     std::vector<TOKEN::MultiplicativeExpression::Var> seq;
 
     TOKEN::CastExpression *ce = tokCastExpression();
@@ -2487,11 +2758,14 @@ TOKEN::MultiplicativeExpression *TreeGenerator::tokMultiplicativeExpression()
         break;
     }
 
-    return new TOKEN::MultiplicativeExpression(std::move(seq));
+    return registerToCache(new TOKEN::MultiplicativeExpression(std::move(seq)), beginIdx);
 }
 
 TOKEN::AttributeSpecifier *TreeGenerator::tokAttributeSpecifier()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::AttributeSpecifier)
+    std::size_t beginIdx{mIdx};
+
     using namespace TOKEN;
 
     std::size_t pre{mIdx};
@@ -2543,11 +2817,14 @@ TOKEN::AttributeSpecifier *TreeGenerator::tokAttributeSpecifier()
         return nullptr;
     }
 
-    return new AttributeSpecifier{std::move(seq)};
+    return registerToCache(new AttributeSpecifier{std::move(seq)}, beginIdx);
 }
 
 TOKEN::AttributeSpecifierList *TreeGenerator::tokAttributeSpecifierList()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::AttributeSpecifierList)
+    std::size_t beginIdx{mIdx};
+
     using namespace TOKEN;
 
     std::vector<AttributeSpecifier*> seq;
@@ -2559,11 +2836,14 @@ TOKEN::AttributeSpecifierList *TreeGenerator::tokAttributeSpecifierList()
     if(seq.empty())
         return nullptr;
     
-    return new AttributeSpecifierList{std::move(seq)};
+    return registerToCache(new AttributeSpecifierList{std::move(seq)}, beginIdx);
 }
 
 TOKEN::AttributeStatement *TreeGenerator::tokAttributeStatement()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::AttributeStatement)
+    std::size_t beginIdx{mIdx};
+
     using namespace TOKEN;
 
     std::size_t preIdx{mIdx};
@@ -2571,7 +2851,7 @@ TOKEN::AttributeStatement *TreeGenerator::tokAttributeStatement()
     auto *asl{tokAttributeSpecifierList()};
     if(asl != nullptr
         && isMatch(Punctuator::Tag::SEMICOLON))
-        return new AttributeStatement{asl};
+        return registerToCache(new AttributeStatement{asl}, beginIdx);
     else
     {
         mIdx = preIdx;
@@ -2584,6 +2864,9 @@ TOKEN::AttributeStatement *TreeGenerator::tokAttributeStatement()
 
 TOKEN::AsmQualifiers *TreeGenerator::tokAsmQualifiers()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::AsmQualifiers)
+    std::size_t beginIdx{mIdx};
+
     using namespace TOKEN;
     using AQ = AsmQualifiers;
 
@@ -2597,13 +2880,16 @@ TOKEN::AsmQualifiers *TreeGenerator::tokAsmQualifiers()
         seq.push_back(AQ::Tag::GOTO);
     
     if(!seq.empty())
-        return new AsmQualifiers{seq};
+        return registerToCache(new AsmQualifiers{seq}, beginIdx);
     else
         return nullptr;
 }
 
 TOKEN::BasicAsm *TreeGenerator::tokBasicAsm()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::BasicAsm)
+    std::size_t beginIdx{mIdx};
+
     using namespace TOKEN;
 
     std::size_t preIdx{mIdx};
@@ -2615,7 +2901,7 @@ TOKEN::BasicAsm *TreeGenerator::tokBasicAsm()
         && isMatch(Punctuator::Tag::L_PARENTHESIS)
         && ((ba->sl = tokStringLiteral()) != nullptr)
         && isMatch(Punctuator::Tag::R_PARENTHESIS))
-        return ba;
+        return registerToCache(ba, beginIdx);
     else
     {
         mIdx = preIdx;
@@ -2626,6 +2912,9 @@ TOKEN::BasicAsm *TreeGenerator::tokBasicAsm()
 
 TOKEN::ExtendedAsm *TreeGenerator::tokExtendedAsm()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::ExtendedAsm)
+    std::size_t beginIdx{mIdx};
+
     using namespace TOKEN;
 
     // this function is not need to free seq's memory
@@ -2702,7 +2991,7 @@ TOKEN::ExtendedAsm *TreeGenerator::tokExtendedAsm()
     tokTokens(ea->gl);
 
     if(isMatch(Punctuator::Tag::R_PARENTHESIS))
-        return ea;
+        return registerToCache(ea, beginIdx);
     else
     {
         mIdx = preIdx;
@@ -2713,6 +3002,9 @@ TOKEN::ExtendedAsm *TreeGenerator::tokExtendedAsm()
 
 TOKEN::AsmStatement *TreeGenerator::tokAsmStatement()
 {
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::AsmStatement)
+    std::size_t beginIdx{mIdx};
+
     using namespace TOKEN;
 
     std::size_t preIdx{mIdx};
@@ -2726,7 +3018,7 @@ TOKEN::AsmStatement *TreeGenerator::tokAsmStatement()
     }
 
     if(isMatch(Punctuator::Tag::SEMICOLON))
-        return as;
+        return registerToCache(as, beginIdx);
     else
     {
         mIdx = preIdx;
@@ -2861,7 +3153,7 @@ bool TreeGenerator::isMatch(TOKEN::Punctuator::Tag tag)
 
 bool TreeGenerator::noEvaluatedError() const
 {
-    static const constexpr std::size_t numMaxOutputTokens{15ull};
+    static const constexpr std::size_t numMaxOutputTokens{60ull};
 
     std::cerr << "TreeGenerator error:\n"
         "    what: token-sequence has not been evaluated to the end.\n"
