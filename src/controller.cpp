@@ -174,19 +174,8 @@ bool Controller::repair(std::shared_ptr<Analyzer> target
     TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::REPAIR};
     
     REPAIR::Controller repairController;
-    if(similarity.has_value())
-    {
-        if(!repairController.execute(target
-            , pool
-            , similarity.value()))
-            return false;
-    }
-    else
-    {
-        if(!repairController.execute(target
-            , pool))
-            return false;
-    }
+    if(!repairController.execute(target, pool, similarity))
+        return false;
 
     return true;
 }

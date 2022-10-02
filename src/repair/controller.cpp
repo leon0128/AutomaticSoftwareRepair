@@ -37,10 +37,12 @@ Controller::~Controller()
 }
 
 bool Controller::execute(std::shared_ptr<Analyzer> srcAnalyzer
-    , const std::vector<std::shared_ptr<Analyzer>> &analyzerPool)
+    , const std::vector<std::shared_ptr<Analyzer>> &analyzerPool
+    , const std::optional<std::deque<std::deque<double>>> &similarity)
 {
     if(!initialize(srcAnalyzer
-        , analyzerPool))
+        , analyzerPool
+        , similarity))
         return false;
 
     std::shared_ptr<REPRESENTATION::Representation> result{geneticAlgorithm()};
@@ -65,7 +67,8 @@ bool Controller::execute(std::shared_ptr<Analyzer> srcAnalyzer
 }
 
 bool Controller::initialize(std::shared_ptr<Analyzer> src
-    , const std::vector<std::shared_ptr<Analyzer>> &pool)
+    , const std::vector<std::shared_ptr<Analyzer>> &pool
+    , const std::optional<std::deque<std::deque<double>>> &similarity)
 {
     TimeMeasurer::Wrapper wrapper{TimeMeasurer::RepairTag::INITIALIZING};
 
@@ -76,13 +79,21 @@ bool Controller::initialize(std::shared_ptr<Analyzer> src
         mPool.push_back(new BLOCK::Block{analyzer->translationUnit()
             , analyzer->scope()->id()});
     }
-
-    if(!REPRESENTATION::Representation::initialize(mPool
-        , mBlock)
-        || !OPERATION::Operation::initialize(mPool
-            , mBlock))
+    
+    if(!REPRESENTATION::Representation::initialize(mPool, mBlock))
         return false;
     
+    if(similarity.has_value())
+    {
+        if(!OPERATION::Operation::initialize(mPool, mBlock, similarity.value()))
+            return false;
+    }
+    else
+    {
+        if(!OPERATION::Operation::initialize(mPool, mBlock))
+            return false;
+    }
+
     return true;
 }
 

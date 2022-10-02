@@ -15,12 +15,6 @@
 namespace REPAIR::OPERATION
 {
 
-std::vector<
-    std::pair<
-        std::size_t
-            , std::vector<
-                std::size_t>>> Operation::SELECTABLE_SOURCE_POOL_AND_FUNCTION_INDICES{};
-
 std::vector<std::size_t> Operation::SELECTABLE_DESTINATION_INDICES{};
 
 decltype(Operation::SELECTABLE_STATEMENT_MAP) Operation::SELECTABLE_STATEMENT_MAP{};
@@ -81,24 +75,18 @@ bool Operation::initialize(const Pool &pool
             , 0ull);
     }
 
-    for(std::size_t i{0ull};
-        i < pool.size();
-        i++)
-    {
-        SELECTABLE_SOURCE_POOL_AND_FUNCTION_INDICES.emplace_back(i, std::vector<std::size_t>{});
-        for(std::size_t j{0ull};
-            j < pool[i]->stats().size();
-            j++)
-        {
-            if(!pool[i]->stats()[j].second->stats().empty())
-                SELECTABLE_SOURCE_POOL_AND_FUNCTION_INDICES.back().second.push_back(j);
-        }
-        if(SELECTABLE_SOURCE_POOL_AND_FUNCTION_INDICES.back().second.empty())
-            SELECTABLE_SOURCE_POOL_AND_FUNCTION_INDICES.pop_back();
-    }
-
     if(!initializeSelectableStatement(pool
         , block))
+        return false;
+
+    return true;
+}
+
+bool Operation::initialize(const Pool &pool
+    , const BLOCK::Block *target
+    , const std::deque<std::deque<double>> &similarity)
+{
+    if(initialize(pool, target))
         return false;
 
     return true;
@@ -126,7 +114,7 @@ void Operation::insertScopeId(const BLOCK::Block *block)
 {
     if(SELECTABLE_STATEMENT_MAP.find(block->scopeId()) == SELECTABLE_STATEMENT_MAP.end())
         SELECTABLE_STATEMENT_MAP.emplace(block->scopeId()
-            , std::vector<std::size_t>{});
+            , decltype(SELECTABLE_STATEMENT_MAP)::mapped_type{});
 
     for(const auto &pair : block->stats())
     {
@@ -150,13 +138,26 @@ bool Operation::insertStatementId(std::size_t scopeId
                 auto &&statement{std::get<std::shared_ptr<TOKEN::Statement>>(var)};
                 if(selector.isFittable(scopeId
                     , statement.get()))
-                    SELECTABLE_STATEMENT_MAP.at(scopeId).push_back(statement->statementId);
+                {
+                    SELECTABLE_STATEMENT_MAP
+                        .at(scopeId)
+                            .emplace_back(0.0
+                                , statement->statementId);
+                }
             }
         }
 
         if(pair.second != nullptr)
             insertStatementId(scopeId
                 , pair.second);
+    }
+
+    // set probabirity that is average value.
+    if(!SELECTABLE_STATEMENT_MAP.at(scopeId).empty())
+    {
+        double averageProp{1.0 / static_cast<double>(SELECTABLE_STATEMENT_MAP.at(scopeId).size())};
+        for(auto &&[prob, statId] : SELECTABLE_STATEMENT_MAP.at(scopeId))
+            prob = averageProp;
     }
 
     return true;
@@ -256,67 +257,6 @@ bool Operation::selectReplacingPosition(const Pool &pool
         return false;
     }
     
-    return true;
-}
-
-bool Operation::selectSourcePoolAndFunction()
-{
-    if(SELECTABLE_SOURCE_POOL_AND_FUNCTION_INDICES.empty())
-        return candidateError("selectSourcePoolAndFunction()");
-
-    const auto &pair{SELECTABLE_SOURCE_POOL_AND_FUNCTION_INDICES[RANDOM::RAND(SELECTABLE_SOURCE_POOL_AND_FUNCTION_INDICES.size())]};
-    
-    mSrc.push_back(pair.first);
-    mSrc.push_back(pair.second[RANDOM::RAND(pair.second.size())]);
-
-    return true;
-}
-
-bool Operation::selectSourceStatement(const Pool &pool)
-{
-    const auto *block{getStatPair(pool).second};
-
-    bool wasIfBlock{false};
-    do
-    {        
-        std::size_t idx{std::numeric_limits<std::size_t>::max()};
-        if(block->isIfBlock())
-        {
-            idx = RANDOM::RAND(block->stats().size() + 1ull);
-            if(idx >= block->stats().size())
-                break;
-            else
-                mSrc.push_back(idx);
-        }
-        else if(wasIfBlock)
-        {
-            idx = RANDOM::RAND(block->stats().size() + 1ull);
-            if(idx < block->stats().size())
-                mSrc.push_back(idx);
-            else
-            {
-                mSrc.pop_back();
-                break;
-            }
-        }
-        else if(mSrc.size() == 2ull)
-        {
-            idx = RANDOM::RAND(block->stats().size());
-            mSrc.push_back(idx);
-        }
-        else
-        {
-            idx = RANDOM::RAND(block->stats().size() + 1ull);
-            if(idx >= block->stats().size())
-                break;
-            else
-                mSrc.push_back(idx);
-        }
-
-        wasIfBlock = block->isIfBlock();
-    }
-    while((block = block->stats().at(mSrc.back()).second));
-
     return true;
 }
 
@@ -448,7 +388,7 @@ bool Operation::selectSourceStatement(const BLOCK::Block *block)
     if(ids.empty())
         return selectionError("no have statement that is addable to destination position.");
 
-    mSrcId = ids.at(RANDOM::RAND(ids.size()));
+    mSrcId = ids.at(RANDOM::RAND(ids.size())).second;
     
     return true;
 }

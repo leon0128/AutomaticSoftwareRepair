@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 #include <unordered_map>
+#include <deque>
 
 namespace REPAIR
 {
@@ -37,21 +38,23 @@ enum class Tag : unsigned char
 class Operation
 {
 private:
-    static std::vector<
-        std::pair<
-            std::size_t
-                , std::vector<
-                    std::size_t>>> SELECTABLE_SOURCE_POOL_AND_FUNCTION_INDICES;
+    using ScopeId = std::size_t;
+    using StatId = std::size_t;
+    using Prob = double;
+
     static std::vector<std::size_t> SELECTABLE_DESTINATION_INDICES;
 
     // key: scope-id
-    // value: array of selectable statement-id
-    static std::unordered_map<std::size_t
-        , std::vector<std::size_t>> SELECTABLE_STATEMENT_MAP;
+    // value: array of probabirity and selectable statement-id
+    static std::unordered_map<ScopeId
+        , std::deque<std::pair<Prob, StatId>>> SELECTABLE_STATEMENT_MAP;
 
 public:
     static bool initialize(const Pool &pool
-        , const BLOCK::Block*);
+        , const BLOCK::Block *target);
+    static bool initialize(const Pool &pool
+        , const BLOCK::Block *target
+        , const std::deque<std::deque<double>> &similarity);
 
 private:
     static bool initializeSelectableStatement(const Pool &pool
@@ -96,10 +99,6 @@ private:
     bool selectReplacingPosition(const Pool &pool
         , const BLOCK::Block*);
     
-    // mSrc[0] and mSrc[1].
-    bool selectSourcePoolAndFunction();
-    // mSrc[2] ... .
-    bool selectSourceStatement(const Pool&);
     // mDst[0].
     bool selectDestinationFunction();
     // mDst[1] ... .
