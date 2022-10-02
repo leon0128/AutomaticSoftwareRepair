@@ -39,25 +39,17 @@ bool Controller::execute(int argc, char **argv)
         return emptyPoolError();
 
     // calculate similarity
-    std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>> tus;
-    for(const auto &analyzer : pool)
-        tus.emplace_back(analyzer->filename(), analyzer->translationUnit());
-
+    std::optional<std::deque<std::deque<double>>> similarity;
+    if(Configure::SHOULD_USE_SIMILARITY)
     {
-        TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::SIMILARITY};
-        SIM::Controller simController;
-        if(!simController.execute(tus))
+        similarity = calculateSimilarity(source, pool);
+        if(!similarity.has_value())
             return false;
     }
 
     // execute repair
-    // {
-    //     TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::REPAIR};
-    //     REPAIR::Controller repairController;
-    //     if(!repairController.execute(source
-    //         , pool))
-    //         return false;
-    // }
+    if(!repair(source, pool, similarity))
+        return false;
 
     if(Configure::SHOULD_OUTPUT_TIME_LOG)
         timeMeasurer().print();
@@ -156,6 +148,47 @@ Analyzer *Controller::createAnalyzer(const std::string &filename)
     treeGenerator.translationUnit(nullptr);
     
     return analyzer;
+}
+
+std::optional<std::deque<std::deque<double>>> Controller::calculateSimilarity(std::shared_ptr<Analyzer> target
+    , const std::vector<std::shared_ptr<Analyzer>> &pool)
+{
+    TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::SIMILARITY};
+    
+    std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>> tus;    
+    for(const auto &analyzer : pool)
+        tus.emplace_back(analyzer->filename(), analyzer->translationUnit());
+
+    SIM::Controller simController;
+    if(!simController.execute(std::make_pair(target->filename(), target->translationUnit())
+        , tus))
+        return std::nullopt;
+    
+    return {simController.getResults()};
+}
+
+bool Controller::repair(std::shared_ptr<Analyzer> target
+    , const std::vector<std::shared_ptr<Analyzer>> &pool
+    , const std::optional<std::deque<std::deque<double>>> &similarity)
+{
+    TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::REPAIR};
+    
+    REPAIR::Controller repairController;
+    if(similarity.has_value())
+    {
+        if(!repairController.execute(target
+            , pool
+            , similarity.value()))
+            return false;
+    }
+    else
+    {
+        if(!repairController.execute(target
+            , pool))
+            return false;
+    }
+
+    return true;
 }
 
 bool Controller::initConfigureError(const std::string &message) const
