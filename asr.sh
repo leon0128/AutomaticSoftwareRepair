@@ -5,7 +5,7 @@
 EXECUTION_NAME="./asr"
 TARGET_FILENAME="test/test.c"
 TARGET_FUNCTIONS=()
-EXTERNAL_PATHS=("../linux/")
+EXTERNAL_PATHS=()
 RESULT_FILENAME="test/result.c"
 TEMPORARY_FILENAME="test/__test.c"
 TEMPORARY_EXECUTION_NAME="test/__test"
@@ -42,6 +42,7 @@ TYPE1_GRAM_SIZE=4
 TYPE2_GRAM_SIZE=4
 TYPE3_GRAM_SIZE=4
 REDUCTION_THRESHOLD=1.0
+NUMBER_OF_USE_EXTERNAL=10
 
 ## others
 MAX_RECURSION=16
@@ -87,8 +88,10 @@ $EXECUTION_NAME \
     --sub-prob "$SUB_PROBABILITY" \
     --swap-prob "$SWAP_PROBABILITY" \
     --max-recursion "$MAX_RECURSION" \
+    --use-similarity \
     --original "$ORIGINAL_GRAM_SIZE" \
     --type1 "$TYPE1_GRAM_SIZE" \
     --type2 "$TYPE2_GRAM_SIZE" \
     --type3 "$TYPE3_GRAM_SIZE" \
-    --capacity "$REDUCTION_THRESHOLD"
+    --capacity "$REDUCTION_THRESHOLD" \
+    --num-of-use-external "$NUMBER_OF_USE_EXTERNAL"

@@ -12,6 +12,7 @@ namespace SIM
 {
 
 Controller::Controller()
+    : mResults{}
 {
 }
 
@@ -19,12 +20,14 @@ Controller::~Controller()
 {
 }
 
-bool Controller::execute(const std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>> &tus)
+bool Controller::execute(const std::pair<std::string, const TOKEN::TranslationUnit*> &target
+    , const std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>> &tus)
 {
     // initialize and 
-    bool isSucceessfull{initialize(tus)};
+    bool isSucceessfull{initialize(tus)
+        && calculate(target)};
 
-    test(tus);
+    // test(tus);
 
     // finalize
     finalize();
@@ -47,6 +50,25 @@ bool Controller::initialize(const std::deque<std::pair<std::string, const TOKEN:
     // initialize Calculator
     if(!Calculator::initialize())
         return false;
+
+    return true;
+}
+
+bool Controller::calculate(const std::pair<std::string, const TOKEN::TranslationUnit*> &target)
+{
+    using Rep = Representation;
+    using RC = RepresentationCreator;
+
+    std::deque<Rep::Element*> reps{RC::create(target.first, target.second)};
+
+    for(auto &&element : reps)
+    {
+        mResults.push_back(Calculator::calculateSimilarity(element));
+        // Calculator::normalize(similarity.back());
+    }
+
+    for(auto &&element : reps)
+        delete element;
 
     return true;
 }

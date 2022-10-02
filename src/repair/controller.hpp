@@ -6,6 +6,7 @@
 #include <functional>
 #include <memory>
 #include <utility>
+#include <deque>
 
 class Analyzer;
 
@@ -38,8 +39,15 @@ public:
     Controller();
     ~Controller();
 
+    // use similarity
+    bool execute(std::shared_ptr<Analyzer> src
+        , const std::vector<std::shared_ptr<Analyzer>> &pool
+        , const std::deque<std::deque<double>> &similarity);
+
+    // no use similarity
     bool execute(std::shared_ptr<Analyzer> src
         , const std::vector<std::shared_ptr<Analyzer>> &pool);
+
 
 private:
     // private member functions
