@@ -578,6 +578,14 @@ bool Analyzer::analyze(const TOKEN::LabeledStatement *ls)
         if(!analyze(s.s))
             return false;
     }
+    else if(std::holds_alternative<LS::Sce_ce_s>(ls->var))
+    {
+        auto &&s{std::get<LS::Sce_ce_s>(ls->var)};
+        if(!analyze(s.ce0)
+            || !analyze(s.ce1)
+            || !analyze(s.s))
+            return false;
+    }
     else if(std::holds_alternative<LS::Ss>(ls->var))
     {
         auto &&s{std::get<LS::Ss>(ls->var)};

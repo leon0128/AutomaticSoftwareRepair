@@ -1,5 +1,6 @@
 #include <iostream>
 #include <utility>
+#include <memory>
 
 #include "../configure.hpp"
 #include "representation.hpp"
@@ -29,11 +30,16 @@ std::deque<Representation::Element*> RepresentationCreator::create(const std::st
 {
     using Rep = Representation;
     using RC = RepresentationCreator;
+    using OriginalRC = OriginalRepresentationCreator;
+    using Type1RC = Type1RepresentationCreator;
+    using Type2RC = Type2RepresentationCreator;
+    using Type3RC = Type3RepresentationCreator;
 
-    std::array<RC*, Rep::castTag(Rep::Tag::SIZE_OF_TAG)> rcarr{new OriginalRepresentationCreator{Configure::SIM_ORIGINAL}
-        , new Type1RepresentationCreator{Configure::SIM_TYPE1}
-        , new Type2RepresentationCreator{Configure::SIM_TYPE2}
-        , new Type3RepresentationCreator{Configure::SIM_TYPE3}};
+    std::array<std::shared_ptr<RC>, Rep::castTag(Rep::Tag::SIZE_OF_TAG)> rcarr;
+    rcarr.at(Rep::castTag(Rep::Tag::ORIGINAL)) = std::shared_ptr<OriginalRC>(new OriginalRC{Configure::SIM_ORIGINAL});
+    rcarr.at(Rep::castTag(Rep::Tag::TYPE1)) = std::shared_ptr<Type1RC>(new Type1RC{Configure::SIM_TYPE1});
+    rcarr.at(Rep::castTag(Rep::Tag::TYPE2)) = std::shared_ptr<Type2RC>(new Type2RC{Configure::SIM_TYPE2});
+    rcarr.at(Rep::castTag(Rep::Tag::TYPE3)) = std::shared_ptr<Type3RC>(new Type3RC{Configure::SIM_TYPE3});
 
     for(auto &&rc : rcarr)
     {
@@ -62,11 +68,16 @@ bool RepresentationCreator::createAndRegister(const std::string &filename
 {
     using Rep = Representation;
     using RC = RepresentationCreator;
+    using OriginalRC = OriginalRepresentationCreator;
+    using Type1RC = Type1RepresentationCreator;
+    using Type2RC = Type2RepresentationCreator;
+    using Type3RC = Type3RepresentationCreator;
 
-    std::array<RC*, Rep::castTag(Rep::Tag::SIZE_OF_TAG)> rcarr{new OriginalRepresentationCreator{Configure::SIM_ORIGINAL}
-        , new Type1RepresentationCreator{Configure::SIM_TYPE1}
-        , new Type2RepresentationCreator{Configure::SIM_TYPE2}
-        , new Type3RepresentationCreator{Configure::SIM_TYPE3}};
+    std::array<std::shared_ptr<RC>, Rep::castTag(Rep::Tag::SIZE_OF_TAG)> rcarr;
+    rcarr.at(Rep::castTag(Rep::Tag::ORIGINAL)) = std::shared_ptr<OriginalRC>(new OriginalRC{Configure::SIM_ORIGINAL});
+    rcarr.at(Rep::castTag(Rep::Tag::TYPE1)) = std::shared_ptr<Type1RC>(new Type1RC{Configure::SIM_TYPE1});
+    rcarr.at(Rep::castTag(Rep::Tag::TYPE2)) = std::shared_ptr<Type2RC>(new Type2RC{Configure::SIM_TYPE2});
+    rcarr.at(Rep::castTag(Rep::Tag::TYPE3)) = std::shared_ptr<Type3RC>(new Type3RC{Configure::SIM_TYPE3});
 
     for(auto &&rc : rcarr)
     {
@@ -189,6 +200,7 @@ bool RepresentationCreator::process(const TOKEN::DeclarationSpecifiers *ds)
 bool RepresentationCreator::process(const TOKEN::Declarator *declarator)
 {
     if(!(declarator->p != nullptr ? process(declarator->p) : true)
+        || !(declarator->asl != nullptr ? process(declarator->asl) : true)
         || !process(declarator->dd))
         return false;
 
@@ -458,7 +470,7 @@ bool RepresentationCreator::process(const TOKEN::BlockItem *bi)
     using namespace TOKEN;
 
     IF_HOLDS_IF_PROCESS_RETURN_FALSE(Declaration*, bi->var)
-    IF_HOLDS_IF_PROCESS_RETURN_FALSE(Statement*, bi->var)
+    else IF_HOLDS_IF_PROCESS_RETURN_FALSE(Statement*, bi->var)
     else
         return variantError("BlockItem");
     
@@ -847,6 +859,19 @@ bool RepresentationCreator::process(const TOKEN::LabeledStatement *ls)
             return false;
         addToken(":");
         if(!process(scs.s))
+            return false;
+    }
+    else if(std::holds_alternative<LS::Sce_ce_s>(ls->var))
+    {
+        auto &&sccs{std::get<LS::Sce_ce_s>(ls->var)};
+        addToken("case");
+        if(!process(sccs.ce0))
+            return false;
+        addToken("...");
+        if(!process(sccs.ce1))
+            return false;
+        addToken(":");
+        if(!process(sccs.s))
             return false;
     }
     else if(std::holds_alternative<LS::Ss>(ls->var))
@@ -2428,6 +2453,19 @@ bool Type3RepresentationCreator::process(const TOKEN::LabeledStatement *ls)
             return false;
         addToken(":");
         if(!RC::process(scs.s))
+            return false;
+    }
+    else if(std::holds_alternative<LS::Sce_ce_s>(ls->var))
+    {
+        auto &&sccs{std::get<LS::Sce_ce_s>(ls->var)};
+        addToken(mTypeTagMap.at(TypeTag::KEYWORD));
+        if(!RC::process(sccs.ce0))
+            return false;
+        addToken(mTypeTagMap.at(TypeTag::OPERATOR));
+        if(!RC::process(sccs.ce1))
+            return false;
+        addToken(":");
+        if(!RC::process(sccs.s))
             return false;
     }
     else if(std::holds_alternative<LS::Ss>(ls->var))

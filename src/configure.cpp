@@ -33,11 +33,14 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--new-operation-prob", {Tag::NEW_OPERATION_PROB, true}}
     , {"--concatenation-prob", {Tag::CONCATENATION_PROB, true}}
     , {"--max-recursion", {Tag::MAX_RECURSION, true}}
+    , {"--use-similarity", {Tag::USE_SIMILARITY, false}}
     , {"--original", {Tag::SIM_ORIGINAL, true}}
     , {"--type1", {Tag::SIM_TYPE1, true}}
     , {"--type2", {Tag::SIM_TYPE2, true}}
     , {"--type3", {Tag::SIM_TYPE3, true}}
-    , {"--capacity", {Tag::SIM_CAPACITY, true}}};
+    , {"--capacity", {Tag::SIM_CAPACITY, true}}
+    , {"--num-of-use-external", {Tag::SIM_NUMBER_OF_USE, true}}
+    , {"--change-prob", {Tag::SIM_CHANGE_PROB, false}}};
 
 bool Configure::parseCommandLineArguments(int argc, char **argv)
 {
@@ -209,6 +212,9 @@ bool Configure::readArgument(Tag tag
             if(!assignSizeT(tag, arg, MAX_RECURSION))
                 return false;
             break;
+        case(Tag::USE_SIMILARITY):
+            SHOULD_USE_SIMILARITY = true;
+            break;
         case(Tag::SIM_ORIGINAL):
             if(!assignSizeT(tag, arg, SIM_ORIGINAL))
                 return false;
@@ -228,6 +234,13 @@ bool Configure::readArgument(Tag tag
         case(Tag::SIM_CAPACITY):
             if(!assignDouble(tag, arg, SIM_CAPACITY))
                 return false;
+            break;
+        case(Tag::SIM_NUMBER_OF_USE):
+            if(!assignSizeT(tag, arg, SIM_NUMBER_OF_USE))
+                return false;
+            break;
+        case(Tag::SIM_CHANGE_PROB):
+            SHOULD_CHANGE_PROB = true;
             break;
         default:
             return unknownTagError(tag);
@@ -331,6 +344,9 @@ bool Configure::setDefaultValue()
             case(Tag::MAX_RECURSION):
                 MAX_RECURSION = 16ull;
                 break;
+            case(Tag::USE_SIMILARITY):
+                SHOULD_USE_SIMILARITY = false;
+                break;
             case(Tag::SIM_ORIGINAL):
                 SIM_ORIGINAL = 1ull;
                 break;
@@ -345,6 +361,12 @@ bool Configure::setDefaultValue()
                 break;
             case(Tag::SIM_CAPACITY):
                 SIM_CAPACITY = 0.10;
+                break;
+            case(Tag::SIM_NUMBER_OF_USE):
+                SIM_NUMBER_OF_USE = 10ull;
+                break;
+            case(Tag::SIM_CHANGE_PROB):
+                SHOULD_CHANGE_PROB = false;
                 break;
 
             default:;

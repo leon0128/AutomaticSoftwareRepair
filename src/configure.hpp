@@ -44,11 +44,14 @@ private:
         , NEW_OPERATION_PROB
         , CONCATENATION_PROB
         , MAX_RECURSION
+        , USE_SIMILARITY
         , SIM_ORIGINAL
         , SIM_TYPE1
         , SIM_TYPE2
         , SIM_TYPE3
         , SIM_CAPACITY
+        , SIM_NUMBER_OF_USE
+        , SIM_CHANGE_PROB
         , NUM_ENUM
     };
 
@@ -93,11 +96,15 @@ public:
 
     inline static std::size_t MAX_RECURSION;
 
+    inline static bool SHOULD_USE_SIMILARITY;
+
     inline static std::size_t SIM_ORIGINAL;
     inline static std::size_t SIM_TYPE1;
     inline static std::size_t SIM_TYPE2;
     inline static std::size_t SIM_TYPE3;
     inline static double SIM_CAPACITY;
+    inline static std::size_t SIM_NUMBER_OF_USE;
+    inline static bool SHOULD_CHANGE_PROB;
 
 private:
     static bool readArgument(Tag

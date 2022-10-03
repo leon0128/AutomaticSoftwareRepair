@@ -6,6 +6,8 @@
 #include <functional>
 #include <memory>
 #include <utility>
+#include <deque>
+#include <optional>
 
 class Analyzer;
 
@@ -38,13 +40,16 @@ public:
     Controller();
     ~Controller();
 
+    // if similarity is std::nullopt, similarity is not used.
     bool execute(std::shared_ptr<Analyzer> src
-        , const std::vector<std::shared_ptr<Analyzer>> &pool);
+        , const std::vector<std::shared_ptr<Analyzer>> &pool
+        , const std::optional<std::deque<std::deque<double>>> &similarity);
 
 private:
     // private member functions
     bool initialize(std::shared_ptr<Analyzer> src
-        , const std::vector<std::shared_ptr<Analyzer>> &pool);
+        , const std::vector<std::shared_ptr<Analyzer>> &pool
+        , const std::optional<std::deque<std::deque<double>>> &similarity);
     
     std::shared_ptr<REPRESENTATION::Representation> geneticAlgorithm();
     int fitness(const REPRESENTATION::Representation*);
