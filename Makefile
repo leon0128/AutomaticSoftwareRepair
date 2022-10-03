@@ -3,6 +3,8 @@
 PROGRAM = asr
 ## source directories
 SOURCE_DIRECTORIES = ./src/ \
+	./src/analyzing/ \
+	./src/common/ \
 	./src/repair/ \
 	./src/similarity/ \
 	./src/utility/
@@ -11,7 +13,7 @@ SOURCE_DIRECTORIES = ./src/ \
 ## c++ compiler
 CXX = g++
 ## c++ compiler flags
-CXXFLAGS = -g3 -Wall -std=c++20
+CXXFLAGS = -g3 -Wall -std=c++20 -I./src/
 ## c++ preprocessor
 CPP = g++ -E
 ## c++ preprocessor flags

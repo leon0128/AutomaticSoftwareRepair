@@ -23,6 +23,10 @@ public:
 private:
     bool initialize(int argc, char **argv);
 
+    bool analyze();
+    bool calculateSimilarity();
+    bool repair();
+
     bool addAllFiles(std::deque<std::string>&
         , const std::filesystem::path &path);
 

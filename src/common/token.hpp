@@ -1,5 +1,5 @@
-#ifndef TOKEN_HPP
-#define TOKEN_HPP
+#ifndef COMMON_TOKEN_HPP
+#define COMMON_TOKEN_HPP
 
 #include <unordered_map>
 #include <variant>

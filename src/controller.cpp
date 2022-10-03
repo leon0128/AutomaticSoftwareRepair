@@ -8,11 +8,11 @@
 #include "similarity/controller.hpp"
 #include "similarity/representation.hpp"
 #include "repair/controller.hpp"
-#include "time_measurer.hpp"
-#include "analyzer.hpp"
-#include "divider.hpp"
-#include "tree_generator.hpp"
-#include "sequencer.hpp"
+#include "common/time_measurer.hpp"
+#include "analyzer/analyzer.hpp"
+#include "analyzer/divider.hpp"
+#include "analyzer/tree_generator.hpp"
+#include "analyzer/sequencer.hpp"
 #include "configure.hpp"
 #include "controller.hpp"
 
@@ -25,6 +25,8 @@ bool Controller::execute(int argc, char **argv)
     // initialize
     if(!initialize(argc, argv))
         return false;
+
+    
 
     // create Analyzer from source code to be fixed
     std::shared_ptr<Analyzer> source{createAnalyzer(Configure::SOURCE_FILENAME)};
