@@ -51,6 +51,7 @@ private:
         , SIM_TYPE3
         , SIM_CAPACITY
         , SIM_NUMBER_OF_USE
+        , SIM_CHANGE_PROB
         , NUM_ENUM
     };
 
@@ -103,6 +104,7 @@ public:
     inline static std::size_t SIM_TYPE3;
     inline static double SIM_CAPACITY;
     inline static std::size_t SIM_NUMBER_OF_USE;
+    inline static bool SHOULD_CHANGE_PROB;
 
 private:
     static bool readArgument(Tag

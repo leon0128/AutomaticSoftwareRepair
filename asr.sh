@@ -94,4 +94,5 @@ $EXECUTION_NAME \
     --type2 "$TYPE2_GRAM_SIZE" \
     --type3 "$TYPE3_GRAM_SIZE" \
     --capacity "$REDUCTION_THRESHOLD" \
-    --num-of-use-external "$NUMBER_OF_USE_EXTERNAL"
+    --num-of-use-external "$NUMBER_OF_USE_EXTERNAL" \
+    --change-prob

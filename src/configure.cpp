@@ -39,7 +39,8 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--type2", {Tag::SIM_TYPE2, true}}
     , {"--type3", {Tag::SIM_TYPE3, true}}
     , {"--capacity", {Tag::SIM_CAPACITY, true}}
-    , {"--num-of-use-external", {Tag::SIM_NUMBER_OF_USE, true}}};
+    , {"--num-of-use-external", {Tag::SIM_NUMBER_OF_USE, true}}
+    , {"--change-prob", {Tag::SIM_CHANGE_PROB, false}}};
 
 bool Configure::parseCommandLineArguments(int argc, char **argv)
 {
@@ -238,6 +239,9 @@ bool Configure::readArgument(Tag tag
             if(!assignSizeT(tag, arg, SIM_NUMBER_OF_USE))
                 return false;
             break;
+        case(Tag::SIM_CHANGE_PROB):
+            SHOULD_CHANGE_PROB = true;
+            break;
         default:
             return unknownTagError(tag);
     }
@@ -360,6 +364,9 @@ bool Configure::setDefaultValue()
                 break;
             case(Tag::SIM_NUMBER_OF_USE):
                 SIM_NUMBER_OF_USE = 10ull;
+                break;
+            case(Tag::SIM_CHANGE_PROB):
+                SHOULD_CHANGE_PROB = false;
                 break;
 
             default:;

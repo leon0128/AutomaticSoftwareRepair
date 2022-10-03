@@ -470,7 +470,7 @@ bool RepresentationCreator::process(const TOKEN::BlockItem *bi)
     using namespace TOKEN;
 
     IF_HOLDS_IF_PROCESS_RETURN_FALSE(Declaration*, bi->var)
-    IF_HOLDS_IF_PROCESS_RETURN_FALSE(Statement*, bi->var)
+    else IF_HOLDS_IF_PROCESS_RETURN_FALSE(Statement*, bi->var)
     else
         return variantError("BlockItem");
     

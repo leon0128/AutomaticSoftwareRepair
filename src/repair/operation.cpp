@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <numeric>
 #include <limits>
+#include <map>
 
 #include "../utility/output.hpp"
 #include "../utility/random.hpp"
@@ -15,9 +16,13 @@
 namespace REPAIR::OPERATION
 {
 
-std::vector<std::size_t> Operation::SELECTABLE_DESTINATION_INDICES{};
-
+decltype(Operation::SELECTABLE_DESTINATION_INDICES) Operation::SELECTABLE_DESTINATION_INDICES{};
 decltype(Operation::SELECTABLE_STATEMENT_MAP) Operation::SELECTABLE_STATEMENT_MAP{};
+decltype(Operation::SIMILARITY) Operation::SIMILARITY{};
+decltype(Operation::SCOPE_BELONGED_SCOPE_MAP) Operation::SCOPE_BELONGED_SCOPE_MAP{};
+decltype(Operation::SCOPE_ROW_MAP) Operation::SCOPE_ROW_MAP{};
+decltype(Operation::STAT_BELONGED_SCOPE_MAP) Operation::STAT_BELONGED_SCOPE_MAP{};
+decltype(Operation::SCOPE_COLUMN_MAP) Operation::SCOPE_COLUMN_MAP{};
 
 Tag selectTag()
 {
@@ -79,6 +84,9 @@ bool Operation::initialize(const Pool &pool
         , block))
         return false;
 
+    if(!initializeMap(pool, block))
+        return false;
+
     return true;
 }
 
@@ -86,7 +94,16 @@ bool Operation::initialize(const Pool &pool
     , const BLOCK::Block *target
     , const std::deque<std::deque<double>> &similarity)
 {
-    if(initialize(pool, target))
+    if(!initialize(pool, target))
+        return false;
+
+    if(!initializeSimilarity(pool, target, similarity))
+        return false;
+    
+    if(!discard())
+        return false;
+
+    if(!setProbability())
         return false;
 
     return true;
@@ -95,7 +112,11 @@ bool Operation::initialize(const Pool &pool
 bool Operation::initializeSelectableStatement(const Pool &pool
     , const BLOCK::Block *block)
 {
-    insertScopeId(block);
+    for(auto &&[statId, subBlock] : block->stats())
+    {
+        if(subBlock != nullptr)
+            insertScopeId(subBlock);
+    }
 
     for(const auto &pair : SELECTABLE_STATEMENT_MAP)
     {
@@ -161,6 +182,178 @@ bool Operation::insertStatementId(std::size_t scopeId
     }
 
     return true;
+}
+
+bool Operation::initializeMap(const Pool &pool
+    , const BLOCK::Block *target)
+{
+    // set scope-belonged-scope-map and stat-belonged-scope-map.
+    // rec: set a this function.
+    auto &&insert{[](auto &&rec
+        , ScopeId funcId
+        , const BLOCK::Block *block)
+        -> void
+        {
+            SCOPE_BELONGED_SCOPE_MAP[block->scopeId()] = funcId;
+            for(auto &&[statId, subBlock] : block->stats())
+            {
+                if(!block->isIfBlock())
+                    STAT_BELONGED_SCOPE_MAP[statId] = block->scopeId();
+                if(subBlock != nullptr)
+                    rec(rec, funcId, subBlock);
+            }
+        }};
+
+    // set a scope-row-map.
+    for(auto &&[statId, block] : target->stats())
+    {
+        if(!block)
+            continue;
+
+        SCOPE_ROW_MAP[block->scopeId()] = SCOPE_ROW_MAP.size();
+        insert(insert, block->scopeId(), block);
+    }
+
+    // set a scope-column-map.
+    for(auto &&block : pool)
+    {
+        for(auto &&[statId, subBlock] : block->stats())
+        {
+            if(!subBlock)
+                continue;
+
+            SCOPE_COLUMN_MAP[subBlock->scopeId()] = SCOPE_COLUMN_MAP.size();
+            insert(insert, subBlock->scopeId(), subBlock);
+        }
+    }
+
+    return true;
+}
+
+bool Operation::initializeSimilarity(const Pool &pool
+    , const BLOCK::Block *target
+    , const std::deque<std::deque<double>> &similarity)
+{
+    // key
+    for(std::size_t row{0ull};
+        auto &&[statId, targetBlock] : target->stats())
+    {
+        if(!targetBlock)
+            continue;
+
+        auto &&mappedValue{SIMILARITY[targetBlock->scopeId()] = decltype(SIMILARITY)::mapped_type{}};
+    
+        // value
+        for(std::size_t column{0ull};
+            auto &&poolBlock : pool)
+        {
+            for(auto &&[statId, subBlock] : poolBlock->stats())
+            {
+                if(!subBlock)
+                    continue;
+            
+                mappedValue.emplace_back(subBlock->scopeId()
+                    , similarity.at(row).at(column));
+                
+                column++;
+            }
+        }
+
+        std::sort(mappedValue.begin()
+            , mappedValue.end()
+            , [](auto &&lhs, auto &&rhs){return lhs.second > rhs.second;});
+
+        row++;
+    }
+
+    return true;
+}
+
+bool Operation::discard()
+{
+    auto &&isSimilar{[](ScopeId scopeId
+        , std::size_t statId)
+        -> bool
+        {
+            auto &&destScopeId{SCOPE_BELONGED_SCOPE_MAP.at(scopeId)};
+            auto &&srcScopeId{SCOPE_BELONGED_SCOPE_MAP.at(STAT_BELONGED_SCOPE_MAP.at(statId))};
+
+            auto &&iter{std::find_if(SIMILARITY.at(destScopeId).begin()
+                , SIMILARITY.at(destScopeId).end()
+                , [&](auto &&pair){return pair.first == srcScopeId;})};
+
+            if(iter == SIMILARITY.at(destScopeId).end())
+                return false;
+
+            return iter - SIMILARITY.at(destScopeId).begin() < static_cast<long int>(Configure::SIM_NUMBER_OF_USE);
+        }};
+
+    for(auto &&[scopeId, statIds] : SELECTABLE_STATEMENT_MAP)
+    {
+        std::erase_if(statIds
+            , [&](auto &&pair){return !isSimilar(scopeId, pair.second);});
+    }
+
+    return true;
+}
+
+bool Operation::setProbability()
+{
+    for(auto &&[scopeId, statIds] : SELECTABLE_STATEMENT_MAP)
+    {
+        if(statIds.empty())
+            continue;
+
+        double sum{0.0};
+        for(auto &&[prob, statId] : statIds)
+        {
+            prob = Configure::SHOULD_CHANGE_PROB
+                    ? getSimilarity(scopeId, statId)
+                    : 1.0;
+            sum += prob;
+        }
+
+        if(sum - 0.0 <= std::numeric_limits<double>::epsilon())
+        {
+            for(auto &&[prob, statId] : statIds)
+                prob = 1.0 / static_cast<double>(statIds.size());
+        }
+        else
+        {
+            for(auto &&[prob, statId] : statIds)
+                prob = prob / sum;
+        }
+    }
+
+    return true;
+}
+
+double Operation::getSimilarity(ScopeId scopeId
+    , std::size_t statId)
+{
+    auto &&destScopeId{SCOPE_BELONGED_SCOPE_MAP.at(scopeId)};
+    auto &&srcScopeId{SCOPE_BELONGED_SCOPE_MAP.at(STAT_BELONGED_SCOPE_MAP.at(statId))};
+
+    auto &&mappedValue{SIMILARITY.at(destScopeId)};
+    auto &&iter{std::find_if(mappedValue.begin()
+        , mappedValue.end()
+        , [&](auto &&pair){return pair.first == srcScopeId;})};
+
+    if(iter == mappedValue.end())
+    {
+        initializationError("related similarity is not found.");
+        return 0.0;
+    }
+
+    return iter->second;
+}
+
+bool Operation::initializationError(const std::string &what)
+{
+    std::cerr << "Operation::initializationError():\n"
+        "    what: " << what
+        << std::endl;
+    return false;
 }
 
 Operation::Operation()
@@ -388,7 +581,16 @@ bool Operation::selectSourceStatement(const BLOCK::Block *block)
     if(ids.empty())
         return selectionError("no have statement that is addable to destination position.");
 
-    mSrcId = ids.at(RANDOM::RAND(ids.size())).second;
+    for(double prob{RANDOM::RAND.floating<double>()}
+            , sum{0.0};
+        auto &&[p, statId] : ids)
+    {
+        if((sum += p) >= prob)
+        {
+            mSrcId = statId;
+            break;
+        }
+    }
     
     return true;
 }

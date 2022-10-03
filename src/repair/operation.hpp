@@ -49,6 +49,25 @@ private:
     static std::unordered_map<ScopeId
         , std::deque<std::pair<Prob, StatId>>> SELECTABLE_STATEMENT_MAP;
 
+    // key: destination function's scope-id.
+    // value:
+    //  key: source function's scope-id.
+    //  value: probability.
+    static std::unordered_map<ScopeId, std::deque<std::pair<ScopeId, double>>> SIMILARITY;
+
+    // key: scope-id that is belonged to value.
+    // value: function's scope-id.
+    static std::unordered_map<ScopeId, ScopeId> SCOPE_BELONGED_SCOPE_MAP;
+    // key: function's scope-id.
+    // value: similarity's row index that indicates key's function.
+    static std::unordered_map<ScopeId, std::size_t> SCOPE_ROW_MAP;
+    // key: stat-id that is belonged to value.
+    // value: scope-id (not function's id)
+    static std::unordered_map<std::size_t, ScopeId> STAT_BELONGED_SCOPE_MAP;
+    // key: function's scope-id.
+    // value: similarity's column index that indicates key's function.
+    static std::unordered_map<ScopeId, std::size_t> SCOPE_COLUMN_MAP;
+
 public:
     static bool initialize(const Pool &pool
         , const BLOCK::Block *target);
@@ -62,6 +81,28 @@ private:
     static void insertScopeId(const BLOCK::Block*);
     static bool insertStatementId(std::size_t scopeId
         , const BLOCK::Block*);
+
+    // initialize
+    //  scope-belonged-scope-map
+    //  , scope-row-map
+    //  , stat-belonged-scope-map
+    //  , scope-column-map
+    static bool initializeMap(const Pool &pool
+        , const BLOCK::Block *target);
+
+    // initialize SIMILARITY    
+    static bool initializeSimilarity(const Pool &pool
+        , const BLOCK::Block *target
+        , const std::deque<std::deque<double>> &similarity);
+
+    // discard selectable statemnt that has low similarity.
+    static bool discard();
+
+    static bool setProbability();
+    static Prob getSimilarity(ScopeId destScopeId
+        , std::size_t srcStatId);
+
+    static bool initializationError(const std::string &what);
 
 private:
     Tag mTag;
