@@ -45,6 +45,7 @@ REDUCTION_THRESHOLD=1.0
 NUMBER_OF_USE_EXTERNAL=10
 
 ## others
+NUMBER_OF_CONCURRENCY=16
 MAX_RECURSION=16
 
 # execution
@@ -87,6 +88,7 @@ $EXECUTION_NAME \
     --add-prob "$ADD_PROBABILITY" \
     --sub-prob "$SUB_PROBABILITY" \
     --swap-prob "$SWAP_PROBABILITY" \
+    --num-cuncurrency "$NUMBER_OF_CONCURRENCY" \
     --max-recursion "$MAX_RECURSION" \
     --use-similarity \
     --original "$ORIGINAL_GRAM_SIZE" \

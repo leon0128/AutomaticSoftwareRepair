@@ -32,6 +32,7 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--swap-prob", {Tag::SWAPPING_PROB, true}}
     , {"--new-operation-prob", {Tag::NEW_OPERATION_PROB, true}}
     , {"--concatenation-prob", {Tag::CONCATENATION_PROB, true}}
+    , {"--num-concurrency", {Tag::NUM_CONCURRENCY, true}}
     , {"--max-recursion", {Tag::MAX_RECURSION, true}}
     , {"--use-similarity", {Tag::USE_SIMILARITY, false}}
     , {"--original", {Tag::SIM_ORIGINAL, true}}
@@ -208,6 +209,10 @@ bool Configure::readArgument(Tag tag
             if(!assignDouble(tag, arg, CONCATENATION_PROBABILITY))
                 return false;
             break;
+        case(Tag::NUM_CONCURRENCY):
+            if(!assignSizeT(tag, arg, NUM_CONCURRENCY))
+                return false;
+            break;
         case(Tag::MAX_RECURSION):
             if(!assignSizeT(tag, arg, MAX_RECURSION))
                 return false;
@@ -340,6 +345,9 @@ bool Configure::setDefaultValue()
                 break;
             case(Tag::CONCATENATION_PROB):
                 CONCATENATION_PROBABILITY = 0.50;
+                break;
+            case(Tag::NUM_CONCURRENCY):
+                NUM_CONCURRENCY = 16;
                 break;
             case(Tag::MAX_RECURSION):
                 MAX_RECURSION = 16ull;
