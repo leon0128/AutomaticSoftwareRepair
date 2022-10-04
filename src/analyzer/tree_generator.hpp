@@ -1,5 +1,5 @@
-#ifndef TREE_GENERATOR_HPP
-#define TREE_GENERATOR_HPP
+#ifndef ANALYZER_TREE_GENERATOR_HPP
+#define ANALYZER_TREE_GENERATOR_HPP
 
 #include <deque>
 #include <vector>
@@ -7,30 +7,34 @@
 #include <unordered_map>
 #include <variant>
 #include <utility>
+#include <functional>
 
-#include "token.hpp"
+#include "common/token.hpp"
+#include "common/scope.hpp"
 
-namespace SCOPE{class Scope;}
+namespace ANALYZER
+{
 
 class TreeGenerator
 {
 private:
     static const std::unordered_map<std::string, TOKEN::Keyword::Tag> KEYWORD_MAP;
+    static const std::deque<TOKEN::PreprocessingToken*> TEMPORARY_OBJECT;
 
 public:
     using Sequence = std::deque<TOKEN::PreprocessingToken*>;
 
-    TreeGenerator(const std::string &file
-        , const Sequence &seq);
+    TreeGenerator();
     ~TreeGenerator();
     TreeGenerator(const TreeGenerator&) = delete;
     TreeGenerator(TreeGenerator&&) = delete;
 
-    bool execute();
-    TOKEN::TranslationUnit *translationUnit() const noexcept
-        {return mTranslationUnit;}
-    void translationUnit(TOKEN::TranslationUnit *tu) noexcept
-        {mTranslationUnit = tu;}
+    bool execute(const std::string &filename
+        , const Sequence &sequence);
+    
+    // if this function is called, mTranslationUnit's value is nullptr.
+    auto moveTranslationUnit()
+        {return std::exchange(mTranslationUnit, nullptr);}
 
 private:
     // this class is used to mCacheMap's value_type.
@@ -154,7 +158,7 @@ private:
 
     // member variables
     std::string mFile;
-    const Sequence &mSeq;
+    std::reference_wrapper<const Sequence> mSeq;
     std::size_t mIdx;
     TOKEN::TranslationUnit *mTranslationUnit;
     std::unordered_multimap<std::size_t, MapElement*> mCacheMap;
@@ -322,6 +326,8 @@ Token *TreeGenerator::registerToCache(Token *token
     auto &&element{new MapElement{beginIdx, mIdx, token->copy()}};
     mCacheMap.emplace(beginIdx, element);
     return token;
+}
+
 }
 
 #endif

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <algorithm>
 
-#include "../configure.hpp"
+#include "configure.hpp"
 #include "calculator.hpp"
 
 namespace SIM

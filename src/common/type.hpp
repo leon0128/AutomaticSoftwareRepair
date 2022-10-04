@@ -1,5 +1,5 @@
-#ifndef TYPE_HPP
-#define TYPE_HPP
+#ifndef COMMON_TYPE_HPP
+#define COMMON_TYPE_HPP
 
 #include <vector>
 #include <string>
@@ -11,6 +11,9 @@
 #include <set>
 #include <unordered_map>
 #include <optional>
+
+inline namespace COMMON
+{
 
 namespace TOKEN
 {
@@ -291,6 +294,8 @@ public:
 
     EnumInfo(const std::string&);
 };
+
+}
 
 }
 

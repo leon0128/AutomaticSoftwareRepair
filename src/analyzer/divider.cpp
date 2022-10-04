@@ -1,8 +1,10 @@
 #include <iostream>
 #include <utility>
 
-#include "token.hpp"
 #include "divider.hpp"
+
+namespace ANALYZER
+{
 
 bool Divider::execute(TOKEN::TranslationUnit *tu)
 {
@@ -256,4 +258,6 @@ bool Divider::unsupportedError(const std::string &what)
         << "what: " << what
         << std::endl;
     return false;
+}
+
 }

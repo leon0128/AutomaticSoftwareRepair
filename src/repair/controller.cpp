@@ -5,13 +5,13 @@
 #include <algorithm>
 #include <iomanip>
 
-#include "../utility/file.hpp"
-#include "../utility/system.hpp"
-#include "../utility/random.hpp"
-#include "../configure.hpp"
-#include "../analyzer.hpp"
-#include "../scope.hpp"
-#include "../time_measurer.hpp"
+#include "utility/file.hpp"
+#include "utility/system.hpp"
+#include "utility/random.hpp"
+#include "configure.hpp"
+#include "analyzer/analyzer.hpp"
+#include "common//scope.hpp"
+#include "common/time_measurer.hpp"
 #include "block.hpp"
 #include "representation.hpp"
 #include "operation.hpp"
@@ -36,12 +36,12 @@ Controller::~Controller()
         delete block;
 }
 
-bool Controller::execute(std::shared_ptr<Analyzer> srcAnalyzer
-    , const std::vector<std::shared_ptr<Analyzer>> &analyzerPool
+bool Controller::execute(const CodeInformation &target
+    , const std::deque<CodeInformation> &pool
     , const std::optional<std::deque<std::deque<double>>> &similarity)
 {
-    if(!initialize(srcAnalyzer
-        , analyzerPool
+    if(!initialize(target
+        , pool
         , similarity))
         return false;
 
@@ -66,18 +66,18 @@ bool Controller::execute(std::shared_ptr<Analyzer> srcAnalyzer
     return true;
 }
 
-bool Controller::initialize(std::shared_ptr<Analyzer> src
-    , const std::vector<std::shared_ptr<Analyzer>> &pool
+bool Controller::initialize(const CodeInformation &target
+    , const std::deque<CodeInformation> &pool
     , const std::optional<std::deque<std::deque<double>>> &similarity)
 {
     TimeMeasurer::Wrapper wrapper{TimeMeasurer::RepairTag::INITIALIZING};
 
-    mBlock = new BLOCK::Block{src->translationUnit()
-        , src->scope()->id()};
-    for(const auto &analyzer : pool)
+    mBlock = new BLOCK::Block{target.mTranslationUnit.get()
+        , target.mScope->id()};
+    for(auto &&ci : pool)
     {
-        mPool.push_back(new BLOCK::Block{analyzer->translationUnit()
-            , analyzer->scope()->id()});
+        mPool.push_back(new BLOCK::Block{ci.mTranslationUnit.get()
+            , ci.mScope->id()});
     }
     
     if(!REPRESENTATION::Representation::initialize(mPool, mBlock))

@@ -9,6 +9,9 @@
 #include <deque>
 #include <optional>
 
+#include "common/define.hpp"
+#include "common/token.hpp"
+
 class Analyzer;
 
 namespace REPAIR
@@ -41,14 +44,14 @@ public:
     ~Controller();
 
     // if similarity is std::nullopt, similarity is not used.
-    bool execute(std::shared_ptr<Analyzer> src
-        , const std::vector<std::shared_ptr<Analyzer>> &pool
+    bool execute(const CodeInformation &target
+        , const std::deque<CodeInformation> &pool
         , const std::optional<std::deque<std::deque<double>>> &similarity);
 
 private:
     // private member functions
-    bool initialize(std::shared_ptr<Analyzer> src
-        , const std::vector<std::shared_ptr<Analyzer>> &pool
+    bool initialize(const CodeInformation &target
+        , const std::deque<CodeInformation> &pool
         , const std::optional<std::deque<std::deque<double>>> &similarity);
     
     std::shared_ptr<REPRESENTATION::Representation> geneticAlgorithm();

@@ -3,8 +3,11 @@
 #include <typeinfo>
 
 #include "configure.hpp"
-#include "analyzer.hpp"
+#include "analyzer/analyzer.hpp"
 #include "type.hpp"
+
+inline namespace COMMON
+{
 
 namespace TYPE
 {
@@ -184,11 +187,11 @@ bool equalTo(const Enum &lhs
     if(lhs.quals.flags != rhs.quals.flags)
         return false;
 
-    auto &&lhsIter{Analyzer::typeMap().find(lhs.id)};
-    auto &&rhsIter{Analyzer::typeMap().find(rhs.id)};
+    auto &&lhsIter{ANALYZER::Analyzer::typeMap().find(lhs.id)};
+    auto &&rhsIter{ANALYZER::Analyzer::typeMap().find(rhs.id)};
 
-    if(lhsIter == Analyzer::typeMap().end()
-        || rhsIter == Analyzer::typeMap().end())
+    if(lhsIter == ANALYZER::Analyzer::typeMap().end()
+        || rhsIter == ANALYZER::Analyzer::typeMap().end())
         return false;
 
     if(!lhsIter->second->isDefined()
@@ -223,8 +226,8 @@ bool equalTo(const Struct &lhs
     if(lhs.quals.flags != rhs.quals.flags)
         return false;
 
-    auto &&lhsIdInfo{Analyzer::typeMap().at(lhs.id)};
-    auto &&rhsIdInfo{Analyzer::typeMap().at(rhs.id)};
+    auto &&lhsIdInfo{ANALYZER::Analyzer::typeMap().at(lhs.id)};
+    auto &&rhsIdInfo{ANALYZER::Analyzer::typeMap().at(rhs.id)};
 
     const auto &lhsStruct{std::dynamic_pointer_cast<StructInfo>(lhsIdInfo)};
     const auto &rhsStruct{std::dynamic_pointer_cast<StructInfo>(rhsIdInfo)};
@@ -284,11 +287,11 @@ bool equalTo(std::size_t lhs
     , std::size_t rhs
     , std::size_t rec)
 {
-    auto &&lhsIter{Analyzer::typeMap().find(lhs)};
-    auto &&rhsIter{Analyzer::typeMap().find(rhs)};
+    auto &&lhsIter{ANALYZER::Analyzer::typeMap().find(lhs)};
+    auto &&rhsIter{ANALYZER::Analyzer::typeMap().find(rhs)};
 
-    if(lhsIter == Analyzer::typeMap().end()
-        || rhsIter == Analyzer::typeMap().end())
+    if(lhsIter == ANALYZER::Analyzer::typeMap().end()
+        || rhsIter == ANALYZER::Analyzer::typeMap().end())
         return false;
 
     if(lhsIter->second->derivedTag() != rhsIter->second->derivedTag())
@@ -449,7 +452,7 @@ std::string Enum::name() const
 {
     std::string enumName{quals.name()};
 
-    auto &&idInfo{Analyzer::typeMap().at(id)};
+    auto &&idInfo{ANALYZER::Analyzer::typeMap().at(id)};
     auto &&enumInfo{std::dynamic_pointer_cast<EnumInfo>(idInfo)};
 
     if(enumInfo.get() != nullptr)
@@ -468,7 +471,7 @@ std::string Struct::name() const
 {
     std::string structName{quals.name()};
 
-    auto &&idInfo{Analyzer::typeMap().at(id)};
+    auto &&idInfo{ANALYZER::Analyzer::typeMap().at(id)};
     auto &&structInfo{std::dynamic_pointer_cast<StructInfo>(idInfo)};
 
     if(structInfo.get() == nullptr)
@@ -619,6 +622,8 @@ EnumInfo::EnumInfo(const std::string &tag)
         , tag}
     , members{}
 {
+}
+
 }
 
 }

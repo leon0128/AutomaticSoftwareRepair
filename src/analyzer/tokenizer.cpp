@@ -3,6 +3,9 @@
 
 #include "tokenizer.hpp"
 
+namespace ANALYZER
+{
+
 namespace TOKENIZER
 {
 
@@ -935,6 +938,8 @@ HexadecimalDigitSequence *decHexadecimalDigitSequence(const std::string &src
         return new HexadecimalDigitSequence(std::move(seq));
     else
         return nullptr;
+}
+
 }
 
 }
