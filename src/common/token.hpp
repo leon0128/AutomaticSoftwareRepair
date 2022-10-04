@@ -9,6 +9,9 @@
 #include <string>
 #include <array>
 
+inline namespace COMMON
+{
+
 namespace TOKEN
 {
 
@@ -3369,6 +3372,8 @@ public:
 };
 
 std::string &addLine(std::string&, std::size_t&);
+
+}
 
 }
 

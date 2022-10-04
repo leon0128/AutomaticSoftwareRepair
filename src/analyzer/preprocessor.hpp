@@ -1,31 +1,33 @@
-#ifndef SEQUENCER_HPP
-#define SEQUENCER_HPP
+#ifndef ANALYZER_PREPROCESSOR_HPP
+#define ANALYZER_PREPROCESSOR_HPP
 
 #include <deque>
 #include <string>
+#include <utility>
 
-namespace TOKEN
+#include "common/token.hpp"
+
+namespace ANALYZER
 {
-    class PreprocessingToken;
-    class EscapeSequence;
-}
 
-class Sequencer
+class Preprocessor
 {
 public:
     using Sequence = std::deque<TOKEN::PreprocessingToken*>;
 
-    Sequencer();
-    ~Sequencer();
-    Sequencer(const Sequencer&) = delete;
-    Sequencer(Sequencer&&) = delete;
+    Preprocessor();
+    ~Preprocessor();
+    Preprocessor(const Preprocessor&) = delete;
+    Preprocessor(Preprocessor&&) = delete;
 
     bool execute(const std::string &filename);
 
-    const Sequence &seq() const noexcept
+    const auto &sequence() const noexcept
         {return mSeq;}
 
 private:
+    void finalize();
+
     bool openFile(std::string &src);
     bool preprocess();
     bool sequencenize(const std::string &src);
@@ -40,5 +42,7 @@ private:
     std::string mFile;
     Sequence mSeq;
 };
+
+}
 
 #endif

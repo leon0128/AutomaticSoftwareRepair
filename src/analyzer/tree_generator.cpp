@@ -2,9 +2,11 @@
 #include <iostream>
 #include <utility>
 
-#include "scope.hpp"
 #include "tokenizer.hpp"
 #include "tree_generator.hpp"
+
+namespace ANALYZER
+{
 
 const std::unordered_map<std::string, TOKEN::Keyword::Tag> TreeGenerator::KEYWORD_MAP
     = {{"auto", TOKEN::Keyword::Tag::AUTO}
@@ -60,16 +62,17 @@ const std::unordered_map<std::string, TOKEN::Keyword::Tag> TreeGenerator::KEYWOR
         , {"asm", TOKEN::Keyword::Tag::ASM}
         , {"__builtin_va_list", TOKEN::Keyword::Tag::BUILTIN_VA_LIST}};
 
+decltype(TreeGenerator::TEMPORARY_OBJECT) TreeGenerator::TEMPORARY_OBJECT{};
+
 // if cache has specific token, its token is returned.
 #define IF_CACHE_HAS_TOKEN_RETURN(Type) \
     if(auto &&cache{createFromCache<Type>()}; \
         cache != nullptr) \
         return cache;
 
-TreeGenerator::TreeGenerator(const std::string &file
-    , const Sequence &seq)
-    : mFile(file)
-    , mSeq(seq)
+TreeGenerator::TreeGenerator()
+    : mFile{}
+    , mSeq{TEMPORARY_OBJECT}
     , mIdx(0)
     , mTranslationUnit(nullptr)
     , mCacheMap{}
@@ -87,11 +90,15 @@ TreeGenerator::~TreeGenerator()
     }
 }
 
-bool TreeGenerator::execute()
+bool TreeGenerator::execute(const std::string &filename
+    , const Sequence &sequence)
 {
+    mFile = filename;
+    mSeq = sequence;
+
     mTranslationUnit = tokTranslationUnit();
 
-    if(mIdx == mSeq.size()
+    if(mIdx == mSeq.get().size()
         && mTranslationUnit)
         return true;
     else
@@ -297,9 +304,9 @@ TOKEN::StringLiteral *TreeGenerator::tokStringLiteral()
     IF_CACHE_HAS_TOKEN_RETURN(TOKEN::StringLiteral)
     std::size_t beginIdx{mIdx};
 
-    if(mIdx < mSeq.size()
-        && std::holds_alternative<TOKEN::StringLiteral*>(mSeq[mIdx]->var))
-        return mIdx++, registerToCache(std::get<TOKEN::StringLiteral*>(mSeq[mIdx - 1]->var)->copy(), beginIdx);
+    if(mIdx < mSeq.get().size()
+        && std::holds_alternative<TOKEN::StringLiteral*>(mSeq.get()[mIdx]->var))
+        return mIdx++, registerToCache(std::get<TOKEN::StringLiteral*>(mSeq.get()[mIdx - 1]->var)->copy(), beginIdx);
     else
         return nullptr;
 }
@@ -1102,11 +1109,11 @@ TOKEN::Identifier *TreeGenerator::tokIdentifier()
     IF_CACHE_HAS_TOKEN_RETURN(TOKEN::Identifier)
     std::size_t beginIdx{mIdx};
 
-    if(mIdx < mSeq.size()
-        && std::holds_alternative<TOKEN::Identifier*>(mSeq[mIdx]->var))
+    if(mIdx < mSeq.get().size()
+        && std::holds_alternative<TOKEN::Identifier*>(mSeq.get()[mIdx]->var))
     {
-        if(KEYWORD_MAP.find(TOKEN::str(mSeq[mIdx])) == KEYWORD_MAP.end())
-            return mIdx++, registerToCache(std::get<TOKEN::Identifier*>(mSeq[mIdx - 1]->var)->copy(), beginIdx);
+        if(KEYWORD_MAP.find(TOKEN::str(mSeq.get()[mIdx])) == KEYWORD_MAP.end())
+            return mIdx++, registerToCache(std::get<TOKEN::Identifier*>(mSeq.get()[mIdx - 1]->var)->copy(), beginIdx);
     }
 
     return nullptr;
@@ -2779,7 +2786,7 @@ TOKEN::AttributeSpecifier *TreeGenerator::tokAttributeSpecifier()
     {
         while(true)
         {
-            if(mIdx >= mSeq.size())
+            if(mIdx >= mSeq.get().size())
             {
                 mIdx = pre;
                 for(auto &&t : seq)
@@ -2935,7 +2942,7 @@ TOKEN::ExtendedAsm *TreeGenerator::tokExtendedAsm()
             && (isMatch(Punctuator::Tag::COLON)
                 || isMatch(Punctuator::Tag::R_PARENTHESIS))))
         {
-            if(mIdx >= mSeq.size())
+            if(mIdx >= mSeq.get().size())
             {
                 mIdx = preIdx;
                 return false;
@@ -3029,10 +3036,10 @@ TOKEN::AsmStatement *TreeGenerator::tokAsmStatement()
 
 TOKEN::IntegerConstant *TreeGenerator::convIntegerConstant()
 {
-    if(mIdx < mSeq.size()
-        && std::holds_alternative<TOKEN::PPNumber*>(mSeq[mIdx]->var))
+    if(mIdx < mSeq.get().size()
+        && std::holds_alternative<TOKEN::PPNumber*>(mSeq.get()[mIdx]->var))
     {
-        std::string str(TOKEN::str(mSeq[mIdx]));
+        std::string str(TOKEN::str(mSeq.get()[mIdx]));
         std::size_t idx = 0;
         TOKEN::IntegerConstant *ic = TOKENIZER::decIntegerConstant(str, idx);
         if(ic != nullptr
@@ -3047,10 +3054,10 @@ TOKEN::IntegerConstant *TreeGenerator::convIntegerConstant()
 
 TOKEN::FloatingConstant *TreeGenerator::convFloatingConstant()
 {
-    if(mIdx < mSeq.size()
-        && std::holds_alternative<TOKEN::PPNumber*>(mSeq[mIdx]->var))
+    if(mIdx < mSeq.get().size()
+        && std::holds_alternative<TOKEN::PPNumber*>(mSeq.get()[mIdx]->var))
     {
-        std::string str(TOKEN::str(mSeq[mIdx]));
+        std::string str(TOKEN::str(mSeq.get()[mIdx]));
         std::size_t idx = 0;
         TOKEN::FloatingConstant *fc = TOKENIZER::decFloatingConstant(str, idx);
         if(fc != nullptr
@@ -3074,45 +3081,45 @@ TOKEN::EnumerationConstant *TreeGenerator::convEnumerationConstant()
 
 TOKEN::CharacterConstant *TreeGenerator::convCharacterConstant()
 {
-    if(mIdx < mSeq.size()
-        && std::holds_alternative<TOKEN::CharacterConstant*>(mSeq[mIdx]->var))
-        return mIdx++, std::get<TOKEN::CharacterConstant*>(mSeq[mIdx - 1]->var)->copy();
+    if(mIdx < mSeq.get().size()
+        && std::holds_alternative<TOKEN::CharacterConstant*>(mSeq.get()[mIdx]->var))
+        return mIdx++, std::get<TOKEN::CharacterConstant*>(mSeq.get()[mIdx - 1]->var)->copy();
     else
         return nullptr;
 }
 
 TOKEN::Token *TreeGenerator::convToken()
 {
-    if(mIdx >= mSeq.size())
+    if(mIdx >= mSeq.get().size())
         return nullptr;
 
     TOKEN::Token *returnToken{new TOKEN::Token{}};
-    if(std::holds_alternative<TOKEN::Identifier*>(mSeq[mIdx]->var))
+    if(std::holds_alternative<TOKEN::Identifier*>(mSeq.get()[mIdx]->var))
     {
-        auto &&iter{KEYWORD_MAP.find(TOKEN::str(std::get<TOKEN::Identifier*>(mSeq[mIdx]->var)))};
+        auto &&iter{KEYWORD_MAP.find(TOKEN::str(std::get<TOKEN::Identifier*>(mSeq.get()[mIdx]->var)))};
         if(iter != KEYWORD_MAP.end())
             returnToken->var.emplace<TOKEN::Keyword*>(new TOKEN::Keyword{iter->second});
         else
-            returnToken->var.emplace<TOKEN::Identifier*>(std::get<TOKEN::Identifier*>(mSeq[mIdx]->var)->copy());
+            returnToken->var.emplace<TOKEN::Identifier*>(std::get<TOKEN::Identifier*>(mSeq.get()[mIdx]->var)->copy());
 
         mIdx++;
     }
-    else if(std::holds_alternative<TOKEN::PPNumber*>(mSeq[mIdx]->var)
-        || std::holds_alternative<TOKEN::CharacterConstant*>(mSeq[mIdx]->var))
+    else if(std::holds_alternative<TOKEN::PPNumber*>(mSeq.get()[mIdx]->var)
+        || std::holds_alternative<TOKEN::CharacterConstant*>(mSeq.get()[mIdx]->var))
     {
         if(returnToken->var.emplace<TOKEN::Constant*>(tokConstant()) == nullptr)
             returnToken->var.emplace<std::monostate>(std::monostate{});
 
         // mIdx is increased by tokConstant()
     }
-    else if(std::holds_alternative<TOKEN::StringLiteral*>(mSeq[mIdx]->var))
+    else if(std::holds_alternative<TOKEN::StringLiteral*>(mSeq.get()[mIdx]->var))
     {
-        returnToken->var.emplace<TOKEN::StringLiteral*>(std::get<TOKEN::StringLiteral*>(mSeq[mIdx]->var)->copy());
+        returnToken->var.emplace<TOKEN::StringLiteral*>(std::get<TOKEN::StringLiteral*>(mSeq.get()[mIdx]->var)->copy());
         mIdx++;
     }
-    else if(std::holds_alternative<TOKEN::Punctuator*>(mSeq[mIdx]->var))
+    else if(std::holds_alternative<TOKEN::Punctuator*>(mSeq.get()[mIdx]->var))
     {
-        returnToken->var.emplace<TOKEN::Punctuator*>(std::get<TOKEN::Punctuator*>(mSeq[mIdx]->var)->copy());
+        returnToken->var.emplace<TOKEN::Punctuator*>(std::get<TOKEN::Punctuator*>(mSeq.get()[mIdx]->var)->copy());
         mIdx++;
     }
 
@@ -3127,10 +3134,10 @@ TOKEN::Token *TreeGenerator::convToken()
 
 bool TreeGenerator::isMatch(TOKEN::Keyword::Tag tag)
 {
-    if(mIdx < mSeq.size()
-        && std::holds_alternative<TOKEN::Identifier*>(mSeq[mIdx]->var))
+    if(mIdx < mSeq.get().size()
+        && std::holds_alternative<TOKEN::Identifier*>(mSeq.get()[mIdx]->var))
     {
-        if(auto iter = KEYWORD_MAP.find(TOKEN::str(mSeq[mIdx]));
+        if(auto iter = KEYWORD_MAP.find(TOKEN::str(mSeq.get()[mIdx]));
             iter != KEYWORD_MAP.end()
                 && iter->second == tag)
             return mIdx++, true;
@@ -3141,10 +3148,10 @@ bool TreeGenerator::isMatch(TOKEN::Keyword::Tag tag)
 
 bool TreeGenerator::isMatch(TOKEN::Punctuator::Tag tag)
 {
-    if(mIdx < mSeq.size()
-        && std::holds_alternative<TOKEN::Punctuator*>(mSeq[mIdx]->var))
+    if(mIdx < mSeq.get().size()
+        && std::holds_alternative<TOKEN::Punctuator*>(mSeq.get()[mIdx]->var))
     {
-        if(std::get<TOKEN::Punctuator*>(mSeq[mIdx]->var)->tag == tag)
+        if(std::get<TOKEN::Punctuator*>(mSeq.get()[mIdx]->var)->tag == tag)
             return mIdx++, true;
     }
     
@@ -3162,13 +3169,15 @@ bool TreeGenerator::noEvaluatedError() const
         "    token: ";
 
     for(std::size_t i{0ull};
-        i < numMaxOutputTokens && i + mIdx < mSeq.size();
+        i < numMaxOutputTokens && i + mIdx < mSeq.get().size();
         i++)
     {
-        std::cout << TOKEN::str(mSeq[i + mIdx]) << ' ';
+        std::cout << TOKEN::str(mSeq.get()[i + mIdx]) << ' ';
     }
 
     std::cout << std::endl;
 
     return false;
+}
+
 }

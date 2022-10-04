@@ -4,6 +4,9 @@
 #include "scope.hpp"
 #include "token.hpp"
 
+inline namespace COMMON
+{
+
 namespace TOKEN
 {
 
@@ -6012,6 +6015,8 @@ std::string &AsmStatement::str(std::string &res, std::size_t &indent) const
     
     res.push_back(';');
     return res;
+}
+
 }
 
 }

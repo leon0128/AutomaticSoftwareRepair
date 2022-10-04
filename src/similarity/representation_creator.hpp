@@ -5,7 +5,7 @@
 #include <string>
 #include <utility>
 
-#include "../token.hpp"
+#include "common/token.hpp"
 
 namespace SIM
 {

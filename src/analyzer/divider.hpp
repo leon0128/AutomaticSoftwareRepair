@@ -1,28 +1,18 @@
-#ifndef DIVIDER_HPP
-#define DIVIDER_HPP
+#ifndef ANALYZER_DIVIDER_HPP
+#define ANALYZER_DIVIDER_HPP
 
 #include <vector>
 #include <string>
 
-namespace TOKEN
+#include "common/token.hpp"
+
+namespace ANALYZER
 {
-    class TranslationUnit;
-    class CompoundStatement;
-    class Declaration;
-    class Statement;
-    class LabeledStatement;
-    class ExpressionStatement;
-    class SelectionStatement;
-    class IterationStatement;
-    class JumpStatement;
-    class AttributeStatement;
-    class AsmStatement;
-    class BlockItemList;
-}
 
 class Divider
 {
 public:
+
     static bool execute(TOKEN::TranslationUnit*);
 
 private:
@@ -50,5 +40,7 @@ private:
 public:
     Divider() = delete;
 };
+
+}
 
 #endif

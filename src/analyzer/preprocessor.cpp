@@ -7,23 +7,24 @@
 #include "utility/system.hpp"
 #include "utility/file.hpp"
 #include "configure.hpp"
-#include "token.hpp"
 #include "tokenizer.hpp"
-#include "sequencer.hpp"
+#include "preprocessor.hpp"
 
-Sequencer::Sequencer()
+namespace ANALYZER
+{
+
+Preprocessor::Preprocessor()
     : mFile{}
     , mSeq{}
 {
 }
 
-Sequencer::~Sequencer()
+Preprocessor::~Preprocessor()
 {
-    for(auto &&pt : mSeq)
-        delete pt;
+    finalize();
 }
 
-bool Sequencer::execute(const std::string &filename)
+bool Preprocessor::execute(const std::string &filename)
 {
     mFile = filename;
     
@@ -39,7 +40,13 @@ bool Sequencer::execute(const std::string &filename)
     return true;
 }
 
-bool Sequencer::openFile(std::string &src)
+void Preprocessor::finalize()
+{
+    for(auto &&pp : mSeq)
+        delete pp;
+}
+
+bool Preprocessor::openFile(std::string &src)
 {
     std::filesystem::path path(Configure::TEST_FILENAME);
     if(!PATH::isExist(path, std::filesystem::file_type::regular))
@@ -55,7 +62,7 @@ bool Sequencer::openFile(std::string &src)
         , src);
 }
 
-bool Sequencer::preprocess()
+bool Preprocessor::preprocess()
 {
     std::filesystem::path path{mFile};
     if(!PATH::isExist(path, std::filesystem::file_type::regular))
@@ -92,7 +99,7 @@ bool Sequencer::preprocess()
     return true;
 }
 
-bool Sequencer::sequencenize(const std::string &src)
+bool Preprocessor::sequencenize(const std::string &src)
 {
     std::size_t idx = 0;
     while(true)
@@ -117,12 +124,12 @@ bool Sequencer::sequencenize(const std::string &src)
     return true;
 }
 
-bool Sequencer::convertCharacter()
+bool Preprocessor::convertCharacter()
 {
     return true;
 }
 
-bool Sequencer::concatenateStringLiteral()
+bool Preprocessor::concatenateStringLiteral()
 {
     // pre: pre + post
     // post: empty
@@ -180,7 +187,7 @@ bool Sequencer::concatenateStringLiteral()
     return true;
 }
 
-void Sequencer::omitWS(const std::string &src
+void Preprocessor::omitWS(const std::string &src
     , std::size_t &idx) const
 {
     while(idx < src.size()
@@ -192,7 +199,7 @@ void Sequencer::omitWS(const std::string &src
         idx++;
 }
 
-bool Sequencer::convertEscapeSequence(TOKEN::EscapeSequence *es
+bool Preprocessor::convertEscapeSequence(TOKEN::EscapeSequence *es
     , char &res) const
 {
     if(std::holds_alternative<TOKEN::SimpleEscapeSequence*>(es->var))
@@ -252,4 +259,6 @@ bool Sequencer::convertEscapeSequence(TOKEN::EscapeSequence *es
     }
 
     return true;
+}
+
 }

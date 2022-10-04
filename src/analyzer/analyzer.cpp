@@ -1,7 +1,9 @@
 #include <iostream>
 
-#include "scope.hpp"
 #include "analyzer.hpp"
+
+namespace ANALYZER
+{
 
 const Analyzer::BaseTypeMap Analyzer::BASE_TYPE_MAP
     {{ResultTypeTag::VOID
@@ -98,7 +100,6 @@ const Analyzer::BaseTypeMap Analyzer::BASE_TYPE_MAP
 
 Analyzer::Analyzer()
     : mFilename{}
-    , mTranslationUnit{nullptr}
     , mFlags{}
     , mScope{nullptr}
 {
@@ -113,7 +114,6 @@ bool Analyzer::execute(const std::string &filename
     , TOKEN::TranslationUnit *tu)
 {
     mFilename = filename;
-    mTranslationUnit = tu;
 
     if(!tu)
         return true;
@@ -126,7 +126,6 @@ bool Analyzer::execute(const std::string &filename
 
 bool Analyzer::finalize()
 {
-    delete mTranslationUnit;
     delete mScope;
 
     return true;
@@ -2627,4 +2626,6 @@ bool Analyzer::notDeclarationError(const std::string &identifier) const
         "    id: " << identifier
         << std::endl;
     return false;
+}
+
 }

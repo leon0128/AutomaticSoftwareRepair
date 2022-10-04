@@ -1,11 +1,13 @@
-#ifndef TOKENIZER_HPP
-#define TOKENIZER_HPP
+#ifndef ANALYZER_TOKENIZER_HPP
+#define ANALYZER_TOKENIZER_HPP
 
 #include <string>
-#include <vector>
 #include <unordered_map>
 
-#include "token.hpp"
+#include "common/token.hpp"
+
+namespace ANALYZER
+{
 
 namespace TOKENIZER
 {
@@ -152,6 +154,8 @@ namespace TOKENIZER
             , {"%>", TOKEN::Punctuator::Tag::R_CURLY_BRACKET}
             , {"%:", TOKEN::Punctuator::Tag::HASH}
             , {"%:%:", TOKEN::Punctuator::Tag::DOUBLE_HASH}};
+}
+
 }
 
 #endif

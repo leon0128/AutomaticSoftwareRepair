@@ -5,6 +5,9 @@
 #include "identifier.hpp"
 #include "scope.hpp"
 
+inline namespace COMMON
+{
+
 namespace SCOPE
 {
 
@@ -147,6 +150,8 @@ void Scope::outputData(std::size_t numIndent) const
         child->outputData(numIndent + 1ull);
 
     indentedCout(numIndent) << "=== ========= ===" << std::endl;
+}
+
 }
 
 }

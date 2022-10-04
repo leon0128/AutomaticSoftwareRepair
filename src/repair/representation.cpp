@@ -1,7 +1,7 @@
 #include <iostream>
 #include <utility>
 
-#include "../configure.hpp"
+#include "configure.hpp"
 #include "block.hpp"
 #include "operation.hpp"
 #include "representation.hpp"
