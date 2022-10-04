@@ -42,6 +42,8 @@ class IdInfo;
 class StructInfo;
 class EnumInfo;
 
+inline std::unordered_map<std::size_t, std::shared_ptr<IdInfo>> TYPE_MAP{};
+
 std::optional<Type> extractType(const Typedef&);
 std::optional<Type> addQualifiers(const Type&
     , const Qualifiers&);

@@ -6,8 +6,8 @@
 
 #include "utility/output.hpp"
 #include "utility/random.hpp"
+#include "common/statement.hpp"
 #include "configure.hpp"
-#include "analyzer/analyzer.hpp"
 #include "register.hpp"
 #include "selector.hpp"
 #include "block.hpp"
@@ -65,7 +65,7 @@ bool Operation::initialize(const Pool &pool
         i < block->stats().size();
         i++)
     {
-        const auto &fd{std::get<std::shared_ptr<FunctionDefinition>>(ANALYZER::Analyzer::statementMap().at(block->stats().at(i).first))};
+        const auto &fd{std::get<std::shared_ptr<FunctionDefinition>>(STATEMENT::STATEMENT_MAP.at(block->stats().at(i).first))};
         if(std::find(Configure::TARGET_FUNCTION_NAMES.begin()
             , Configure::TARGET_FUNCTION_NAMES.end()
             , getFunctionName(fd->d))
@@ -153,7 +153,7 @@ bool Operation::insertStatementId(std::size_t scopeId
     {
         if(pair.first != std::numeric_limits<decltype(pair.first)>::max())
         {
-            auto &&var{ANALYZER::Analyzer::statementMap().at(pair.first)};
+            auto &&var{STATEMENT::STATEMENT_MAP.at(pair.first)};
             if(std::holds_alternative<std::shared_ptr<TOKEN::Statement>>(var))
             {
                 auto &&statement{std::get<std::shared_ptr<TOKEN::Statement>>(var)};
@@ -554,7 +554,7 @@ bool Operation::selectAlternativeIdentifier(const Pool &pool
     std::size_t scopeId{getScopeId(block)};
     std::size_t statementId{getStatementId(pool)};
 
-    std::shared_ptr<TOKEN::Statement> statement{std::get<std::shared_ptr<TOKEN::Statement>>(ANALYZER::Analyzer::statementMap().at(statementId))->copy()};
+    std::shared_ptr<TOKEN::Statement> statement{std::get<std::shared_ptr<TOKEN::Statement>>(STATEMENT::STATEMENT_MAP.at(statementId))->copy()};
     
     Selector selector;
     if(!selector.execute(scopeId
@@ -599,7 +599,7 @@ bool Operation::selectAlternativeIdentifier(const BLOCK::Block *block)
 {
     auto &&scopeId{getScopeId(block)};
 
-    std::shared_ptr<TOKEN::Statement> statement{std::get<std::shared_ptr<TOKEN::Statement>>(ANALYZER::Analyzer::statementMap().at(mSrcId))->copy()};
+    std::shared_ptr<TOKEN::Statement> statement{std::get<std::shared_ptr<TOKEN::Statement>>(STATEMENT::STATEMENT_MAP.at(mSrcId))->copy()};
 
     Selector selector;
     if(!selector.execute(scopeId
