@@ -35,6 +35,8 @@ class Enum;
 class Typedef;
 class Label;
 
+inline std::unordered_map<std::size_t, std::shared_ptr<Identifier>> IDENTIFIER_MAP{};
+
 bool notSupportedError(const std::string&);
 
 template<class DerivedType, class BaseTypePtr>

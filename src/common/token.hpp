@@ -8,6 +8,7 @@
 #include <utility>
 #include <string>
 #include <array>
+#include <memory>
 
 inline namespace COMMON
 {

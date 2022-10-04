@@ -26,22 +26,6 @@ private:
 
     using Flags = std::bitset<NUM_FLAG_TAG>;
 
-    using MapKey = std::size_t;
-    template<class E>
-    using MapElement = std::shared_ptr<E>;
-    using TypeMap = std::unordered_map<MapKey, MapElement<TYPE::IdInfo>>;
-    using IdMap = std::unordered_map<MapKey, MapElement<IDENTIFIER::Identifier>>;
-    using StatementMap = std::unordered_map<MapKey
-        , std::variant<std::shared_ptr<TOKEN::Declaration>
-            , std::shared_ptr<TOKEN::FunctionDefinition>
-            , std::shared_ptr<TOKEN::Statement>>>;
-
-    inline static TypeMap TYPE_MAP{};
-    inline static IdMap ID_MAP{};
-    inline static StatementMap STATEMENT_MAP{};
-
-    inline static std::size_t NEXT_STATEMENT_ID{0ull};
-
     using ResultTypeTag = TYPE::Base::Tag;
     using BaseTypeTag = TOKEN::TypeSpecifier::Tag;
     using BaseTypeSet = std::multiset<BaseTypeTag>;
@@ -67,15 +51,6 @@ public:
     // if this function is called, mScope's value is nullptr.
     auto moveScope()
         {return std::exchange(mScope, nullptr);}
-
-    static std::size_t addStatement(const StatementMap::mapped_type&);
-
-    inline static constexpr const IdMap &idMap() noexcept
-        {return ID_MAP;}
-    inline static constexpr const TypeMap &typeMap() noexcept
-        {return TYPE_MAP;}
-    inline static const StatementMap &statementMap() noexcept
-        {return STATEMENT_MAP;}
 
 private:
     bool finalize();

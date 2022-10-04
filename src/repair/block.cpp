@@ -2,7 +2,7 @@
 #include <limits>
 #include <utility>
 
-#include "analyzer/analyzer.hpp"
+#include "common/statement.hpp"
 #include "block.hpp"
 
 namespace REPAIR::BLOCK
@@ -59,7 +59,7 @@ bool Block::add(const std::vector<std::size_t> &pos
     Block *block{getBlock(pos)};
 
     block->mStats.insert(block->mStats.begin() + pos.back()
-        , createStatPair(std::get<std::shared_ptr<Statement>>(ANALYZER::Analyzer::statementMap().at(statId)).get()
+        , createStatPair(std::get<std::shared_ptr<Statement>>(STATEMENT::STATEMENT_MAP.at(statId)).get()
             , block->scopeId()));
 
     return true;
@@ -83,7 +83,7 @@ bool Block::replace(const std::vector<std::size_t> &pos
     Block *block{getBlock(pos)};
 
     delete block->mStats.at(pos.back()).second;
-    block->mStats.at(pos.back()) = createStatPair(std::get<std::shared_ptr<Statement>>(ANALYZER::Analyzer::statementMap().at(statId)).get()
+    block->mStats.at(pos.back()) = createStatPair(std::get<std::shared_ptr<Statement>>(STATEMENT::STATEMENT_MAP.at(statId)).get()
         , block->scopeId());
 
     return true;
@@ -96,11 +96,11 @@ TOKEN::TranslationUnit *Block::createTranslationUnit() const
     auto *tu{new TranslationUnit{decltype(TranslationUnit::seq){}}};
 
     for(const auto &id : mDecls)
-        tu->seq.push_back(new ExternalDeclaration{std::get<std::shared_ptr<Declaration>>(ANALYZER::Analyzer::statementMap().at(id))->copy()});
+        tu->seq.push_back(new ExternalDeclaration{std::get<std::shared_ptr<Declaration>>(STATEMENT::STATEMENT_MAP.at(id))->copy()});
 
     for(const auto &pair : mStats)
     {
-        auto &&oldfd{std::get<std::shared_ptr<FunctionDefinition>>(ANALYZER::Analyzer::statementMap().at(pair.first))};
+        auto &&oldfd{std::get<std::shared_ptr<FunctionDefinition>>(STATEMENT::STATEMENT_MAP.at(pair.first))};
         auto *fd{new FunctionDefinition{oldfd->ds->copy()
             , oldfd->d->copy()
             , oldfd->dl
@@ -332,7 +332,7 @@ TOKEN::CompoundStatement *Block::createCompoundStatement() const
 
     auto *cs{new CompoundStatement{new BlockItemList{decltype(BlockItemList::seq){}}}};
     for(const auto &id : mDecls)
-        cs->bil->seq.push_back(new BlockItem{std::get<std::shared_ptr<Declaration>>(ANALYZER::Analyzer::statementMap().at(id))->copy()});
+        cs->bil->seq.push_back(new BlockItem{std::get<std::shared_ptr<Declaration>>(STATEMENT::STATEMENT_MAP.at(id))->copy()});
 
     for(const auto &pair : mStats)
         cs->bil->seq.push_back(new BlockItem{createStatement(pair)});
@@ -352,7 +352,7 @@ TOKEN::Statement *Block::createStatement(const StatPair &pair) const
     using AS = AttributeStatement;
     using AsmS = AsmStatement;
 
-    const auto &oldPtr{std::get<std::shared_ptr<Statement>>(ANALYZER::Analyzer::statementMap().at(pair.first))};
+    const auto &oldPtr{std::get<std::shared_ptr<Statement>>(STATEMENT::STATEMENT_MAP.at(pair.first))};
     Statement *newStatement{nullptr};
 
     newStatement = new Statement{std::monostate{}};
