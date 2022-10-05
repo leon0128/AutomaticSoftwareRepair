@@ -30,8 +30,7 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--add-prob", {Tag::ADDING_PROB, true}}
     , {"--sub-prob", {Tag::SUBTRACTING_PROB, true}}
     , {"--swap-prob", {Tag::SWAPPING_PROB, true}}
-    , {"--new-operation-prob", {Tag::NEW_OPERATION_PROB, true}}
-    , {"--concatenation-prob", {Tag::CONCATENATION_PROB, true}}
+    , {"--new-creation-prob", {Tag::NEW_CREATION_PROB, true}}
     , {"--num-concurrency", {Tag::NUM_CONCURRENCY, true}}
     , {"--max-recursion", {Tag::MAX_RECURSION, true}}
     , {"--use-similarity", {Tag::USE_SIMILARITY, false}}
@@ -201,12 +200,8 @@ bool Configure::readArgument(Tag tag
             if(!assignDouble(tag, arg, SWAPPING_PROBABILITY))
                 return false;
             break;
-        case(Tag::NEW_OPERATION_PROB):
-            if(!assignDouble(tag, arg, ADDING_NEW_OPERATION_PROBABILITY))
-                return false;
-            break;
-        case(Tag::CONCATENATION_PROB):
-            if(!assignDouble(tag, arg, CONCATENATION_PROBABILITY))
+        case(Tag::NEW_CREATION_PROB):
+            if(!assignDouble(tag, arg, NEW_CREATION_PROB))
                 return false;
             break;
         case(Tag::NUM_CONCURRENCY):
@@ -340,11 +335,8 @@ bool Configure::setDefaultValue()
             case(Tag::SWAPPING_PROB):
                 SWAPPING_PROBABILITY = 0.0;
                 break;
-            case(Tag::NEW_OPERATION_PROB):
-                ADDING_NEW_OPERATION_PROBABILITY = 0.50;
-                break;
-            case(Tag::CONCATENATION_PROB):
-                CONCATENATION_PROBABILITY = 0.50;
+            case(Tag::NEW_CREATION_PROB):
+                NEW_CREATION_PROB = 0.20;
                 break;
             case(Tag::NUM_CONCURRENCY):
                 NUM_CONCURRENCY = 16;

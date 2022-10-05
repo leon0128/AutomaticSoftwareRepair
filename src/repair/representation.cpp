@@ -9,17 +9,17 @@
 namespace REPAIR::REPRESENTATION
 {
 
-bool Representation::initialize(const Pool &pool
-    , const BLOCK::Block *block)
+bool Representation::initialize(const std::shared_ptr<BLOCK::Block> &target
+    , const std::deque<std::shared_ptr<BLOCK::Block>> &pool)
 {
     POOL = pool;
-    INIT_BLOCK = block;
+    INIT_BLOCK = target;
 
     return true;
 }
 
 Representation::Representation()
-    : mBlock{INIT_BLOCK->copy()}
+    : mBlock{INIT_BLOCK.get()->copy()}
     , mOps{}
 {
 }
@@ -33,8 +33,7 @@ Representation::~Representation()
 
 bool Representation::addOperation()
 {
-    OPERATION::Operation op{POOL
-        , mBlock};
+    OPERATION::Operation op{mBlock, POOL};
 
     if(op.tag() != OPERATION::Tag::NONE)
         mOps.emplace_back(new OPERATION::Operation{std::move(op)});
@@ -49,12 +48,11 @@ bool Representation::addOperation()
 
 Representation *Representation::copy() const
 {
-    return new Representation{mBlock
-        , mOps};
+    return new Representation{mBlock, mOps};
 }
 
 Representation::Representation(const BLOCK::Block *block
-    , const std::vector<const OPERATION::Operation*> &ops)
+    , const std::deque<const OPERATION::Operation*> &ops)
     : mBlock{block->copy()}
     , mOps{}
 {

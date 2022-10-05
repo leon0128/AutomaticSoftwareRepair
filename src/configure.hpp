@@ -41,8 +41,7 @@ private:
         , ADDING_PROB
         , SUBTRACTING_PROB
         , SWAPPING_PROB
-        , NEW_OPERATION_PROB
-        , CONCATENATION_PROB
+        , NEW_CREATION_PROB
         , NUM_CONCURRENCY
         , MAX_RECURSION
         , USE_SIMILARITY
@@ -92,8 +91,7 @@ public:
     inline static double SUBTRACTING_PROBABILITY;
     inline static double SWAPPING_PROBABILITY;
 
-    inline static double ADDING_NEW_OPERATION_PROBABILITY;
-    inline static double CONCATENATION_PROBABILITY;
+    inline static double NEW_CREATION_PROB;
 
     inline static std::size_t NUM_CONCURRENCY;
     inline static std::size_t MAX_RECURSION;
