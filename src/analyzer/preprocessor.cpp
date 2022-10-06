@@ -6,24 +6,28 @@
 
 #include "utility/system.hpp"
 #include "utility/file.hpp"
+#include "common/define.hpp"
 #include "configure.hpp"
-#include "token.hpp"
 #include "tokenizer.hpp"
-#include "sequencer.hpp"
+#include "preprocessor.hpp"
 
-Sequencer::Sequencer()
+namespace ANALYZER
+{
+
+Preprocessor::Preprocessor()
     : mFile{}
+    , mTemporaryFilename{PATH::getTempFilename()}
     , mSeq{}
 {
+    mTemporaryFilename += ".c";
 }
 
-Sequencer::~Sequencer()
+Preprocessor::~Preprocessor()
 {
-    for(auto &&pt : mSeq)
-        delete pt;
+    finalize();
 }
 
-bool Sequencer::execute(const std::string &filename)
+bool Preprocessor::execute(const std::string &filename)
 {
     mFile = filename;
     
@@ -39,9 +43,15 @@ bool Sequencer::execute(const std::string &filename)
     return true;
 }
 
-bool Sequencer::openFile(std::string &src)
+void Preprocessor::finalize()
 {
-    std::filesystem::path path(Configure::TEST_FILENAME);
+    for(auto &&pp : mSeq)
+        delete pp;
+}
+
+bool Preprocessor::openFile(std::string &src)
+{
+    std::filesystem::path path(mTemporaryFilename);
     if(!PATH::isExist(path, std::filesystem::file_type::regular))
     {
         std::cerr << "sequencer error:\n"
@@ -55,7 +65,7 @@ bool Sequencer::openFile(std::string &src)
         , src);
 }
 
-bool Sequencer::preprocess()
+bool Preprocessor::preprocess()
 {
     std::filesystem::path path{mFile};
     if(!PATH::isExist(path, std::filesystem::file_type::regular))
@@ -71,14 +81,13 @@ bool Sequencer::preprocess()
     std::string command{SYSTEM::command(Configure::PREPROCESSOR
         , "-P"
         , mFile
-        , "-D__extension__="
-        , "-D__builtin_expect\\(exp,c\\)=\\(exp\\)"
-        , "-D__builtin_offsetof\\(TYPE,MEMBER\\)=\\(\\(size_t\\)\\&\\(\\(TYPE*\\)0\\)-\\>MEMBER\\)"
+        // , "-D__extension__="
+        // , "-D__builtin_expect\\(exp,c\\)=\\(exp\\)"
+        // , "-D__builtin_offsetof\\(TYPE,MEMBER\\)=\\(\\(size_t\\)\\&\\(\\(TYPE*\\)0\\)-\\>MEMBER\\)"
         , "-o"
-        , Configure::TEST_FILENAME
-        , ">"
-        , SYSTEM::NULLFILE
-        , "2>&1")};
+        , mTemporaryFilename)};
+
+    controlOutputLog(command);
 
     if(SYSTEM::system(command) != 0)
     {
@@ -92,7 +101,7 @@ bool Sequencer::preprocess()
     return true;
 }
 
-bool Sequencer::sequencenize(const std::string &src)
+bool Preprocessor::sequencenize(const std::string &src)
 {
     std::size_t idx = 0;
     while(true)
@@ -117,12 +126,12 @@ bool Sequencer::sequencenize(const std::string &src)
     return true;
 }
 
-bool Sequencer::convertCharacter()
+bool Preprocessor::convertCharacter()
 {
     return true;
 }
 
-bool Sequencer::concatenateStringLiteral()
+bool Preprocessor::concatenateStringLiteral()
 {
     // pre: pre + post
     // post: empty
@@ -180,7 +189,7 @@ bool Sequencer::concatenateStringLiteral()
     return true;
 }
 
-void Sequencer::omitWS(const std::string &src
+void Preprocessor::omitWS(const std::string &src
     , std::size_t &idx) const
 {
     while(idx < src.size()
@@ -192,7 +201,7 @@ void Sequencer::omitWS(const std::string &src
         idx++;
 }
 
-bool Sequencer::convertEscapeSequence(TOKEN::EscapeSequence *es
+bool Preprocessor::convertEscapeSequence(TOKEN::EscapeSequence *es
     , char &res) const
 {
     if(std::holds_alternative<TOKEN::SimpleEscapeSequence*>(es->var))
@@ -252,4 +261,6 @@ bool Sequencer::convertEscapeSequence(TOKEN::EscapeSequence *es
     }
 
     return true;
+}
+
 }

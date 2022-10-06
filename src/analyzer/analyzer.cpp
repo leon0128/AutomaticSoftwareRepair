@@ -1,7 +1,12 @@
 #include <iostream>
 
-#include "scope.hpp"
+#include "common/type.hpp"
+#include "common/identifier.hpp"
+#include "common/statement.hpp"
 #include "analyzer.hpp"
+
+namespace ANALYZER
+{
 
 const Analyzer::BaseTypeMap Analyzer::BASE_TYPE_MAP
     {{ResultTypeTag::VOID
@@ -98,7 +103,6 @@ const Analyzer::BaseTypeMap Analyzer::BASE_TYPE_MAP
 
 Analyzer::Analyzer()
     : mFilename{}
-    , mTranslationUnit{nullptr}
     , mFlags{}
     , mScope{nullptr}
 {
@@ -113,7 +117,6 @@ bool Analyzer::execute(const std::string &filename
     , TOKEN::TranslationUnit *tu)
 {
     mFilename = filename;
-    mTranslationUnit = tu;
 
     if(!tu)
         return true;
@@ -126,29 +129,9 @@ bool Analyzer::execute(const std::string &filename
 
 bool Analyzer::finalize()
 {
-    delete mTranslationUnit;
     delete mScope;
 
     return true;
-}
-
-std::size_t Analyzer::addStatement(const Analyzer::StatementMap::mapped_type &value)
-{
-    using namespace TOKEN;
-
-    std::size_t statId{NEXT_STATEMENT_ID++};
-
-    if(std::holds_alternative<std::shared_ptr<Declaration>>(value))
-        std::get<std::shared_ptr<Declaration>>(value)->statementId = statId;
-    else if(std::holds_alternative<std::shared_ptr<FunctionDefinition>>(value))
-        std::get<std::shared_ptr<FunctionDefinition>>(value)->statementId = statId;
-    else if(std::holds_alternative<std::shared_ptr<Statement>>(value))
-        std::get<std::shared_ptr<Statement>>(value)->statementId = statId;
-
-    STATEMENT_MAP.emplace(statId
-        , value);
-
-    return statId;
 }
 
 bool Analyzer::analyze(const TOKEN::TranslationUnit *tu)
@@ -187,7 +170,7 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
     bool oldIsCreatingBlock{flag(FlagTag::IS_CREATING_BLOCK, false)};
     bool oldIsOutestParameter{flag(FlagTag::IS_OUTEST_PARAMETER, true)};
 
-    fd->statementId = NEXT_STATEMENT_ID++;
+    fd->statementId = STATEMENT::NEXT_STATEMENT_ID++;
 
     auto &&attrsOpt{analyzeAttributes(fd->ds)};
     if(!attrsOpt)
@@ -218,7 +201,7 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
         auto &&pair{mScope->addIdentifier(id
             , SCOPE::Scope::NamespaceTag::OTHER
             , SCOPE::Scope::ScopeTag::FILE)};
-        ID_MAP.emplace(id->id()
+        IDENTIFIER::IDENTIFIER_MAP.emplace(id->id()
             , id);
         
         auto &&identifier{getIdentifier(fd->d)};
@@ -251,7 +234,7 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
         , fd->scopeId))
         return false;
 
-    STATEMENT_MAP.emplace(fd->statementId
+    STATEMENT::STATEMENT_MAP.emplace(fd->statementId
         , std::shared_ptr<TOKEN::FunctionDefinition>{fd->copy()});
 
     flag(FlagTag::IS_FUNCTION, oldIsFunction);
@@ -267,7 +250,7 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
 
 bool Analyzer::analyze(TOKEN::Declaration *d)
 {
-    d->statementId = NEXT_STATEMENT_ID++;
+    d->statementId = STATEMENT::NEXT_STATEMENT_ID++;
 
     if(std::holds_alternative<TOKEN::Declaration::Sds_idl>(d->var))
     {
@@ -350,7 +333,7 @@ bool Analyzer::analyze(TOKEN::Declaration *d)
 
                     auto &&pair{mScope->addIdentifier(id
                         , SCOPE::Scope::NamespaceTag::OTHER)};
-                    ID_MAP.emplace(id->id()
+                    IDENTIFIER::IDENTIFIER_MAP.emplace(id->id()
                         , id);
 
                     auto &&i{getIdentifier(declarator)};
@@ -425,7 +408,7 @@ bool Analyzer::analyze(TOKEN::Declaration *d)
     else
         variantError("Declaration");
 
-    STATEMENT_MAP.emplace(d->statementId
+    STATEMENT::STATEMENT_MAP.emplace(d->statementId
         , std::shared_ptr<TOKEN::Declaration>{d->copy()});
     
     return true;
@@ -470,7 +453,7 @@ bool Analyzer::analyze(const TOKEN::CompoundStatement *cs
 
 bool Analyzer::analyze(TOKEN::Statement *s)
 {
-    s->statementId = NEXT_STATEMENT_ID++;
+    s->statementId = STATEMENT::NEXT_STATEMENT_ID++;
 
     if(std::holds_alternative<TOKEN::LabeledStatement*>(s->var))
     {
@@ -523,7 +506,7 @@ bool Analyzer::analyze(TOKEN::Statement *s)
     else
         variantError("Statement");
 
-    STATEMENT_MAP.emplace(s->statementId
+    STATEMENT::STATEMENT_MAP.emplace(s->statementId
         , std::shared_ptr<TOKEN::Statement>{s->copy()});
     
     return true;
@@ -548,7 +531,7 @@ bool Analyzer::analyze(const TOKEN::LabeledStatement *ls)
             auto &&pair{mScope->addIdentifier(id
                 , SCOPE::Scope::NamespaceTag::LABEL
                 , SCOPE::Scope::ScopeTag::FUNCTION)};
-            ID_MAP.emplace(id->id()
+            IDENTIFIER::IDENTIFIER_MAP.emplace(id->id()
                 , id);
             
             deleteIdentifierElement(s.i);
@@ -741,7 +724,7 @@ bool Analyzer::analyze(const TOKEN::JumpStatement *js)
             auto &&pair{mScope->addIdentifier(id
                 , SCOPE::Scope::NamespaceTag::LABEL
                 , SCOPE::Scope::ScopeTag::FUNCTION)};
-            ID_MAP.emplace(id->id()
+            IDENTIFIER::IDENTIFIER_MAP.emplace(id->id()
                 , id);
 
             deleteIdentifierElement(s.i);
@@ -1582,7 +1565,7 @@ std::optional<TYPE::Type>
             if(!analyzeMember(sdl, id))
                 return {std::nullopt};
 
-            TYPE_MAP.find(id)->second->isDefined(true);
+            TYPE::TYPE_MAP.find(id)->second->isDefined(true);
             return {TYPE::Type{TYPE::Struct{id}}};
         }};
     auto addTagInfo{[&](const std::string &tag
@@ -1598,8 +1581,8 @@ std::optional<TYPE::Type>
             
             std::shared_ptr<IDENTIFIER::Identifier> tagIdentPtr{new IDENTIFIER::Tag{tagIdent}};
             auto &&pair{mScope->addIdentifier(tagIdentPtr, NTag::TAG)};
-            ID_MAP.emplace(tagIdent.id(), tagIdentPtr);
-            TYPE_MAP.emplace(sInfo.id(), new TYPE::StructInfo{sInfo});
+            IDENTIFIER::IDENTIFIER_MAP.emplace(tagIdent.id(), tagIdentPtr);
+            TYPE::TYPE_MAP.emplace(sInfo.id(), new TYPE::StructInfo{sInfo});
             
             deleteIdentifierElement(identifier);
             identifier->var.emplace<TOKEN::Identifier::Id>(pair->first->id(), pair->second);
@@ -1619,7 +1602,7 @@ std::optional<TYPE::Type>
         if(!s.i)
         {
             TYPE::StructInfo sInfo{{}, isUnion(s.sou)};
-            TYPE_MAP.emplace(sInfo.id(), new TYPE::StructInfo{sInfo});
+            TYPE::TYPE_MAP.emplace(sInfo.id(), new TYPE::StructInfo{sInfo});
 
             return define(s.sdl, sInfo.id());
         }
@@ -1637,7 +1620,7 @@ std::optional<TYPE::Type>
                     return {std::nullopt};
                 }
 
-                auto &&iter{TYPE_MAP.find(tagIdent->typeId())};
+                auto &&iter{TYPE::TYPE_MAP.find(tagIdent->typeId())};
                 if(iter->second->isDefined())
                 {
                     redefinedError(tag);
@@ -1728,7 +1711,7 @@ bool Analyzer::analyzeMember(const TOKEN::StructDeclarationList *sdl
             sInfo->members.emplace_back(type, ident);
             std::shared_ptr<IDENTIFIER::Identifier> member{new IDENTIFIER::Member{ident, sInfo->id()}};
             
-            ID_MAP.emplace(member->id(), member);
+            IDENTIFIER::IDENTIFIER_MAP.emplace(member->id(), member);
             auto &&pair{mScope->addIdentifier(member, SCOPE::Scope::NamespaceTag::MEMBER)};
             if(!pair)
                 return false;
@@ -1739,7 +1722,7 @@ bool Analyzer::analyzeMember(const TOKEN::StructDeclarationList *sdl
             return true;
         }};
 
-    auto &&sInfo{std::dynamic_pointer_cast<TYPE::StructInfo>(TYPE_MAP.find(typeId)->second)};
+    auto &&sInfo{std::dynamic_pointer_cast<TYPE::StructInfo>(TYPE::TYPE_MAP.find(typeId)->second)};
     if(!sInfo)
         return differentTypeError(std::to_string(typeId));
 
@@ -1849,7 +1832,7 @@ std::optional<TYPE::Type>
             if(!analyzeMember(el, id))
                 return {std::nullopt};
             
-            TYPE_MAP.find(id)->second->isDefined(true);
+            TYPE::TYPE_MAP.find(id)->second->isDefined(true);
             return {TYPE::Type{TYPE::Enum{id}}};
         }};
 
@@ -1882,7 +1865,7 @@ std::optional<TYPE::Type>
                     return {std::nullopt};
                 }
 
-                auto &&iter{TYPE_MAP.find(tagIdent->typeId())};
+                auto &&iter{TYPE::TYPE_MAP.find(tagIdent->typeId())};
                 if(iter->second->isDefined())
                 {
                     redefinedError(tag);
@@ -1901,9 +1884,9 @@ std::optional<TYPE::Type>
                 std::shared_ptr<IDENTIFIER::Identifier> tagIdentPtr{new IDENTIFIER::Tag{tag, eInfo.id(), IDENTIFIER::Tag::T::ENUM}};
                 auto &&pair{mScope->addIdentifier(tagIdentPtr
                     , SCOPE::Scope::NamespaceTag::TAG)};
-                ID_MAP.emplace(tagIdentPtr->id()
+                IDENTIFIER::IDENTIFIER_MAP.emplace(tagIdentPtr->id()
                     , tagIdentPtr);
-                TYPE_MAP.emplace(eInfo.id()
+                TYPE::TYPE_MAP.emplace(eInfo.id()
                     , new TYPE::EnumInfo{eInfo});
 
                 deleteIdentifierElement(s.i);
@@ -1915,7 +1898,7 @@ std::optional<TYPE::Type>
         else
         {
             TYPE::EnumInfo eInfo{{}};
-            TYPE_MAP.emplace(eInfo.id()
+            TYPE::TYPE_MAP.emplace(eInfo.id()
                 , new TYPE::EnumInfo{eInfo});
             
             return define(s.el, eInfo.id());
@@ -1958,7 +1941,7 @@ bool Analyzer::analyzeMember(const TOKEN::EnumeratorList *el
 {
     using E = TOKEN::Enumerator;
 
-    auto &&iter{TYPE_MAP.find(typeId)};
+    auto &&iter{TYPE::TYPE_MAP.find(typeId)};
     auto &&enumInfo{std::dynamic_pointer_cast<TYPE::EnumInfo>(iter->second)};
 
     for(const auto &e : el->seq)
@@ -1991,7 +1974,7 @@ bool Analyzer::analyzeMember(const TOKEN::EnumeratorList *el
         std::shared_ptr<IDENTIFIER::Identifier> identPtr{new IDENTIFIER::Enum{TOKEN::str(identifier), typeId}};
         auto &&pair{mScope->addIdentifier(identPtr
             , SCOPE::Scope::NamespaceTag::OTHER)};
-        ID_MAP.emplace(identPtr->id()
+        IDENTIFIER::IDENTIFIER_MAP.emplace(identPtr->id()
             , identPtr);
         
         enumInfo->members.emplace_back(TOKEN::str(identifier)
@@ -2379,7 +2362,7 @@ std::optional<TYPE::Type>
 
         auto &&pair{mScope->addIdentifier(identifier
             , SCOPE::Scope::NamespaceTag::OTHER)};
-        ID_MAP.emplace(identifier->id()
+        IDENTIFIER::IDENTIFIER_MAP.emplace(identifier->id()
             , identifier);
 
         auto &&i{getIdentifier(d)};
@@ -2627,4 +2610,6 @@ bool Analyzer::notDeclarationError(const std::string &identifier) const
         "    id: " << identifier
         << std::endl;
     return false;
+}
+
 }

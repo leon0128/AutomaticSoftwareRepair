@@ -3,6 +3,8 @@
 PROGRAM = asr
 ## source directories
 SOURCE_DIRECTORIES = ./src/ \
+	./src/analyzer/ \
+	./src/common/ \
 	./src/repair/ \
 	./src/similarity/ \
 	./src/utility/
@@ -11,7 +13,7 @@ SOURCE_DIRECTORIES = ./src/ \
 ## c++ compiler
 CXX = g++
 ## c++ compiler flags
-CXXFLAGS = -g3 -Wall -std=c++20
+CXXFLAGS = -g3 -Wall -std=c++2a -I./src -lpthread -pthread
 ## c++ preprocessor
 CPP = g++ -E
 ## c++ preprocessor flags
@@ -54,7 +56,7 @@ $(PROGRAM): $(OBJECT_FILES)
 # dependency file recipe
 $(DEPENDENCY_FILES):
 	echo -n "$(dir $@) > $@"
-	$(CXX) -MM -c $(basename $@).cpp >> $@
+	$(CXX) $(CXXFLAGS) -MM -c $(basename $@).cpp >> $@
 	echo "	rm -rf $@" >> $@
 	echo "	$(CXX) $(CXXFLAGS) -c $(basename $@).cpp -o $(basename $@).o" >> $@
 

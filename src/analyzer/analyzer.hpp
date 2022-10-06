@@ -1,5 +1,5 @@
-#ifndef ANALYZER_HPP
-#define ANALYZER_HPP
+#ifndef ANALYZER_ANALYZER_HPP
+#define ANALYZER_ANALYZER_HPP
 
 #include <utility>
 #include <bitset>
@@ -10,22 +10,13 @@
 #include <string>
 #include <optional>
 
-#include "token.hpp"
-#include "type.hpp"
-#include "identifier.hpp"
+#include "common/token.hpp"
+#include "common/type.hpp"
+#include "common/identifier.hpp"
+#include "common/scope.hpp"
 
-namespace SCOPE
+namespace ANALYZER
 {
-    class Scope;
-}
-namespace TYPE
-{
-    class IdInfo;
-}
-namespace IDENTIFIER
-{
-    class Identifier;
-}
 
 class Analyzer
 {
@@ -34,22 +25,6 @@ private:
     inline static constexpr const std::size_t NUM_FLAG_TAG{4};
 
     using Flags = std::bitset<NUM_FLAG_TAG>;
-
-    using MapKey = std::size_t;
-    template<class E>
-    using MapElement = std::shared_ptr<E>;
-    using TypeMap = std::unordered_map<MapKey, MapElement<TYPE::IdInfo>>;
-    using IdMap = std::unordered_map<MapKey, MapElement<IDENTIFIER::Identifier>>;
-    using StatementMap = std::unordered_map<MapKey
-        , std::variant<std::shared_ptr<TOKEN::Declaration>
-            , std::shared_ptr<TOKEN::FunctionDefinition>
-            , std::shared_ptr<TOKEN::Statement>>>;
-
-    inline static TypeMap TYPE_MAP{};
-    inline static IdMap ID_MAP{};
-    inline static StatementMap STATEMENT_MAP{};
-
-    inline static std::size_t NEXT_STATEMENT_ID{0ull};
 
     using ResultTypeTag = TYPE::Base::Tag;
     using BaseTypeTag = TOKEN::TypeSpecifier::Tag;
@@ -64,27 +39,22 @@ public:
     Analyzer();
     ~Analyzer();
 
+    Analyzer(const Analyzer&) = delete;
+    Analyzer(Analyzer&&) = delete; 
+
     bool execute(const std::string &filename
         , TOKEN::TranslationUnit*);
-    bool finalize();
 
-    TOKEN::TranslationUnit *translationUnit() const noexcept
-        {return mTranslationUnit;}
-    const std::string &filename() const noexcept
-        {return mFilename;}
     SCOPE::Scope *scope() const noexcept
         {return mScope;}
 
-    static std::size_t addStatement(const StatementMap::mapped_type&);
-
-    inline static constexpr const IdMap &idMap() noexcept
-        {return ID_MAP;}
-    inline static constexpr const TypeMap &typeMap() noexcept
-        {return TYPE_MAP;}
-    inline static const StatementMap &statementMap() noexcept
-        {return STATEMENT_MAP;}
+    // if this function is called, mScope's value is nullptr.
+    auto moveScope()
+        {return std::exchange(mScope, nullptr);}
 
 private:
+    bool finalize();
+
     bool analyze(const TOKEN::TranslationUnit*);
     bool analyze(TOKEN::FunctionDefinition*);
     bool analyze(TOKEN::Declaration*);
@@ -225,5 +195,7 @@ enum class Analyzer::FlagTag : unsigned char
     // used in function-definition or prototype-declaration
     , IS_OUTEST_PARAMETER
 };
+
+}
 
 #endif

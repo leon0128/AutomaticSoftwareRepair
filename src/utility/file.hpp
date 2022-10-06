@@ -2,6 +2,7 @@
 #define UTILITY_FILE_HPP
 
 #include <filesystem>
+#include <string>
 
 namespace PATH
 {
@@ -30,6 +31,8 @@ bool read(const std::filesystem::path &path
 bool write(const std::filesystem::path &path
     , const std::string &str
     , bool isOverwitten = true);
+
+std::string getTempFilename();
 
 }
 

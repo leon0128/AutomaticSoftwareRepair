@@ -1,5 +1,5 @@
-#ifndef TOKEN_HPP
-#define TOKEN_HPP
+#ifndef COMMON_TOKEN_HPP
+#define COMMON_TOKEN_HPP
 
 #include <unordered_map>
 #include <variant>
@@ -8,6 +8,10 @@
 #include <utility>
 #include <string>
 #include <array>
+#include <memory>
+
+inline namespace COMMON
+{
 
 namespace TOKEN
 {
@@ -3369,6 +3373,8 @@ public:
 };
 
 std::string &addLine(std::string&, std::size_t&);
+
+}
 
 }
 

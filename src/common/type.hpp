@@ -1,5 +1,5 @@
-#ifndef TYPE_HPP
-#define TYPE_HPP
+#ifndef COMMON_TYPE_HPP
+#define COMMON_TYPE_HPP
 
 #include <vector>
 #include <string>
@@ -11,6 +11,9 @@
 #include <set>
 #include <unordered_map>
 #include <optional>
+
+inline namespace COMMON
+{
 
 namespace TOKEN
 {
@@ -38,6 +41,8 @@ class Type;
 class IdInfo;
 class StructInfo;
 class EnumInfo;
+
+inline std::unordered_map<std::size_t, std::shared_ptr<IdInfo>> TYPE_MAP{};
 
 std::optional<Type> extractType(const Typedef&);
 std::optional<Type> addQualifiers(const Type&
@@ -291,6 +296,8 @@ public:
 
     EnumInfo(const std::string&);
 };
+
+}
 
 }
 

@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../analyzer.hpp"
+#include "common/statement.hpp"
 #include "register.hpp"
 
 namespace REPAIR
@@ -107,7 +107,7 @@ std::optional<std::size_t> Register::registerStatement(TOKEN::Statement *stateme
             return {std::nullopt};
     }
     
-    statement->statementId = Analyzer::addStatement(std::shared_ptr<Statement>(statement->copy()));
+    statement->statementId = STATEMENT::addStatement(std::shared_ptr<Statement>(statement->copy()));
     return {statement->statementId};
 }
 
@@ -115,7 +115,7 @@ std::optional<std::size_t> Register::registerDeclaration(TOKEN::Declaration *dec
 {
     using namespace TOKEN;
 
-    declaration->statementId = Analyzer::addStatement(std::shared_ptr<Declaration>(declaration->copy()));
+    declaration->statementId = STATEMENT::addStatement(std::shared_ptr<Declaration>(declaration->copy()));
     return {declaration->statementId};
 }
 

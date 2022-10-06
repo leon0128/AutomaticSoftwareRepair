@@ -2,7 +2,7 @@
 #include <utility>
 #include <memory>
 
-#include "../configure.hpp"
+#include "configure.hpp"
 #include "representation.hpp"
 #include "representation_creator.hpp"
 

@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <iterator>
 
-#include "../token.hpp"
 #include "representation.hpp"
 #include "representation_creator.hpp"
 #include "calculator.hpp"
@@ -20,11 +19,11 @@ Controller::~Controller()
 {
 }
 
-bool Controller::execute(const std::pair<std::string, const TOKEN::TranslationUnit*> &target
-    , const std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>> &tus)
+bool Controller::execute(const CodeInformation &target
+    , const std::deque<CodeInformation> &pool)
 {
     // initialize and 
-    bool isSucceessfull{initialize(tus)
+    bool isSucceessfull{initialize(pool)
         && calculate(target)};
 
     // test(tus);
@@ -35,15 +34,15 @@ bool Controller::execute(const std::pair<std::string, const TOKEN::TranslationUn
     return isSucceessfull;
 }
 
-bool Controller::initialize(const std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>> &tus)
+bool Controller::initialize(const std::deque<CodeInformation> &pool)
 {
     // priority:
     //  RepCreator > Calculator
 
     // create and register Rep
-    for(auto &&[filename, tu] : tus)
+    for(auto &&ci : pool)
     {
-        if(!RepresentationCreator::createAndRegister(filename, tu))
+        if(!RepresentationCreator::createAndRegister(ci.mFilename, ci.mTranslationUnit.get()))
             return false;
     }
 
@@ -54,12 +53,12 @@ bool Controller::initialize(const std::deque<std::pair<std::string, const TOKEN:
     return true;
 }
 
-bool Controller::calculate(const std::pair<std::string, const TOKEN::TranslationUnit*> &target)
+bool Controller::calculate(const CodeInformation &target)
 {
     using Rep = Representation;
     using RC = RepresentationCreator;
 
-    std::deque<Rep::Element*> reps{RC::create(target.first, target.second)};
+    std::deque<Rep::Element*> reps{RC::create(target.mFilename, target.mTranslationUnit.get())};
 
     for(auto &&element : reps)
     {
@@ -79,15 +78,15 @@ void Controller::finalize()
     Calculator::finalize();
 }
 
-void Controller::test(const std::deque<std::pair<std::string, const TOKEN::TranslationUnit*>> &tus)
+void Controller::test(const std::deque<CodeInformation> &pool)
 {
     using Rep = Representation;
     using RC = RepresentationCreator;
 
     std::deque<Rep::Element*> reps;
-    for(auto &&[filename, tu] : tus)
+    for(auto &&ci : pool)
     {
-        auto &&tempReps{RC::create(filename, tu)};
+        auto &&tempReps{RC::create(ci.mFilename, ci.mTranslationUnit.get())};
         std::move(tempReps.begin()
             , tempReps.end()
             , std::back_inserter(reps));

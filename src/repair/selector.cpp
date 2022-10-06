@@ -3,10 +3,10 @@
 #include <limits>
 #include <algorithm>
 
-#include "../utility/random.hpp"
-#include "../scope.hpp"
-#include "../identifier.hpp"
-#include "../token.hpp"
+#include "utility/random.hpp"
+#include "common/scope.hpp"
+#include "common/identifier.hpp"
+#include "common/token.hpp"
 #include "selector.hpp"
 
 namespace REPAIR

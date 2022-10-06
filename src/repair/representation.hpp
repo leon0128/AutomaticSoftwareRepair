@@ -1,9 +1,11 @@
 #ifndef REPAIR_REPRESENTATION_HPP
 #define REPAIR_REPRESENTATION_HPP
 
+#include <deque>
 #include <vector>
 #include <functional>
 #include <string>
+#include <memory>
 
 namespace REPAIR
 {
@@ -12,8 +14,6 @@ namespace BLOCK
 {
     class Block;
 }
-
-using Pool = std::vector<const BLOCK::Block*>;
 
 namespace OPERATION
 {
@@ -31,17 +31,18 @@ namespace REPRESENTATION
 class Representation
 {
 private:
-    inline static const Pool TEMPORALY_POOL{};
-    inline static std::reference_wrapper<const Pool> POOL{TEMPORALY_POOL};
-    inline static const BLOCK::Block *INIT_BLOCK{nullptr};
+    inline static const std::deque<std::shared_ptr<BLOCK::Block>> TEMPORALY_POOL{};
+    inline static std::reference_wrapper<const std::deque<std::shared_ptr<BLOCK::Block>>> POOL{TEMPORALY_POOL};
+    inline static const std::shared_ptr<BLOCK::Block> TEMPORARY_BLOCK{};
+    inline static std::reference_wrapper<const std::shared_ptr<BLOCK::Block>> INIT_BLOCK{TEMPORARY_BLOCK};
 
 public:
-    static bool initialize(const Pool&
-        , const BLOCK::Block*);
+    static bool initialize(const std::shared_ptr<BLOCK::Block> &target
+        , const std::deque<std::shared_ptr<BLOCK::Block>> &pool);
 
 private:
     BLOCK::Block *mBlock;
-    std::vector<const OPERATION::Operation*> mOps;
+    std::deque<const OPERATION::Operation*> mOps;
 
 public:
     Representation();
@@ -56,7 +57,7 @@ public:
 
 private:
     Representation(const BLOCK::Block*
-        , const std::vector<const OPERATION::Operation*>&);
+        , const std::deque<const OPERATION::Operation*>&);
 
     // update block, apply mOps.back()
     bool updateBlock();

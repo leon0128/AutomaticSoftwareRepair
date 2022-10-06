@@ -7,8 +7,9 @@ TARGET_FILENAME="test/test.c"
 TARGET_FUNCTIONS=()
 EXTERNAL_PATHS=()
 RESULT_FILENAME="test/result.c"
-TEMPORARY_FILENAME="test/__test.c"
-TEMPORARY_EXECUTION_NAME="test/__test"
+
+EXEC_EXTENSION=""
+NULL_FILENAME="/dev/null"
 
 ## test case
 TEST_SCRIPT_FILENAME="test/test.sh"
@@ -31,7 +32,7 @@ SWAP_PROBABILITY=0.4
 MAX_NUMBER_OF_FAILURES=10
 
 ## genetic algorithm
-POPULATION=100
+POPULATION=1000
 GENERATION=10
 NUMBER_OF_ELITE=2
 TOURNAMENT_SIZE=3
@@ -45,6 +46,7 @@ REDUCTION_THRESHOLD=1.0
 NUMBER_OF_USE_EXTERNAL=10
 
 ## others
+NUMBER_OF_CONCURRENCY=64
 MAX_RECURSION=16
 
 # execution
@@ -65,13 +67,13 @@ $EXECUTION_NAME \
     $TARGET \
     $POOL \
     --result "$RESULT_FILENAME" \
-    --command-log \
     --time-log \
+    --repair-log \
     --preprocessor "$PREPROCESSOR" \
     --compiler "$COMPILER" \
     --test-script "$TEST_SCRIPT_FILENAME" \
-    --test-filename "$TEMPORARY_FILENAME" \
-    --execution "$TEMPORARY_EXECUTION_NAME" \
+    --exec-extension "$EXEC_EXTENSION" \
+    --null-filename "$NULL_FILENAME" \
     --pos-prefix "$POSITIVE_PREFIX" \
     --neg-prefix "$NEGATIVE_PREFIX" \
     --num-pos "$NUMBER_OF_POSITIVE" \
@@ -87,6 +89,7 @@ $EXECUTION_NAME \
     --add-prob "$ADD_PROBABILITY" \
     --sub-prob "$SUB_PROBABILITY" \
     --swap-prob "$SWAP_PROBABILITY" \
+    --num-concurrency "$NUMBER_OF_CONCURRENCY" \
     --max-recursion "$MAX_RECURSION" \
     --use-similarity \
     --original "$ORIGINAL_GRAM_SIZE" \

@@ -4,10 +4,10 @@
 #include <limits>
 #include <map>
 
-#include "../utility/output.hpp"
-#include "../utility/random.hpp"
-#include "../configure.hpp"
-#include "../analyzer.hpp"
+#include "utility/output.hpp"
+#include "utility/random.hpp"
+#include "common/statement.hpp"
+#include "configure.hpp"
 #include "register.hpp"
 #include "selector.hpp"
 #include "block.hpp"
@@ -41,8 +41,8 @@ Tag selectTag()
     return tag;
 }
 
-bool Operation::initialize(const Pool &pool
-    , const BLOCK::Block *block)
+bool Operation::initialize(const std::shared_ptr<BLOCK::Block> &target
+    , const std::deque<std::shared_ptr<BLOCK::Block>> &pool)
 {
     using namespace TOKEN;
     using DD = DirectDeclarator;
@@ -62,10 +62,10 @@ bool Operation::initialize(const Pool &pool
     }};
 
     for(std::size_t i{0ull};
-        i < block->stats().size();
+        i < target->stats().size();
         i++)
     {
-        const auto &fd{std::get<std::shared_ptr<FunctionDefinition>>(Analyzer::statementMap().at(block->stats().at(i).first))};
+        const auto &fd{std::get<std::shared_ptr<FunctionDefinition>>(STATEMENT::STATEMENT_MAP.at(target->stats().at(i).first))};
         if(std::find(Configure::TARGET_FUNCTION_NAMES.begin()
             , Configure::TARGET_FUNCTION_NAMES.end()
             , getFunctionName(fd->d))
@@ -74,30 +74,30 @@ bool Operation::initialize(const Pool &pool
     }
     if(SELECTABLE_DESTINATION_INDICES.empty())
     {
-        SELECTABLE_DESTINATION_INDICES.resize(block->stats().size());
+        SELECTABLE_DESTINATION_INDICES.resize(target->stats().size());
         std::iota(SELECTABLE_DESTINATION_INDICES.begin()
             , SELECTABLE_DESTINATION_INDICES.end()
             , 0ull);
     }
 
-    if(!initializeSelectableStatement(pool
-        , block))
+    if(!initializeSelectableStatement(target
+        , pool))
         return false;
 
-    if(!initializeMap(pool, block))
+    if(!initializeMap(target, pool))
         return false;
 
     return true;
 }
 
-bool Operation::initialize(const Pool &pool
-    , const BLOCK::Block *target
+bool Operation::initialize(const std::shared_ptr<BLOCK::Block> &target
+    , const std::deque<std::shared_ptr<BLOCK::Block>> &pool
     , const std::deque<std::deque<double>> &similarity)
 {
-    if(!initialize(pool, target))
+    if(!initialize(target, pool))
         return false;
 
-    if(!initializeSimilarity(pool, target, similarity))
+    if(!initializeSimilarity(target, pool, similarity))
         return false;
     
     if(!discard())
@@ -109,10 +109,10 @@ bool Operation::initialize(const Pool &pool
     return true;
 }
 
-bool Operation::initializeSelectableStatement(const Pool &pool
-    , const BLOCK::Block *block)
+bool Operation::initializeSelectableStatement(const std::shared_ptr<BLOCK::Block> &target
+    , const std::deque<std::shared_ptr<BLOCK::Block>> &pool)
 {
-    for(auto &&[statId, subBlock] : block->stats())
+    for(auto &&[statId, subBlock] : target->stats())
     {
         if(subBlock != nullptr)
             insertScopeId(subBlock);
@@ -120,10 +120,10 @@ bool Operation::initializeSelectableStatement(const Pool &pool
 
     for(const auto &pair : SELECTABLE_STATEMENT_MAP)
     {
-        for(const auto *b : pool)
+        for(auto &&b : pool)
         {
             if(!insertStatementId(pair.first
-                , b))
+                , b.get()))
                 return false;
         }
     }
@@ -153,7 +153,7 @@ bool Operation::insertStatementId(std::size_t scopeId
     {
         if(pair.first != std::numeric_limits<decltype(pair.first)>::max())
         {
-            auto &&var{Analyzer::statementMap().at(pair.first)};
+            auto &&var{STATEMENT::STATEMENT_MAP.at(pair.first)};
             if(std::holds_alternative<std::shared_ptr<TOKEN::Statement>>(var))
             {
                 auto &&statement{std::get<std::shared_ptr<TOKEN::Statement>>(var)};
@@ -184,8 +184,8 @@ bool Operation::insertStatementId(std::size_t scopeId
     return true;
 }
 
-bool Operation::initializeMap(const Pool &pool
-    , const BLOCK::Block *target)
+bool Operation::initializeMap(const std::shared_ptr<BLOCK::Block> &target
+    , const std::deque<std::shared_ptr<BLOCK::Block>> &pool)
 {
     // set scope-belonged-scope-map and stat-belonged-scope-map.
     // rec: set a this function.
@@ -230,8 +230,8 @@ bool Operation::initializeMap(const Pool &pool
     return true;
 }
 
-bool Operation::initializeSimilarity(const Pool &pool
-    , const BLOCK::Block *target
+bool Operation::initializeSimilarity(const std::shared_ptr<BLOCK::Block> &target
+    , const std::deque<std::shared_ptr<BLOCK::Block>> &pool
     , const std::deque<std::deque<double>> &similarity)
 {
     // key
@@ -358,46 +358,42 @@ bool Operation::initializationError(const std::string &what)
 
 Operation::Operation()
     : mTag{Tag::NONE}
-    , mSrc{}
     , mDst{}
-    , mIds{}
     , mSrcId{std::numeric_limits<std::size_t>::max()}
     , mStatId{std::numeric_limits<std::size_t>::max()}
 {
 }
 
-Operation::Operation(const Pool &pool
-    , const BLOCK::Block *srcBlock)
-    : Operation{pool
-        , srcBlock
+Operation::Operation(const BLOCK::Block *target
+    , const std::deque<std::shared_ptr<BLOCK::Block>> &pool)
+    : Operation{target
+        , pool
         , selectTag()}
 {
 }
 
-Operation::Operation(const Pool &pool
-    , const BLOCK::Block *srcBlock
+Operation::Operation(const BLOCK::Block *target
+    , const std::deque<std::shared_ptr<BLOCK::Block>> &pool
     , Tag tag)
     : mTag{tag}
-    , mSrc{}
     , mDst{}
-    , mIds{}
     , mSrcId{std::numeric_limits<std::size_t>::max()}
     , mStatId{std::numeric_limits<std::size_t>::max()}
 {
     switch(tag)
     {
         case(Tag::ADD):
-            if(!selectAdditionalPosition(pool
-                , srcBlock))
+            if(!selectAdditionalPosition(target
+                , pool))
                 mTag = Tag::NONE;
             break;
         case(Tag::DEL):
-            if(!selectSubtractionalPosition(srcBlock))
+            if(!selectSubtractionalPosition(target))
                 mTag = Tag::NONE;
             break;
         case(Tag::REP):
-            if(!selectReplacingPosition(pool
-                , srcBlock))
+            if(!selectReplacingPosition(target
+                , pool))
                 mTag = Tag::NONE;
             break;
 
@@ -408,14 +404,14 @@ Operation::Operation(const Pool &pool
         clear();
 }
 
-bool Operation::selectAdditionalPosition(const Pool &pool
-    , const BLOCK::Block *srcBlock)
+bool Operation::selectAdditionalPosition(const BLOCK::Block *target
+        , const std::deque<std::shared_ptr<BLOCK::Block>> &pool)
 {
     if(!selectDestinationFunction()
-        || !selectDestinationStatement(srcBlock
+        || !selectDestinationStatement(target
             , true)
-        || !selectSourceStatement(srcBlock)
-        || !selectAlternativeIdentifier(srcBlock))
+        || !selectSourceStatement(target)
+        || !selectAlternativeIdentifier(target))
     {
         clear();
         return false;
@@ -424,10 +420,10 @@ bool Operation::selectAdditionalPosition(const Pool &pool
     return true;
 }
 
-bool Operation::selectSubtractionalPosition(const BLOCK::Block *srcBlock)
+bool Operation::selectSubtractionalPosition(const BLOCK::Block *target)
 {
     if(!selectDestinationFunction()
-        || !selectDestinationStatement(srcBlock
+        || !selectDestinationStatement(target
             , false))
     {
         clear();
@@ -437,14 +433,14 @@ bool Operation::selectSubtractionalPosition(const BLOCK::Block *srcBlock)
     return true;
 }
 
-bool Operation::selectReplacingPosition(const Pool &pool
-    , const BLOCK::Block *srcBlock)
+bool Operation::selectReplacingPosition(const BLOCK::Block *target
+    , const std::deque<std::shared_ptr<BLOCK::Block>> &pool)
 {
     if(!selectDestinationFunction()
-        || !selectDestinationStatement(srcBlock
+        || !selectDestinationStatement(target
             , false)
-        || !selectSourceStatement(srcBlock)
-        || !selectAlternativeIdentifier(srcBlock))
+        || !selectSourceStatement(target)
+        || !selectAlternativeIdentifier(target))
     {
         clear();
         return false;
@@ -548,31 +544,6 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
     return true;
 }
 
-bool Operation::selectAlternativeIdentifier(const Pool &pool
-    , const BLOCK::Block *block)
-{
-    std::size_t scopeId{getScopeId(block)};
-    std::size_t statementId{getStatementId(pool)};
-
-    std::shared_ptr<TOKEN::Statement> statement{std::get<std::shared_ptr<TOKEN::Statement>>(Analyzer::statementMap().at(statementId))->copy()};
-    
-    Selector selector;
-    if(!selector.execute(scopeId
-        , statement.get()
-        , mIds))
-        return false;
-    if(!selector.execute(mIds
-        , statement.get()))
-        return false;
-
-    std::optional<std::size_t> statId;
-    if(!(statId = Register::execute(statement.get())))
-        return false;
-
-    mStatId = statId.value();
-    return true;
-}
-
 bool Operation::selectSourceStatement(const BLOCK::Block *block)
 {
     auto &&scopeId{getScopeId(block)};
@@ -599,14 +570,15 @@ bool Operation::selectAlternativeIdentifier(const BLOCK::Block *block)
 {
     auto &&scopeId{getScopeId(block)};
 
-    std::shared_ptr<TOKEN::Statement> statement{std::get<std::shared_ptr<TOKEN::Statement>>(Analyzer::statementMap().at(mSrcId))->copy()};
+    std::shared_ptr<TOKEN::Statement> statement{std::get<std::shared_ptr<TOKEN::Statement>>(STATEMENT::STATEMENT_MAP.at(mSrcId))->copy()};
 
+    std::vector<std::size_t> ids;
     Selector selector;
     if(!selector.execute(scopeId
         , statement.get()
-        , mIds))
+        , ids))
         return false;
-    if(!selector.execute(mIds
+    if(!selector.execute(ids
         , statement.get()))
         return false;
     
@@ -622,22 +594,9 @@ bool Operation::selectAlternativeIdentifier(const BLOCK::Block *block)
 void Operation::clear()
 {
     mTag = Tag::NONE;
-    mSrc.clear();
     mDst.clear();
-    mIds.clear();
+    mSrcId = std::numeric_limits<std::size_t>::max();
     mStatId = std::numeric_limits<std::size_t>::max();
-}
-
-CStatPair Operation::getStatPair(const Pool &pool) const
-{
-    CStatPair statPair{0ull, pool.at(mSrc.front())};
-
-    for(std::size_t i{1ull};
-        i < mSrc.size();
-        i++)
-        statPair = statPair.second->stats().at(mSrc[i]);
-    
-    return statPair;
 }
 
 CStatPair Operation::getStatPair(const BLOCK::Block *block) const
@@ -658,18 +617,6 @@ std::size_t Operation::getScopeId(const BLOCK::Block *block) const
         block = block->stats().at(mDst[i]).second;
     
     return block->scopeId();
-}
-
-std::size_t Operation::getStatementId(const Pool &pool) const
-{
-    const auto *block{pool.at(mSrc.front())};
-
-    for(std::size_t i{1ull};
-        i + 1ull < mSrc.size();
-        i++)
-        block = block->stats().at(mSrc[i]).second;
-    
-    return block->stats().at(mSrc.back()).first;
 }
 
 bool Operation::candidateError(const std::string &functionName) const

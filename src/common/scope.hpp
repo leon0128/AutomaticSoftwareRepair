@@ -1,5 +1,5 @@
-#ifndef SCOPE_HPP
-#define SCOPE_HPP
+#ifndef COMMON_SCOPE_HPP
+#define COMMON_SCOPE_HPP
 
 #include <unordered_map>
 #include <functional>
@@ -9,6 +9,9 @@
 #include <any>
 #include <memory>
 #include <vector>
+
+inline namespace COMMON
+{
 
 namespace IDENTIFIER
 {
@@ -102,6 +105,8 @@ enum class Scope::NamespaceTag : unsigned char
     , MEMBER
     , OTHER
 };
+
+}
 
 }
 

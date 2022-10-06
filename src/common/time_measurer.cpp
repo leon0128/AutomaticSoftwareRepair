@@ -3,11 +3,20 @@
 
 #include "time_measurer.hpp"
 
+inline namespace COMMON
+{
+
 decltype(TimeMeasurer::mMainTagNameMap) TimeMeasurer::mMainTagNameMap
     {{MainTag::INITIALIZING, "initializing"}
         , {MainTag::ANALYZING, "analyzing"}
         , {MainTag::SIMILARITY, "similality calculation"}
         , {MainTag::REPAIR, "repair"}};
+
+decltype(TimeMeasurer::mAnalyzerTagNameMap) TimeMeasurer::mAnalyzerTagNameMap
+    {{AnalyzerTag::PREPROCESSING, "preprocessing"}
+        , {AnalyzerTag::TREE_GENERATION, "tree generation"}
+        , {AnalyzerTag::DIVISION, "division"}
+        , {AnalyzerTag::ANALYZING, "analyzing"}};
 
 decltype(TimeMeasurer::mSimTagNameMap) TimeMeasurer::mSimTagNameMap
     {{SimTag::METRIC, "metrics calculation"}
@@ -15,10 +24,8 @@ decltype(TimeMeasurer::mSimTagNameMap) TimeMeasurer::mSimTagNameMap
 
 decltype(TimeMeasurer::mRepairTagNameMap) TimeMeasurer::mRepairTagNameMap
     {{RepairTag::INITIALIZING, "initializing"}
-        , {RepairTag::FILE_CREATION, "file creation"}
-        , {RepairTag::COMPILATION, "compilation"}
-        , {RepairTag::EVALUATION, "evaluation"}
-        , {RepairTag::MANIPLATION, "manipulation"}};
+        , {RepairTag::REP_GENERATION, "rep generation"}
+        , {RepairTag::EVALUATION, "evaluation"}};
 
 TimeMeasurer::TimeMeasurer()
     : mMainTimers{}
@@ -48,6 +55,23 @@ void TimeMeasurer::print()
         total += count;
     }
     std::cout << "time-total: " 
+        << total << " (ms)"
+        << std::endl;
+
+    // AnalyzerTag
+    total = 0;
+    for(std::size_t tag{0ull}; tag < cast(AnalyzerTag::TAG_SIZE); tag++)
+    {
+        Timer::Rep count{timer(AnalyzerTag{tag}).count<std::chrono::milliseconds>()};
+        std::cout << "    analyzer-time: "
+            << mAnalyzerTagNameMap.at(AnalyzerTag{tag})
+            << ": "
+            << count
+            << " (ms)"
+            << std::endl;
+        total += count;
+    }
+    std::cout << "analyzer-time: total: "
         << total << " (ms)"
         << std::endl;
 
@@ -84,4 +108,6 @@ void TimeMeasurer::print()
     std::cout << "repair-time: total: " 
         << total << " (ms)"
         << std::endl;
+}
+
 }

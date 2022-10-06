@@ -3,7 +3,7 @@
 
 #include <optional>
 
-#include "../token.hpp"
+#include "common/token.hpp"
 
 namespace REPAIR
 {

@@ -1,5 +1,5 @@
-#ifndef IDENTIFIER_HPP
-#define IDENTIFIER_HPP
+#ifndef COMMON_IDENTIFIER_HPP
+#define COMMON_IDENTIFIER_HPP
 
 #include <string>
 #include <bitset>
@@ -9,6 +9,9 @@
 #include <unordered_map>
 
 #include "type.hpp"
+
+inline namespace COMMON
+{
 
 namespace TOKEN
 {
@@ -31,6 +34,8 @@ class Member;
 class Enum;
 class Typedef;
 class Label;
+
+inline std::unordered_map<std::size_t, std::shared_ptr<Identifier>> IDENTIFIER_MAP{};
 
 bool notSupportedError(const std::string&);
 
@@ -272,6 +277,8 @@ public:
 private:
     bool mIsDefined;
 };
+
+}
 
 }
 

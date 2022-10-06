@@ -2,6 +2,9 @@
 
 #include "identifier.hpp"
 
+inline namespace COMMON
+{
+
 namespace IDENTIFIER
 {
 
@@ -127,6 +130,8 @@ Label::Label(const std::string &s
         , s}
     , mIsDefined{b}
 {
+}
+
 }
 
 }

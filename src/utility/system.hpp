@@ -9,15 +9,6 @@
 namespace SYSTEM
 {
 
-#if _WIN64 || _WIN32
-inline extern const char * const NULLFILE{"NUL"};
-#else
-inline extern const char * const NULLFILE{"/dev/null"};
-#endif
-
-inline extern bool shouldOutputLog;
-bool shouldOutputLog{false};
-
 inline extern int system(const std::string &cmd);
 template<class Str
     , class ...Args>
@@ -32,9 +23,6 @@ inline extern std::string command();
 
 inline extern int system(const std::string &cmd)
 {
-    if(shouldOutputLog)
-        std::clog << "command: " << cmd << std::endl;
-
     return std::system(cmd.c_str());
 }
 
@@ -45,9 +33,6 @@ inline extern int system(Str &&str
 {
     std::string com{command(std::forward<Str>(str)
         , std::forward<Args>(args)...)};
-    
-    if(shouldOutputLog)
-        std::clog << "command: " << com << std::endl;
 
     return std::system(com.c_str());
 }
