@@ -415,8 +415,7 @@ bool Operation::selectAdditionalPosition(const BLOCK::Block *target
         || !selectDestinationStatement(target
             , true)
         || !selectSourceStatement(target)
-        || !selectAlternativeIdentifier(target
-            , pool))
+        || !selectAlternativeIdentifier(target))
     {
         clear();
         return false;
