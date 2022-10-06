@@ -74,6 +74,8 @@ private:
     static bool execute(const std::string &baseFilename
         , int &score);
 
+    void outputResultLog() const;
+
     bool repCreationError(const std::string &what) const;
 
     static bool outputError(const std::string &filename);
@@ -84,6 +86,10 @@ private:
 
     bool mIsRepaired;
     REPRESENTATION::Representation *mResult;
+
+    // these variable is used for log.
+    std::size_t mTotalGen;
+    std::size_t mTotalRep;
 
     inline static std::mutex mIOMutex{};
 };

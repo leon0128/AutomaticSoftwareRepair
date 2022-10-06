@@ -85,7 +85,7 @@ std::string getTempFilename()
     static std::filesystem::path tempDir{std::filesystem::temp_directory_path() / "asr/"};
     static std::mutex mutex;
     
-    std::unuque_lock lock{mutex};
+    std::unique_lock lock{mutex};
     return (tempDir / std::to_string(numCreated++)).string();
 }
 

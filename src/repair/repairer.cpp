@@ -26,6 +26,8 @@ Repairer::Repairer()
     , mPool{}
     , mIsRepaired{false}
     , mResult{nullptr}
+    , mTotalGen{0ull}
+    , mTotalRep{0ull}
 {
 }
 
@@ -43,6 +45,9 @@ bool Repairer::execute(const CodeInformation &target
     
     if(!repair())
         return false;
+
+    if(Configure::SHOULD_OUTPUT_REPAIR_LOG)
+        outputResultLog();
 
     return true;
 }
@@ -103,6 +108,8 @@ bool Repairer::repair()
 
     for(std::size_t gen{0ull}; gen < Configure::MAX_GEN; gen++)
     {
+        mTotalGen++;
+
         currentReps.swap(prevReps);
         currentReps.clear();
 
@@ -179,9 +186,27 @@ bool Repairer::test(Reps &currentReps)
             std::unique_lock lock{mutex};
             currentReps.at(indexOfReps).second = score;
             availableIndices.push_back(indexOfFutures);
+
             cv.notify_all();
-        
             return {indexOfReps, score};
+        }};
+
+    auto &&evaluateWrapperWithOutput{[&](std::size_t indexOfReps
+        , std::size_t indexOfFutures
+        , std::shared_ptr<Representation> rep)
+        -> std::pair<std::size_t, int>
+        {
+            auto &&result{evaluateWrapper(indexOfReps
+                , indexOfFutures
+                , rep)};
+
+            std::unique_lock lock{mIOMutex};
+            std::cout << "repair-log: evaluation is end.("
+                << mTotalRep++ % Configure::POP_SIZE + 1
+                << "/" << Configure::POP_SIZE
+                << "(gen: " << mTotalGen << ")"
+                << std::endl;
+            return result;
         }};
 
     // execute all evaluation.
@@ -206,7 +231,9 @@ bool Repairer::test(Reps &currentReps)
 
             futures.at(indexOfFutures)
                 = std::async(std::launch::async
-                    , evaluateWrapper
+                    , (Configure::SHOULD_OUTPUT_REPAIR_LOG
+                        ? evaluateWrapperWithOutput
+                        : evaluateWrapper)
                     , i
                     , indexOfFutures
                     , currentReps.at(i).first);
@@ -342,6 +369,15 @@ bool Repairer::execute(const std::string &baseFilename
         && exec(Configure::NEGATIVE_TEST_PREFIX
             , Configure::NUM_NEGATIVE_TEST
             , Configure::NEGATIVE_TEST_WEIGHT);
+}
+
+void Repairer::outputResultLog() const
+{
+    std::cout << "repair-log:\n"
+        "    repair is " << (mIsRepaired ? "SUCCEEDED" : "FAILED")
+        << ".\n        Generation: " << mTotalGen
+        << "\n        Number of Representation: " << mTotalRep
+        << std::endl;
 }
 
 bool Repairer::repCreationError(const std::string &what) const
