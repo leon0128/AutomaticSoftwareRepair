@@ -209,6 +209,13 @@ bool Repairer::test(Reps &currentReps)
             return result;
         }};
 
+    // function that is passed to future.
+    std::function<std::pair<std::size_t, int>(std::size_t, std::size_t, std::shared_ptr<Representation>)> evaluateFunc;
+    if(Configure::SHOULD_OUTPUT_REPAIR_LOG)
+        evaluateFunc = evaluateWrapper;
+    else
+        evaluateFunc = evaluateWrapperWithOutput;
+
     // execute all evaluation.
     for(std::size_t i{0ull}, size{currentReps.size()}; i < size; i++)
     {
@@ -231,9 +238,7 @@ bool Repairer::test(Reps &currentReps)
 
             futures.at(indexOfFutures)
                 = std::async(std::launch::async
-                    , (Configure::SHOULD_OUTPUT_REPAIR_LOG
-                        ? evaluateWrapperWithOutput
-                        : evaluateWrapper)
+                    , evaluateFunc
                     , i
                     , indexOfFutures
                     , currentReps.at(i).first);

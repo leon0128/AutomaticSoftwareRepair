@@ -13,7 +13,7 @@ SOURCE_DIRECTORIES = ./src/ \
 ## c++ compiler
 CXX = g++
 ## c++ compiler flags
-CXXFLAGS = -g3 -Wall -std=c++20 -I./src
+CXXFLAGS = -g3 -Wall -std=c++2a -I./src -lpthread -pthread
 ## c++ preprocessor
 CPP = g++ -E
 ## c++ preprocessor flags

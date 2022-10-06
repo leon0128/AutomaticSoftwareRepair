@@ -1,3 +1,6 @@
+#include <optional>
+#include <deque>
+
 #include "utility/system.hpp"
 #include "analyzer/controller.hpp"
 #include "similarity/controller.hpp"
@@ -38,14 +41,17 @@ bool Controller::execute(int argc, char **argv)
     auto &&pool{analyzerController.movePool()};
 
     // calculate similarity
-    SIM::Controller similarityController;
+    std::optional<std::deque<std::deque<double>>> similarity;
+    if(Configure::SHOULD_USE_SIMILARITY)
     {
-        TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::SIMILARITY};
-        if(!similarityController.execute(target, pool))
-            return false;
+        SIM::Controller similarityController;
+        {
+            TimeMeasurer::Wrapper wrapper{TimeMeasurer::MainTag::SIMILARITY};
+            if(!similarityController.execute(target, pool))
+                return false;
+        }
+        similarity = similarityController.moveResults();
     }
-
-    auto &&similarity{similarityController.moveResults()};
 
     // repair
     REPAIR::Controller repairController;
