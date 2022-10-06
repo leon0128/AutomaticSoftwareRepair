@@ -24,10 +24,8 @@ decltype(TimeMeasurer::mSimTagNameMap) TimeMeasurer::mSimTagNameMap
 
 decltype(TimeMeasurer::mRepairTagNameMap) TimeMeasurer::mRepairTagNameMap
     {{RepairTag::INITIALIZING, "initializing"}
-        , {RepairTag::FILE_CREATION, "file creation"}
-        , {RepairTag::COMPILATION, "compilation"}
-        , {RepairTag::EVALUATION, "evaluation"}
-        , {RepairTag::MANIPLATION, "manipulation"}};
+        , {RepairTag::REP_GENERATION, "rep generation"}
+        , {RepairTag::EVALUATION, "evaluation"}};
 
 TimeMeasurer::TimeMeasurer()
     : mMainTimers{}

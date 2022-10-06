@@ -105,9 +105,7 @@ private:
 
 private:
     Tag mTag;
-    std::vector<std::size_t> mSrc; // for addition and replacement
     std::vector<std::size_t> mDst; // for addition, deletion and replacement
-    std::vector<std::size_t> mIds; // for addition and replacement
     std::size_t mSrcId; // source statement id, for addition and replacement
     std::size_t mStatId; // alternative statement id, for addition and replacement
 
@@ -121,12 +119,8 @@ public:
 
     Tag tag() const noexcept
         {return mTag;}
-    const std::vector<std::size_t> &src() const noexcept
-        {return mSrc;}
     const std::vector<std::size_t> &dst() const noexcept
         {return mDst;}
-    const std::vector<std::size_t> &ids() const noexcept
-        {return mIds;}
     std::size_t srcId() const noexcept
         {return mSrcId;}
     std::size_t statId() const noexcept
@@ -144,20 +138,15 @@ private:
     // mDst[1] ... .
     bool selectDestinationStatement(const BLOCK::Block*
         , bool isAddition);
-    // mStatId and mIds[0] ... .
-    bool selectAlternativeIdentifier(const BLOCK::Block *target
-        , const std::deque<std::shared_ptr<BLOCK::Block>> &pool);
     // mSrcId
     bool selectSourceStatement(const BLOCK::Block *target);
-    // mStatId and mIds[0] ...
+    // mStatId
     bool selectAlternativeIdentifier(const BLOCK::Block *target);
 
     void clear();
 
-    CStatPair getStatPair(const std::deque<std::shared_ptr<BLOCK::Block>> &pool) const; // use mSrc
     CStatPair getStatPair(const BLOCK::Block *target) const; // use mDst
     std::size_t getScopeId(const BLOCK::Block *target) const; // use mDst (no use mDst.back)
-    std::size_t getStatementId(const std::deque<std::shared_ptr<BLOCK::Block>> &pool) const; // use mSrc
 
     bool candidateError(const std::string &functionName) const;
     bool selectionError(const std::string &what) const;

@@ -13,6 +13,8 @@
 #include "utility/system.hpp"
 #include "common/scope.hpp"
 #include "common/token.hpp"
+#include "common/define.hpp"
+#include "common/time_measurer.hpp"
 #include "block.hpp"
 #include "representation.hpp"
 #include "operation.hpp"
@@ -40,9 +42,12 @@ bool Repairer::execute(const CodeInformation &target
     , const std::deque<CodeInformation> &pool
     , const std::optional<std::deque<std::deque<double>>> &similarity)
 {
-    if(!initialize(target, pool, similarity))
-        return false;
-    
+    {
+        TimeMeasurer::Wrapper wrapper{TimeMeasurer::RepairTag::INITIALIZING};
+        if(!initialize(target, pool, similarity))
+            return false;
+    }
+
     if(!repair())
         return false;
 
@@ -113,11 +118,17 @@ bool Repairer::repair()
         currentReps.swap(prevReps);
         currentReps.clear();
 
-        if(!createReps(currentReps, prevReps))
-            return false;
+        {
+            TimeMeasurer::Wrapper wrapper{TimeMeasurer::RepairTag::REP_GENERATION};
+            if(!createReps(currentReps, prevReps))
+                return false;
+        }
 
-        if(!test(currentReps))
-            return false;
+        {
+            TimeMeasurer::Wrapper wrapper{TimeMeasurer::RepairTag::EVALUATION};
+            if(!test(currentReps))
+                return false;
+        }
 
         if(mIsRepaired)
             break;
@@ -184,6 +195,7 @@ bool Repairer::test(Reps &currentReps)
             int score{evaluateRep(rep)};
 
             std::unique_lock lock{mutex};
+            mTotalRep++;
             currentReps.at(indexOfReps).second = score;
             availableIndices.push_back(indexOfFutures);
 
@@ -200,11 +212,11 @@ bool Repairer::test(Reps &currentReps)
                 , indexOfFutures
                 , rep)};
 
-            std::unique_lock lock{mIOMutex};
+            std::unique_lock ioLock{mIOMutex};
             std::cout << "repair-log: evaluation is end.("
-                << mTotalRep++ % Configure::POP_SIZE + 1
-                << "/" << Configure::POP_SIZE
-                << "(gen: " << mTotalGen << ")"
+                << mTotalRep % Configure::getSafelyPOP_SIZE()
+                << "/" << Configure::getSafelyPOP_SIZE()
+                << ")(gen:" << mTotalGen << ")"
                 << std::endl;
             return result;
         }};
@@ -212,12 +224,12 @@ bool Repairer::test(Reps &currentReps)
     // function that is passed to future.
     std::function<std::pair<std::size_t, int>(std::size_t, std::size_t, std::shared_ptr<Representation>)> evaluateFunc;
     if(Configure::SHOULD_OUTPUT_REPAIR_LOG)
-        evaluateFunc = evaluateWrapper;
-    else
         evaluateFunc = evaluateWrapperWithOutput;
+    else
+        evaluateFunc = evaluateWrapper;
 
     // execute all evaluation.
-    for(std::size_t i{0ull}, size{currentReps.size()}; i < size; i++)
+    for(std::size_t indexOfReps{0ull}, size{currentReps.size()}; indexOfReps < size;)
     {
         std::unique_lock lock{mutex};
 
@@ -231,17 +243,18 @@ bool Repairer::test(Reps &currentReps)
             
             if(futures.at(indexOfFutures).valid())
             {
-                auto &&[indexOfReps, score]{futures.at(indexOfFutures).get()};
-                if(currentReps.at(indexOfReps).second >= Configure::GOAL_SCORE)
+                auto &&[index, score]{futures.at(indexOfFutures).get()};
+                if(currentReps.at(index).second >= Configure::getSafelyGOAL_SCORE())
                     break;
             }
 
             futures.at(indexOfFutures)
                 = std::async(std::launch::async
                     , evaluateFunc
-                    , i
+                    , indexOfReps
                     , indexOfFutures
-                    , currentReps.at(i).first);
+                    , currentReps.at(indexOfReps).first);
+            indexOfReps++;
         }
         else
             cv.wait(lock, [&]{return !availableIndices.empty();});
@@ -314,7 +327,7 @@ int Repairer::evaluateRep(const std::shared_ptr<REPRESENTATION::Representation> 
 
     // removes created files.
     std::string cFilename{baseFilename + ".c"};
-    std::string execFilename{baseFilename + Configure::EXEC_EXTENSION};
+    std::string execFilename{baseFilename + Configure::getSafelyEXEC_EXTENSION()};
     std::remove(cFilename.c_str());
     std::remove(execFilename.c_str());
 
@@ -334,10 +347,12 @@ bool Repairer::outputToFile(const std::string &baseFilename
 
 bool Repairer::compile(const std::string &baseFilename)
 {
-    std::string command{SYSTEM::command(Configure::COMPILER
+    std::string command{SYSTEM::command(Configure::getSafelyCOMPILER()
         , baseFilename + ".c"
         , "-o"
-        , baseFilename + Configure::EXEC_EXTENSION)};
+        , baseFilename + Configure::getSafelyEXEC_EXTENSION())};
+
+    controlOutputLog(command, mIOMutex);
 
     if(SYSTEM::system(command) != 0)
         return compilingError(baseFilename + ".c");
@@ -356,11 +371,13 @@ bool Repairer::execute(const std::string &baseFilename
             for(std::size_t i{0ull}; i < size; i++)
             {
                 std::string command{SYSTEM::command("bash"
-                    , Configure::TEST_SCRIPT
-                    , baseFilename + Configure::EXEC_EXTENSION
+                    , Configure::getSafelyTEST_SCRIPT()
+                    , baseFilename + Configure::getSafelyEXEC_EXTENSION()
                     , prefix + std::to_string(i))};
 
-                if(SYSTEM::system(command) != 0)
+                controlOutputLog(command, mIOMutex);
+
+                if(SYSTEM::system(command) == 0)
                     score += weight;
             }
 
@@ -368,20 +385,20 @@ bool Repairer::execute(const std::string &baseFilename
         }};
 
     score = 0;
-    return exec(Configure::POSITIVE_TEST_PREFIX
-        , Configure::NUM_POSITIVE_TEST
-        , Configure::POSITIVE_TEST_WEIGHT)
-        && exec(Configure::NEGATIVE_TEST_PREFIX
-            , Configure::NUM_NEGATIVE_TEST
-            , Configure::NEGATIVE_TEST_WEIGHT);
+    return exec(Configure::getSafelyPOSITIVE_TEST_PREFIX()
+        , Configure::getSafelyNUM_POSITIVE_TEST()
+        , Configure::getSafelyPOSITIVE_TEST_WEIGHT())
+        && exec(Configure::getSafelyNEGATIVE_TEST_PREFIX()
+            , Configure::getSafelyNUM_NEGATIVE_TEST()
+            , Configure::getSafelyNEGATIVE_TEST_WEIGHT());
 }
 
 void Repairer::outputResultLog() const
 {
     std::cout << "repair-log:\n"
         "    repair is " << (mIsRepaired ? "SUCCEEDED" : "FAILED")
-        << ".\n        Generation: " << mTotalGen
-        << "\n        Number of Representation: " << mTotalRep
+        << ".\n    Generation: " << mTotalGen
+        << "\n    Representation: " << mTotalRep
         << std::endl;
 }
 

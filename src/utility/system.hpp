@@ -9,13 +9,6 @@
 namespace SYSTEM
 {
 
-inline extern bool shouldOutputSubprocessCommand;
-inline extern bool shouldOutputSubprocessLog;
-inline extern std::string nullFile;
-bool shouldOutputSubprocessCommand{false};
-bool shouldOutputSubprocessLog{false};
-std::string nullFile{"/dev/null"};
-
 inline extern int system(const std::string &cmd);
 template<class Str
     , class ...Args>
@@ -30,17 +23,7 @@ inline extern std::string command();
 
 inline extern int system(const std::string &cmd)
 {
-    std::string addedCmd{cmd};
-    if(shouldOutputSubprocessLog)
-    {
-        addedCmd += " 2>&1 ";
-        addedCmd += nullFile;
-    }
-
-    if(shouldOutputSubprocessCommand)
-        std::clog << "command: " << addedCmd << std::endl;
-
-    return std::system(addedCmd.c_str());
+    return std::system(cmd.c_str());
 }
 
 template<class Str
@@ -50,16 +33,6 @@ inline extern int system(Str &&str
 {
     std::string com{command(std::forward<Str>(str)
         , std::forward<Args>(args)...)};
-    
-    std::string addedCmd{com};
-    if(shouldOutputSubprocessLog)
-    {
-        addedCmd += " 2>&1 ";
-        addedCmd += nullFile;
-    }
-
-    if(shouldOutputSubprocessCommand)
-        std::clog << "command: " << addedCmd << std::endl;
 
     return std::system(com.c_str());
 }

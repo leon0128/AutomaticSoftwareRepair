@@ -6,6 +6,7 @@
 
 #include "utility/system.hpp"
 #include "utility/file.hpp"
+#include "common/define.hpp"
 #include "configure.hpp"
 #include "tokenizer.hpp"
 #include "preprocessor.hpp"
@@ -85,6 +86,8 @@ bool Preprocessor::preprocess()
         // , "-D__builtin_offsetof\\(TYPE,MEMBER\\)=\\(\\(size_t\\)\\&\\(\\(TYPE*\\)0\\)-\\>MEMBER\\)"
         , "-o"
         , mTemporaryFilename)};
+
+    controlOutputLog(command);
 
     if(SYSTEM::system(command) != 0)
     {

@@ -141,7 +141,7 @@ bool Configure::readArgument(Tag tag
                 return false;
             break;
         case(Tag::NULL_FILENAME):
-            if(!assignString(tag, arg, EXEC_EXTENSION))
+            if(!assignString(tag, arg, NULL_FILENAME))
                 return false;
             break;
         case(Tag::POS_PREFIX):

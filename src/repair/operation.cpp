@@ -358,9 +358,7 @@ bool Operation::initializationError(const std::string &what)
 
 Operation::Operation()
     : mTag{Tag::NONE}
-    , mSrc{}
     , mDst{}
-    , mIds{}
     , mSrcId{std::numeric_limits<std::size_t>::max()}
     , mStatId{std::numeric_limits<std::size_t>::max()}
 {
@@ -378,9 +376,7 @@ Operation::Operation(const BLOCK::Block *target
     , const std::deque<std::shared_ptr<BLOCK::Block>> &pool
     , Tag tag)
     : mTag{tag}
-    , mSrc{}
     , mDst{}
-    , mIds{}
     , mSrcId{std::numeric_limits<std::size_t>::max()}
     , mStatId{std::numeric_limits<std::size_t>::max()}
 {
@@ -548,31 +544,6 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
     return true;
 }
 
-bool Operation::selectAlternativeIdentifier(const BLOCK::Block *target
-    , const std::deque<std::shared_ptr<BLOCK::Block>> &pool)
-{
-    std::size_t scopeId{getScopeId(target)};
-    std::size_t statementId{getStatementId(pool)};
-
-    std::shared_ptr<TOKEN::Statement> statement{std::get<std::shared_ptr<TOKEN::Statement>>(STATEMENT::STATEMENT_MAP.at(statementId))->copy()};
-    
-    Selector selector;
-    if(!selector.execute(scopeId
-        , statement.get()
-        , mIds))
-        return false;
-    if(!selector.execute(mIds
-        , statement.get()))
-        return false;
-
-    std::optional<std::size_t> statId;
-    if(!(statId = Register::execute(statement.get())))
-        return false;
-
-    mStatId = statId.value();
-    return true;
-}
-
 bool Operation::selectSourceStatement(const BLOCK::Block *block)
 {
     auto &&scopeId{getScopeId(block)};
@@ -601,12 +572,13 @@ bool Operation::selectAlternativeIdentifier(const BLOCK::Block *block)
 
     std::shared_ptr<TOKEN::Statement> statement{std::get<std::shared_ptr<TOKEN::Statement>>(STATEMENT::STATEMENT_MAP.at(mSrcId))->copy()};
 
+    std::vector<std::size_t> ids;
     Selector selector;
     if(!selector.execute(scopeId
         , statement.get()
-        , mIds))
+        , ids))
         return false;
-    if(!selector.execute(mIds
+    if(!selector.execute(ids
         , statement.get()))
         return false;
     
@@ -622,22 +594,9 @@ bool Operation::selectAlternativeIdentifier(const BLOCK::Block *block)
 void Operation::clear()
 {
     mTag = Tag::NONE;
-    mSrc.clear();
     mDst.clear();
-    mIds.clear();
+    mSrcId = std::numeric_limits<std::size_t>::max();
     mStatId = std::numeric_limits<std::size_t>::max();
-}
-
-CStatPair Operation::getStatPair(const std::deque<std::shared_ptr<BLOCK::Block>> &pool) const
-{
-    CStatPair statPair{0ull, pool.at(mSrc.front()).get()};
-
-    for(std::size_t i{1ull};
-        i < mSrc.size();
-        i++)
-        statPair = statPair.second->stats().at(mSrc[i]);
-    
-    return statPair;
 }
 
 CStatPair Operation::getStatPair(const BLOCK::Block *block) const
@@ -658,18 +617,6 @@ std::size_t Operation::getScopeId(const BLOCK::Block *block) const
         block = block->stats().at(mDst[i]).second;
     
     return block->scopeId();
-}
-
-std::size_t Operation::getStatementId(const std::deque<std::shared_ptr<BLOCK::Block>> &pool) const
-{
-    const auto *block{pool.at(mSrc.front()).get()};
-
-    for(std::size_t i{1ull};
-        i + 1ull < mSrc.size();
-        i++)
-        block = block->stats().at(mSrc[i]).second;
-    
-    return block->stats().at(mSrc.back()).first;
 }
 
 bool Operation::candidateError(const std::string &functionName) const

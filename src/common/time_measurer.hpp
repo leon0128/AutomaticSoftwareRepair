@@ -60,10 +60,8 @@ public:
     enum class RepairTag : std::size_t
     {
         INITIALIZING
-        , FILE_CREATION
-        , COMPILATION
+        , REP_GENERATION
         , EVALUATION
-        , MANIPLATION
         , TAG_SIZE // to be used to decide array size
     };
 

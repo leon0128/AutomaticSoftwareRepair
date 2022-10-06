@@ -68,10 +68,6 @@ bool Controller::initialize(int argc, char **argv)
 {
     if(!Configure::parseCommandLineArguments(argc, argv))
         return false;
-    
-    SYSTEM::shouldOutputSubprocessCommand = Configure::SHOULD_OUTPUT_COMMAND_LOG;
-    SYSTEM::shouldOutputSubprocessLog = Configure::SHOULD_OUTPUT_SUBPROCESS_LOG;
-    SYSTEM::nullFile = Configure::NULL_FILENAME;
 
     return true;
 }
