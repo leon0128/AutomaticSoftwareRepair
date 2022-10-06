@@ -114,7 +114,7 @@ bool Controller::analyze(const std::string &filename
     if(isTarget)
         mTarget = CodeInformation{filename, translationUnit, scope};
     else
-        mPool.emplace_back(filename, translationUnit, scope);
+        mPool.emplace_back(CodeInformation{filename, translationUnit, scope});
 
     return true;
 }

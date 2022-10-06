@@ -3,7 +3,6 @@
 #include <limits>
 #include <filesystem>
 #include <utility>
-#include <cstdio>
 
 #include "utility/system.hpp"
 #include "utility/file.hpp"
@@ -16,7 +15,7 @@ namespace ANALYZER
 
 Preprocessor::Preprocessor()
     : mFile{}
-    , mTemporaryFilename{std::tmpnam(nullptr)}
+    , mTemporaryFilename{PATH::getTempFilename()}
     , mSeq{}
 {
     mTemporaryFilename += ".c";

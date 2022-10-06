@@ -1,6 +1,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <mutex>
 
 #include "file.hpp"
 
@@ -76,6 +77,16 @@ bool write(const std::filesystem::path &path
     fstr << str;
 
     return true;
+}
+
+std::string getTempFilename()
+{
+    static std::size_t numCreated{0ull};
+    static std::filesystem::path tempDir{std::filesystem::temp_directory_path() / "asr/"};
+    static std::mutex mutex;
+    
+    std::unuque_lock lock{mutex};
+    return (tempDir / std::to_string(numCreated++)).string();
 }
 
 }

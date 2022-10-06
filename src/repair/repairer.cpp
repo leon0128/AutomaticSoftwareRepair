@@ -6,7 +6,6 @@
 #include <future>
 #include <numeric>
 #include <limits>
-#include <cstdio>
 
 #include "configure.hpp"
 #include "utility/random.hpp"
@@ -274,7 +273,7 @@ int Repairer::evaluateRep(const std::shared_ptr<REPRESENTATION::Representation> 
 {
     int score{std::numeric_limits<int>::min()};
 
-    std::string baseFilename{std::tmpnam(nullptr)};
+    std::string baseFilename{PATH::getTempFilename()};
 
     // if any function return false, remained function is not called and score is set min.
     outputToFile(baseFilename, rep)
