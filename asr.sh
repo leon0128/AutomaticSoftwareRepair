@@ -7,8 +7,9 @@ TARGET_FILENAME="test/test.c"
 TARGET_FUNCTIONS=()
 EXTERNAL_PATHS=()
 RESULT_FILENAME="test/result.c"
-TEMPORARY_FILENAME="test/__test.c"
-TEMPORARY_EXECUTION_NAME="test/__test"
+
+EXEC_EXTENSION=""
+NULL_FILENAME="/dev/null"
 
 ## test case
 TEST_SCRIPT_FILENAME="test/test.sh"
@@ -68,11 +69,13 @@ $EXECUTION_NAME \
     --result "$RESULT_FILENAME" \
     --command-log \
     --time-log \
+    --repair-log \
+    --subprocess-log \
     --preprocessor "$PREPROCESSOR" \
     --compiler "$COMPILER" \
     --test-script "$TEST_SCRIPT_FILENAME" \
-    --test-filename "$TEMPORARY_FILENAME" \
-    --execution "$TEMPORARY_EXECUTION_NAME" \
+    --exec-extension "$EXEC_EXTENSION" \
+    --null-filename "$NULL_FILENAME" \
     --pos-prefix "$POSITIVE_PREFIX" \
     --neg-prefix "$NEGATIVE_PREFIX" \
     --num-pos "$NUMBER_OF_POSITIVE" \
@@ -88,7 +91,7 @@ $EXECUTION_NAME \
     --add-prob "$ADD_PROBABILITY" \
     --sub-prob "$SUB_PROBABILITY" \
     --swap-prob "$SWAP_PROBABILITY" \
-    --num-cuncurrency "$NUMBER_OF_CONCURRENCY" \
+    --num-concurrency "$NUMBER_OF_CONCURRENCY" \
     --max-recursion "$MAX_RECURSION" \
     --use-similarity \
     --original "$ORIGINAL_GRAM_SIZE" \

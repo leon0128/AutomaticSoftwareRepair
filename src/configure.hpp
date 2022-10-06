@@ -21,10 +21,12 @@ private:
         , COMMAND_LOG
         , TIME_LOG
         , REPAIR_LOG
+        , SUBPROCESS_LOG
         , PREPROCESSOR
         , COMPILER
         , TEST_SCRIPT
-        , TEST_FILENAME
+        , EXEC_EXTENSION
+        , NULL_FILENAME
         , EXECUTION
         , POS_PREFIX
         , NEG_PREFIX
@@ -66,12 +68,14 @@ public:
     inline static bool SHOULD_OUTPUT_COMMAND_LOG;
     inline static bool SHOULD_OUTPUT_TIME_LOG;
     inline static bool SHOULD_OUTPUT_REPAIR_LOG;
+    inline static bool SHOULD_OUTPUT_SUBPROCESS_LOG;
 
     inline static std::string PREPROCESSOR;
     inline static std::string COMPILER;
     inline static std::string TEST_SCRIPT;
-    inline static std::string TEST_FILENAME;
+    inline static std::string EXEC_EXTENSION;
     inline static std::string EXECUTION_NAME;
+    inline static std::string NULL_FILENAME;
     inline static std::string POSITIVE_TEST_PREFIX;
     inline static std::string NEGATIVE_TEST_PREFIX;
     inline static std::size_t NUM_POSITIVE_TEST;

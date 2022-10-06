@@ -4,13 +4,16 @@
 #include <algorithm>
 #include <condition_variable>
 #include <future>
-#include <mutex>
 #include <numeric>
 #include <limits>
+#include <cstdio>
 
-#include "utility/random.hpp"
 #include "configure.hpp"
+#include "utility/random.hpp"
+#include "utility/file.hpp"
+#include "utility/system.hpp"
 #include "common/scope.hpp"
+#include "common/token.hpp"
 #include "block.hpp"
 #include "representation.hpp"
 #include "operation.hpp"
@@ -43,6 +46,23 @@ bool Repairer::execute(const CodeInformation &target
         return false;
 
     return true;
+}
+
+bool Repairer::outputResult(const std::string &filename) const
+{
+    if(!mResult)
+        return false;
+    
+    // remove extension
+    std::string baseFilename{filename};
+    if(std::filesystem::path{filename}.extension() == ".c")
+    {
+        baseFilename.pop_back();
+        baseFilename.pop_back();
+    };
+
+    return outputToFile(baseFilename
+        , std::shared_ptr<REPRESENTATION::Representation>{mResult->copy()});
 }
 
 bool Repairer::initialize(const CodeInformation &target
@@ -142,6 +162,7 @@ bool Repairer::test(Reps &currentReps)
     std::condition_variable cv;
 
     std::deque<std::future<std::pair<std::size_t,int>>> futures(Configure::NUM_CONCURRENCY);
+    // availableIndices is used to notify finished future object to main thread.
     std::deque<std::size_t> availableIndices(futures.size());
     std::iota(availableIndices.begin()
         , availableIndices.end()
@@ -164,10 +185,14 @@ bool Repairer::test(Reps &currentReps)
             return {indexOfReps, score};
         }};
 
-    for(std::size_t i{0ull}; i < currentReps.size(); i++)
+    // execute all evaluation.
+    for(std::size_t i{0ull}, size{currentReps.size()}; i < size; i++)
     {
         std::unique_lock lock{mutex};
 
+        // if available future object exists,
+        // result of previous future object is assigned currentReps
+        // and new future object is set to futures.
         if(!availableIndices.empty())
         {
             std::size_t indexOfFutures{availableIndices.front()};
@@ -176,8 +201,7 @@ bool Repairer::test(Reps &currentReps)
             if(futures.at(indexOfFutures).valid())
             {
                 auto &&[indexOfReps, score]{futures.at(indexOfFutures).get()};
-                currentReps.at(indexOfReps).second = score;
-                if(score >= Configure::GOAL_SCORE)
+                if(currentReps.at(indexOfReps).second >= Configure::GOAL_SCORE)
                     break;
             }
 
@@ -192,20 +216,19 @@ bool Repairer::test(Reps &currentReps)
             cv.wait(lock, [&]{return !availableIndices.empty();});
     }
 
+    // wait until execution of future objects is end.
     for(auto &&future : futures)
     {
         if(future.valid())
-        {
-            auto &&[index, score]{future.get()};
-            currentReps.at(index).second = score;
-        }
+            future.get();
     }
 
-
+    // results is sorted by score.
     std::sort(currentReps.begin()
         , currentReps.end()
         , [](auto &&lhs, auto &&rhs){return lhs.second > rhs.second;});
 
+    // set results to member variables.
     mResult = currentReps.front().first->copy();
     mIsRepaired = currentReps.front().second >= Configure::GOAL_SCORE;
 
@@ -247,10 +270,104 @@ std::shared_ptr<REPRESENTATION::Representation> Repairer::selectRep(const Reps &
         ->first; 
 }
 
+int Repairer::evaluateRep(const std::shared_ptr<REPRESENTATION::Representation> &rep)
+{
+    int score{std::numeric_limits<int>::min()};
+
+    std::string baseFilename{std::tmpnam(nullptr)};
+
+    // if any function return false, remained function is not called and score is set min.
+    outputToFile(baseFilename, rep)
+        && compile(baseFilename)
+        && execute(baseFilename, score);
+
+    // removes created files.
+    std::string cFilename{baseFilename + ".c"};
+    std::string execFilename{baseFilename + Configure::EXEC_EXTENSION};
+    std::remove(cFilename.c_str());
+    std::remove(execFilename.c_str());
+
+    return score;
+}
+
+bool Repairer::outputToFile(const std::string &baseFilename
+    , const std::shared_ptr<REPRESENTATION::Representation> &rep)
+{
+    std::shared_ptr<TOKEN::TranslationUnit> translationUnit{rep->block()->createTranslationUnit()};
+
+    if(!PATH::write(baseFilename + ".c", TOKEN::str(translationUnit.get())))
+        return outputError(baseFilename + ".c");
+
+    return true;
+}
+
+bool Repairer::compile(const std::string &baseFilename)
+{
+    std::string command{SYSTEM::command(Configure::COMPILER
+        , baseFilename + ".c"
+        , "-o"
+        , baseFilename + Configure::EXEC_EXTENSION)};
+
+    if(SYSTEM::system(command) != 0)
+        return compilingError(baseFilename + ".c");
+
+    return true;
+}
+
+bool Repairer::execute(const std::string &baseFilename
+    , int &score)
+{
+    auto &&exec{[&](const std::string &prefix
+        , std::size_t size
+        , int weight)
+        -> bool
+        {
+            for(std::size_t i{0ull}; i < size; i++)
+            {
+                std::string command{SYSTEM::command("bash"
+                    , Configure::TEST_SCRIPT
+                    , baseFilename + Configure::EXEC_EXTENSION
+                    , prefix + std::to_string(i))};
+
+                if(SYSTEM::system(command) != 0)
+                    score += weight;
+            }
+
+            return true;
+        }};
+
+    score = 0;
+    return exec(Configure::POSITIVE_TEST_PREFIX
+        , Configure::NUM_POSITIVE_TEST
+        , Configure::POSITIVE_TEST_WEIGHT)
+        && exec(Configure::NEGATIVE_TEST_PREFIX
+            , Configure::NUM_NEGATIVE_TEST
+            , Configure::NEGATIVE_TEST_WEIGHT);
+}
+
 bool Repairer::repCreationError(const std::string &what) const
 {
     std::cerr << "REPAIR::Repairer::repCreationError():\n"
         "    what: " << what
+        << std::endl;
+    return false;
+}
+
+bool Repairer::outputError(const std::string &filename)
+{
+    std::unique_lock lock{mIOMutex};
+    std::cerr << "REPAIR::Repairer::outputError():\n"
+        "    what: failed to output to file.\n"
+        "    filename: " << filename
+        << std::endl;
+    return false;
+}
+
+bool Repairer::compilingError(const std::string &filename)
+{
+    std::unique_lock lock{mIOMutex};
+    std::cerr << "REPAIR::Repairer::compilingError():\n"
+        "    filename" << filename
         << std::endl;
     return false;
 }

@@ -40,6 +40,7 @@ private:
         , char &res) const;
 
     std::string mFile;
+    std::string mTemporaryFilename;
     Sequence mSeq;
 };
 

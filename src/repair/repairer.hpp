@@ -7,6 +7,7 @@
 #include <functional>
 #include <string>
 #include <utility>
+#include <mutex>
 
 #include "common/define.hpp"
 
@@ -41,6 +42,7 @@ public:
 
     auto moveResult()
         {return std::exchange(mResult, nullptr);}
+    bool outputResult(const std::string &filename) const;
 
 private:
     bool initialize(const CodeInformation &target
@@ -66,14 +68,24 @@ private:
 
     // these fuctions are static member for multithread execution.
     static int evaluateRep(const std::shared_ptr<REPRESENTATION::Representation> &rep);
+    static bool outputToFile(const std::string &baseFilename
+        , const std::shared_ptr<REPRESENTATION::Representation> &rep);
+    static bool compile(const std::string &baseFilename);
+    static bool execute(const std::string &baseFilename
+        , int &score);
 
     bool repCreationError(const std::string &what) const;
+
+    static bool outputError(const std::string &filename);
+    static bool compilingError(const std::string &filename);
 
     std::shared_ptr<BLOCK::Block> mTarget;
     std::deque<std::shared_ptr<BLOCK::Block>> mPool;
 
     bool mIsRepaired;
     REPRESENTATION::Representation *mResult;
+
+    inline static std::mutex mIOMutex{};
 };
 
 }

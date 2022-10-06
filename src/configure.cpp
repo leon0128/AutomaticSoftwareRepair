@@ -10,11 +10,12 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--command-log", {Tag::COMMAND_LOG, false}}
     , {"--time-log", {Tag::TIME_LOG, false}}
     , {"--repair-log", {Tag::REPAIR_LOG, false}}
+    , {"--subprocess-log", {Tag::SUBPROCESS_LOG, false}}
     , {"--preprocessor", {Tag::PREPROCESSOR, true}}
     , {"--compiler", {Tag::COMPILER, true}}
     , {"--test-script", {Tag::TEST_SCRIPT, true}}
-    , {"--test-filename", {Tag::TEST_FILENAME, true}}
-    , {"--execution", {Tag::EXECUTION, true}}
+    , {"--exec-extension", {Tag::EXEC_EXTENSION, true}}
+    , {"--null-filename", {Tag::NULL_FILENAME, true}}
     , {"--pos-prefix", {Tag::POS_PREFIX, true}}
     , {"--neg-prefix", {Tag::NEG_PREFIX, true}}
     , {"--num-pos", {Tag::NPOS, true}}
@@ -120,6 +121,9 @@ bool Configure::readArgument(Tag tag
         case(Tag::REPAIR_LOG):
             SHOULD_OUTPUT_REPAIR_LOG = true;
             break;
+        case(Tag::SUBPROCESS_LOG):
+            SHOULD_OUTPUT_SUBPROCESS_LOG = true;
+            break;
         case(Tag::PREPROCESSOR):
             if(!assignString(tag, arg, PREPROCESSOR))
                 return false;
@@ -132,12 +136,12 @@ bool Configure::readArgument(Tag tag
             if(!assignString(tag, arg, TEST_SCRIPT))
                 return false;
             break;
-        case(Tag::TEST_FILENAME):
-            if(!assignString(tag, arg, TEST_FILENAME))
+        case(Tag::EXEC_EXTENSION):
+            if(!assignString(tag, arg, EXEC_EXTENSION))
                 return false;
             break;
-        case(Tag::EXECUTION):
-            if(!assignString(tag, arg, EXECUTION_NAME))
+        case(Tag::NULL_FILENAME):
+            if(!assignString(tag, arg, EXEC_EXTENSION))
                 return false;
             break;
         case(Tag::POS_PREFIX):
@@ -275,6 +279,9 @@ bool Configure::setDefaultValue()
             case(Tag::REPAIR_LOG):
                 SHOULD_OUTPUT_REPAIR_LOG = false;
                 break;
+            case(Tag::SUBPROCESS_LOG):
+                SHOULD_OUTPUT_SUBPROCESS_LOG = false;
+                break;
             case(Tag::PREPROCESSOR):
                 PREPROCESSOR = "cpp -P";
                 break;
@@ -284,11 +291,11 @@ bool Configure::setDefaultValue()
             case(Tag::TEST_SCRIPT):
                 TEST_SCRIPT = "test.sh";
                 break;
-            case(Tag::TEST_FILENAME):
-                TEST_FILENAME = "__test.c";
+            case(Tag::EXEC_EXTENSION):
+                EXEC_EXTENSION = "";
                 break;
-            case(Tag::EXECUTION):
-                EXECUTION_NAME = "__test";
+            case(Tag::NULL_FILENAME):
+                NULL_FILENAME = "/dev/null";
                 break;
             case(Tag::POS_PREFIX):
                 POSITIVE_TEST_PREFIX = "p";

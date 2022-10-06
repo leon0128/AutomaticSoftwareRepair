@@ -3,6 +3,7 @@
 #include <limits>
 #include <filesystem>
 #include <utility>
+#include <cstdio>
 
 #include "utility/system.hpp"
 #include "utility/file.hpp"
@@ -15,8 +16,10 @@ namespace ANALYZER
 
 Preprocessor::Preprocessor()
     : mFile{}
+    , mTemporaryFilename{std::tmpnam(nullptr)}
     , mSeq{}
 {
+    mTemporaryFilename += ".c";
 }
 
 Preprocessor::~Preprocessor()
@@ -48,7 +51,7 @@ void Preprocessor::finalize()
 
 bool Preprocessor::openFile(std::string &src)
 {
-    std::filesystem::path path(Configure::TEST_FILENAME);
+    std::filesystem::path path(mTemporaryFilename);
     if(!PATH::isExist(path, std::filesystem::file_type::regular))
     {
         std::cerr << "sequencer error:\n"
@@ -82,10 +85,7 @@ bool Preprocessor::preprocess()
         // , "-D__builtin_expect\\(exp,c\\)=\\(exp\\)"
         // , "-D__builtin_offsetof\\(TYPE,MEMBER\\)=\\(\\(size_t\\)\\&\\(\\(TYPE*\\)0\\)-\\>MEMBER\\)"
         , "-o"
-        , Configure::TEST_FILENAME
-        , ">"
-        , SYSTEM::NULLFILE
-        , "2>&1")};
+        , mTemporaryFilename)};
 
     if(SYSTEM::system(command) != 0)
     {

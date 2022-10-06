@@ -9,14 +9,12 @@
 namespace SYSTEM
 {
 
-#if _WIN64 || _WIN32
-inline extern const char * const NULLFILE{"NUL"};
-#else
-inline extern const char * const NULLFILE{"/dev/null"};
-#endif
-
-inline extern bool shouldOutputLog;
-bool shouldOutputLog{false};
+inline extern bool shouldOutputSubprocessCommand;
+inline extern bool shouldOutputSubprocessLog;
+inline extern std::string nullFile;
+bool shouldOutputSubprocessCommand{false};
+bool shouldOutputSubprocessLog{false};
+std::string nullFile{"/dev/null"};
 
 inline extern int system(const std::string &cmd);
 template<class Str
@@ -32,10 +30,17 @@ inline extern std::string command();
 
 inline extern int system(const std::string &cmd)
 {
-    if(shouldOutputLog)
-        std::clog << "command: " << cmd << std::endl;
+    std::string addedCmd{cmd};
+    if(shouldOutputSubprocessLog)
+    {
+        addedCmd += " 2>&1 ";
+        addedCmd += nullFile;
+    }
 
-    return std::system(cmd.c_str());
+    if(shouldOutputSubprocessCommand)
+        std::clog << "command: " << addedCmd << std::endl;
+
+    return std::system(addedCmd.c_str());
 }
 
 template<class Str
@@ -46,8 +51,15 @@ inline extern int system(Str &&str
     std::string com{command(std::forward<Str>(str)
         , std::forward<Args>(args)...)};
     
-    if(shouldOutputLog)
-        std::clog << "command: " << com << std::endl;
+    std::string addedCmd{com};
+    if(shouldOutputSubprocessLog)
+    {
+        addedCmd += " 2>&1 ";
+        addedCmd += nullFile;
+    }
+
+    if(shouldOutputSubprocessCommand)
+        std::clog << "command: " << addedCmd << std::endl;
 
     return std::system(com.c_str());
 }
