@@ -162,6 +162,9 @@ public:
 #undef GET_SAFELY
 
 private:
+    static bool parseOption(int argc
+        , char **argv);
+    static bool isOption(const char *option);
     static bool readArgument(Tag
         , const std::string &arg = std::string{});
     static bool setDefaultValue();

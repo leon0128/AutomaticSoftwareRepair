@@ -1,4 +1,5 @@
 #include <iostream>
+#include <regex>
 
 #include "utility/output.hpp"
 #include "configure.hpp"
@@ -14,7 +15,7 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--subprocess-log", {Tag::SUBPROCESS_LOG, false}}
     , {"--preprocessor", {Tag::PREPROCESSOR, true}}
     , {"--compiler", {Tag::COMPILER, true}}
-    , {"--test-script", {Tag::TEST_SCRIPT, true}}
+    , {"--test", {Tag::TEST_SCRIPT, true}}
     , {"--exec-extension", {Tag::EXEC_EXTENSION, true}}
     , {"--null-filename", {Tag::NULL_FILENAME, true}}
     , {"--pos-prefix", {Tag::POS_PREFIX, true}}
@@ -26,7 +27,7 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--goal", {Tag::GOAL, true}}
     , {"--failure", {Tag::FAILURE, true}}
     , {"--pop", {Tag::POP, true}}
-    , {"--max", {Tag::MAX, true}}
+    , {"--gen", {Tag::MAX, true}}
     , {"--elite", {Tag::ELITE, true}}
     , {"--tournament", {Tag::TOURNAMENT, true}}
     , {"--add-prob", {Tag::ADDING_PROB, true}}
@@ -41,38 +42,13 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--type2", {Tag::SIM_TYPE2, true}}
     , {"--type3", {Tag::SIM_TYPE3, true}}
     , {"--capacity", {Tag::SIM_CAPACITY, true}}
-    , {"--num-of-use-external", {Tag::SIM_NUMBER_OF_USE, true}}
+    , {"--num-use-external", {Tag::SIM_NUMBER_OF_USE, true}}
     , {"--change-prob", {Tag::SIM_CHANGE_PROB, false}}};
 
 bool Configure::parseCommandLineArguments(int argc, char **argv)
 {
-    for(int i{1ull}; i < argc; i++)
-    {
-        auto &&iter{flagMap.find(argv[i])};
-        if(iter != flagMap.end())
-        {
-            if(iter->second.second)
-            {
-                if(i + 1 >= argc)
-                    return noArgumentError(argv[i]);
-
-                if(!readArgument(iter->second.first, argv[i + 1]))
-                    return false;
-                
-                i++;
-            }
-            else
-            {
-                if(!readArgument(iter->second.first))
-                    return false;
-            }
-        }
-        else
-        {
-            if(!readArgument(Tag::SOURCE, argv[i]))
-                return false;
-        }
-    }
+    if(!parseOption(argc, argv))
+        return false;
 
     if(!setDefaultValue())
         return false;
@@ -84,6 +60,53 @@ bool Configure::parseCommandLineArguments(int argc, char **argv)
         return false;
 
     return true;
+}
+
+bool Configure::parseOption(int argc
+    , char **argv)
+{
+    for(int i{1}; i < argc; i++)
+    {
+        // parse target source code
+        if(!isOption(argv[i]))
+        {
+            if(!readArgument(Tag::SOURCE, argv[i]))
+                return false;
+        }
+        // option
+        else
+        {
+            auto &&iter{flagMap.find(argv[i])};
+            if(iter == flagMap.end())
+                return unknownFlagError(argv[i]);
+        
+            if(iter->second.second)
+            {
+                if(i + 1 >= argc
+                    || isOption(argv[i + 1]))
+                    return noArgumentError(argv[i]);
+                
+                if(!readArgument(iter->second.first, argv[i + 1]))
+                    return false;
+                
+                i++;
+            }
+            else
+            {
+                if(!readArgument(iter->second.first))
+                    return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
+bool Configure::isOption(const char *arg)
+{
+    static const std::regex regex{"^--(.*)"};
+
+    return std::regex_match(arg, regex);
 }
 
 bool Configure::readArgument(Tag tag
