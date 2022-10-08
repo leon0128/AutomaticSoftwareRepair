@@ -2,6 +2,7 @@
 #include <sstream>
 #include <string>
 #include <mutex>
+#include <cstdio>
 
 #include "file.hpp"
 
@@ -91,6 +92,11 @@ std::string getTempFilename()
     if(!isCreatedDirectories)
         std::filesystem::create_directories(tempDir);
     return (tempDir / std::to_string(numCreated++)).string();
+}
+
+bool remove(const std::string &filename)
+{
+    return std::remove(filename.c_str()) == 0;
 }
 
 }

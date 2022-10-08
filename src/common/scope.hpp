@@ -9,6 +9,7 @@
 #include <any>
 #include <memory>
 #include <vector>
+#include <deque>
 
 inline namespace COMMON
 {
@@ -31,6 +32,10 @@ private:
         , Scope*> SCOPE_MAP{};
     inline static std::unordered_map<std::size_t
         , std::shared_ptr<IDENTIFIER::Identifier>> IDENTIFIER_MAP{};
+    // first: scope-id that indicates translation-unit.
+    // second: deque of included file. ex. {"<stdio.h>, "\"header.h\"", ...}
+    inline static std::unordered_map<std::size_t
+        , std::deque<std::string>> INCLUDING_FILE_MAP{};
 
 public:
     using PairType = std::pair<std::shared_ptr<IDENTIFIER::Identifier>
@@ -47,10 +52,12 @@ public:
     using Array = std::array<Map
         , NUM_NAMESPACE>;
 
-    inline static auto &scopeMap()
+    inline static auto &&scopeMap()
         {return SCOPE_MAP;}
-    inline static auto &identifierMap()
+    inline static auto &&identifierMap()
         {return IDENTIFIER_MAP;}
+    inline static auto &&includingFileMap()
+        {return INCLUDING_FILE_MAP;}
 
     Scope(Scope*
         , ScopeTag);

@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "utility/output.hpp"
 #include "configure.hpp"
 
 decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
@@ -513,55 +514,69 @@ bool Configure::checkValidity()
 
 bool Configure::unknownFlagError(const std::string &flag)
 {
-    std::cerr << "Configure::unknownFlagError():\n"
-        "    flag: " << flag
+    std::cerr << OUTPUT::charRedCode
+        << "Configure::unknownFlagError():\n"
+        << OUTPUT::resetCode
+        << "    flag: " << flag
         << std::endl;
     return false;
 }
 
 bool Configure::noArgumentError(const std::string &flag)
 {
-    std::cerr << "Configure::noArgumentError():\n"
-        "    flag: " << flag
+    std::cerr << OUTPUT::charRedCode
+        << "Configure::noArgumentError():\n"
+        << OUTPUT::resetCode
+        << "    flag: " << flag
         << std::endl;
     return false;
 }
 
 bool Configure::noHasSourceError()
 {
-    std::cerr << "Configure::noHasSourceError():\n"
+    std::cerr << OUTPUT::charRedCode
+        << "Configure::noHasSourceError():\n"
+        << OUTPUT::resetCode
         << std::flush;
     return false;
 }
 
 bool Configure::duplicationError(const std::string &flag)
 {
-    std::cerr << "Configure::duplicationError():\n"
-        "    flag: " << flag
+    std::cerr << OUTPUT::charRedCode
+        << "Configure::duplicationError():\n"
+        << OUTPUT::resetCode
+        << "    flag: " << flag
         << std::endl;
     return false;
 }
 
 bool Configure::unknownTagError(Tag tag)
 {
-    std::cerr << "Configure::unknownTagError():\n"
-        "    tag: " << static_cast<int>(tag)
+    std::cerr << OUTPUT::charRedCode
+        << "Configure::unknownTagError():\n"
+        << OUTPUT::resetCode
+        << "    tag: " << static_cast<int>(tag)
         << std::endl;
     return false;
 }
 
 bool Configure::valueConvertError(const std::string &arg)
 {
-    std::cerr << "Configure::valueConvertError():\n"
-        "    arg: " << arg
+    std::cerr << OUTPUT::charRedCode
+        << "Configure::valueConvertError():\n"
+        << OUTPUT::resetCode
+        << "    arg: " << arg
         << std::endl;
     return false;
 }
 
 bool Configure::validityError(const std::string &what)
 {
-    std::cerr << "Configure::validityError():\n"
-        "    what: " << what
+    std::cerr << OUTPUT::charRedCode
+        <<  "Configure::validityError():\n"
+        << OUTPUT::resetCode
+        << "    what: " << what
         << std::endl;
     return false;
 }

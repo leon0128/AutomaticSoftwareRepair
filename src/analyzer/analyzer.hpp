@@ -55,7 +55,14 @@ public:
 private:
     bool finalize();
 
-    bool analyze(const TOKEN::TranslationUnit*);
+    // this function deletes included contents from mTranslationUnit.
+    bool controlIncludingFile();
+    // this function controls mIncludingFileMap.
+    // second argument is indicates position of first argument in translation-unit.
+    bool controlIncludingFile(const TOKEN::IncludingFile*
+        , std::size_t translationUnitIndex);
+
+    bool analyze(TOKEN::TranslationUnit*);
     bool analyze(TOKEN::FunctionDefinition*);
     bool analyze(TOKEN::Declaration*);
     bool analyze(const TOKEN::CompoundStatement*
@@ -181,6 +188,7 @@ private:
     TOKEN::TranslationUnit *mTranslationUnit;
     Flags mFlags;
     SCOPE::Scope *mScope;
+    std::unordered_map<std::string, std::pair<std::size_t, std::size_t>> mIncludingFileMap;
 };
 
 enum class Analyzer::FlagTag : unsigned char

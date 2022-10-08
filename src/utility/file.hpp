@@ -33,6 +33,7 @@ bool write(const std::filesystem::path &path
     , bool isOverwitten = true);
 
 std::string getTempFilename();
+bool remove(const std::string &filename);
 
 }
 

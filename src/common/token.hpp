@@ -148,6 +148,8 @@ class ExtendedAsm;
 class AsmQualifiers;
 class AsmStatement;
 
+class IncludingFile;
+
 template<class T>
 extern std::string str(const T *t)
 {
@@ -291,6 +293,7 @@ public:
         , SLASH_ASSIGNMENT, PERCENT_ASSIGNMENT, PLUS_ASSIGNMENT, MINUS_ASSIGNMENT
         , L_SHIFT_ASSIGNMENT, R_SHIFT_ASSIGNMENT, AND_ASSIGNMENT, XOR_ASSIGNMENT
         , BITOR_ASSIGNMENT, COMMA, HASH, DOUBLE_HASH
+        , AT
     };
 
     Tag tag;
@@ -1194,6 +1197,9 @@ public:
 
     TranslationUnit *copy() const;
     std::string &str(std::string&, std::size_t&) const;
+    // this function converts this to string that includes included files.
+    // argument indicates this translation-unit's scope-id.
+    std::string str(std::size_t scopeId) const;
 };
 
 class ExternalDeclaration
@@ -1201,7 +1207,8 @@ class ExternalDeclaration
 public:
     using Var = std::variant<std::monostate
         , FunctionDefinition*
-        , Declaration*>;
+        , Declaration*
+        , IncludingFile*>;
     
     Var var;
     
@@ -3369,6 +3376,19 @@ public:
     ~AsmStatement();
 
     AsmStatement *copy() const;
+    std::string &str(std::string&, std::size_t&) const;
+};
+
+class IncludingFile
+{
+public:
+    std::string filename;
+
+    IncludingFile(const std::string &inFilename = "")
+        : filename{inFilename}{}
+    ~IncludingFile() = default;
+
+    IncludingFile *copy() const;
     std::string &str(std::string&, std::size_t&) const;
 };
 

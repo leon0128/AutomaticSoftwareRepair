@@ -1,7 +1,9 @@
 #include <vector>
 #include <iostream>
 #include <utility>
+#include <algorithm>
 
+#include "utility/output.hpp"
 #include "tokenizer.hpp"
 #include "tree_generator.hpp"
 
@@ -131,6 +133,9 @@ TOKEN::ExternalDeclaration *TreeGenerator::tokExternalDeclaration()
     else if(TOKEN::FunctionDefinition *fd = tokFunctionDefinition();
         fd != nullptr)
         return registerToCache(new TOKEN::ExternalDeclaration(fd), beginIdx);
+    else if(TOKEN::IncludingFile *i{tokIncludingFile()};
+        i != nullptr)
+        return registerToCache(new TOKEN::ExternalDeclaration{i}, beginIdx);
 
     return nullptr;
 }
@@ -3034,6 +3039,60 @@ TOKEN::AsmStatement *TreeGenerator::tokAsmStatement()
     }
 }
 
+TOKEN::IncludingFile *TreeGenerator::tokIncludingFile()
+{
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::IncludingFile)
+    std::size_t beginIdx{mIdx};
+
+    using namespace TOKEN;
+
+    auto &&getFilename{[&](Punctuator::Tag delimiterTag)
+        -> std::string
+        {
+            std::string filename;
+            for(; mIdx < mSeq.get().size(); mIdx++)
+            {
+                if(isMatch(delimiterTag))
+                {
+                    mIdx--;
+                    break;
+                }
+                
+                filename += TOKEN::str(mSeq.get()[mIdx]);
+            }
+
+            return filename;
+        }};
+
+    std::size_t preIdx{mIdx};
+
+    std::string filename;
+
+    if(!isMatch(Punctuator::Tag::AT))
+        return nullptr;
+    
+    // @<includingFile>
+    if(isMatch(Punctuator::Tag::LESS))
+    {
+        filename.push_back('<');
+        filename += getFilename(Punctuator::Tag::GREATER);
+        filename.push_back('>');
+        if(!isMatch(Punctuator::Tag::GREATER))
+            return mIdx = preIdx, nullptr;
+    }
+    // @"includeFile"
+    else if(auto &&sl{tokStringLiteral()};
+        sl != nullptr)
+    {
+        filename = TOKEN::str(sl);
+        delete sl;
+    }
+    else
+        return mIdx = preIdx, nullptr;
+
+    return registerToCache(new IncludingFile{std::move(filename)}, beginIdx);
+}
+
 TOKEN::IntegerConstant *TreeGenerator::convIntegerConstant()
 {
     if(mIdx < mSeq.get().size()
@@ -3160,22 +3219,39 @@ bool TreeGenerator::isMatch(TOKEN::Punctuator::Tag tag)
 
 bool TreeGenerator::noEvaluatedError() const
 {
-    static const constexpr std::size_t numMaxOutputTokens{60ull};
+    static const constexpr std::size_t numPreOutput{15ull};
+    static const constexpr std::size_t numPostOutput{5ull};
 
-    std::cerr << "TreeGenerator error:\n"
-        "    what: token-sequence has not been evaluated to the end.\n"
-        "    file: " << mFile << "\n"
-        "    idx: " << mIdx << "\n"
-        "    token: ";
-
-    for(std::size_t i{0ull};
-        i < numMaxOutputTokens && i + mIdx < mSeq.get().size();
-        i++)
+    std::size_t endPos{0ull};
+    if(!mCacheMap.empty())
     {
-        std::cout << TOKEN::str(mSeq.get()[i + mIdx]) << ' ';
+        for(auto &&[beginPos, element] : mCacheMap)
+            endPos = element->mEnd > endPos ? element->mEnd : endPos;
     }
 
-    std::cout << std::endl;
+    std::cerr << OUTPUT::charRedCode
+        << "TreeGenerator error:\n"
+        << OUTPUT::resetCode
+        << "    what: token-sequence has not been evaluated to the end.\n"
+        "    file: " << mFile << "\n"
+        "    idx: " << endPos << "\n"
+        "    token: ";
+
+    for(std::size_t i{endPos >= numPreOutput
+            ? endPos - numPreOutput
+            : 0ull};
+        i < endPos + numPostOutput
+            && i < mSeq.get().size();
+        i++)
+    {
+        if(i + 1ull == endPos || i == endPos)
+            std::cerr << OUTPUT::charRedCode;
+        else
+            std::cerr << OUTPUT::resetCode;
+        std::cerr << TOKEN::str(mSeq.get().at(i)) << ' ';
+    }
+
+    std::cerr << OUTPUT::resetCode << std::endl;
 
     return false;
 }

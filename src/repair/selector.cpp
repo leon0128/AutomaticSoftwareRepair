@@ -3,6 +3,7 @@
 #include <limits>
 #include <algorithm>
 
+#include "utility/output.hpp"
 #include "utility/random.hpp"
 #include "common/scope.hpp"
 #include "common/identifier.hpp"
@@ -1569,24 +1570,30 @@ bool Selector::select(const TOKEN::AsmStatement *as)
 
 bool Selector::clearError() const
 {
-    std::cerr << "GA::Selector error:\n"
-        "    what: failed to clear previous value.\n"
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Selector error:\n"
+        << OUTPUT::resetCode
+        << "    what: failed to clear previous value.\n"
         << std::flush;
     return false;
 }
 
 bool Selector::invalidStatementError() const
 {
-    std::cerr << "GA::Selector error:\n"
-        "    what: invalid statement.\n"
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Selector error:\n"
+        << OUTPUT::resetCode
+        << "    what: invalid statement.\n"
         << std::flush;
     return false;
 }
 
 bool Selector::invalidVariantError(const std::string &className) const
 {
-    std::cerr << "GA::Selector error:\n"
-        "    what: variant has invalid entity.\n"
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Selector error:\n"
+        << OUTPUT::resetCode
+        << "    what: variant has invalid entity.\n"
         "    class: " << className
         << std::endl;
     return false;
@@ -1594,16 +1601,20 @@ bool Selector::invalidVariantError(const std::string &className) const
 
 bool Selector::isNotFoundIdentifier() const
 {
-    std::cerr << "GA::Selector error:\n"
-        "    what: not found identifier that is same type.\n"
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Selector error:\n"
+        << OUTPUT::resetCode
+        << "    what: not found identifier that is same type.\n"
         << std::flush;
     return false;
 }
 
 bool Selector::notSupportError(const std::string &name) const
 {
-    std::cerr << "GA::Selector error:\n"
-        "    what: not support.\n"
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Selector error:\n"
+        << OUTPUT::resetCode
+        << "    what: not support.\n"
         "    ---: " << name
         << std::endl;
     return false;
@@ -1611,16 +1622,20 @@ bool Selector::notSupportError(const std::string &name) const
 
 bool Selector::lackIdError() const
 {
-    std::cerr << "GA::Selector error:\n"
-        "    what: lack of id-list.\n"
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Selector error:\n"
+        << OUTPUT::resetCode
+        << "    what: lack of id-list.\n"
         << std::flush;
     return false;
 }
 
 bool Selector::unusedIdError() const
 {
-    std::cerr << "GA::Selector error:\n"
-        "    what: exists unused identifier-id.\n"
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Selector error:\n"
+        << OUTPUT::resetCode
+        << "    what: exists unused identifier-id.\n"
         << std::flush;
     return false;
 }

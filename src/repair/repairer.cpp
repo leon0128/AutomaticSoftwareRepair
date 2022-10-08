@@ -11,6 +11,7 @@
 #include "utility/random.hpp"
 #include "utility/file.hpp"
 #include "utility/system.hpp"
+#include "utility/output.hpp"
 #include "common/scope.hpp"
 #include "common/token.hpp"
 #include "common/define.hpp"
@@ -404,8 +405,10 @@ void Repairer::outputResultLog() const
 
 bool Repairer::repCreationError(const std::string &what) const
 {
-    std::cerr << "REPAIR::Repairer::repCreationError():\n"
-        "    what: " << what
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Repairer::repCreationError():\n"
+        << OUTPUT::resetCode
+        << "    what: " << what
         << std::endl;
     return false;
 }
@@ -413,8 +416,10 @@ bool Repairer::repCreationError(const std::string &what) const
 bool Repairer::outputError(const std::string &filename)
 {
     std::unique_lock lock{mIOMutex};
-    std::cerr << "REPAIR::Repairer::outputError():\n"
-        "    what: failed to output to file.\n"
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Repairer::outputError():\n"
+        << OUTPUT::resetCode
+        << "    what: failed to output to file.\n"
         "    filename: " << filename
         << std::endl;
     return false;
@@ -423,8 +428,10 @@ bool Repairer::outputError(const std::string &filename)
 bool Repairer::compilingError(const std::string &filename)
 {
     std::unique_lock lock{mIOMutex};
-    std::cerr << "REPAIR::Repairer::compilingError():\n"
-        "    filename" << filename
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Repairer::compilingError():\n"
+        << OUTPUT::resetCode
+        << "    filename" << filename
         << std::endl;
     return false;
 }

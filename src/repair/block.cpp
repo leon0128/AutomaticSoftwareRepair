@@ -2,6 +2,7 @@
 #include <limits>
 #include <utility>
 
+#include "utility/output.hpp"
 #include "common/statement.hpp"
 #include "block.hpp"
 
@@ -473,16 +474,20 @@ void Block::move(Block &&other)
 
 bool Block::variantError(const std::string &className) const
 {
-    std::cerr << "Block::variantError()\n"
-        "    className: " << className
+    std::cerr << OUTPUT::charRedCode
+        << "Block::variantError()\n"
+        << OUTPUT::resetCode
+        << "    className: " << className
         << std::endl;
     return false;
 }
 
 bool Block::nullptrError(const std::string &className) const
 {
-    std::cerr << "Block::nullptrError()\n"
-        "    className: " << className
+    std::cerr << OUTPUT::charRedCode
+        << "Block::nullptrError()\n"
+        << OUTPUT::resetCode
+        << "    className: " << className
         << std::endl;
     return false;
 }

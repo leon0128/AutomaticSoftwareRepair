@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include "configure.hpp"
+#include "utility/output.hpp"
 #include "calculator.hpp"
 
 namespace SIM
@@ -344,8 +345,10 @@ bool Calculator::reductionWarning()
 
 bool Calculator::normalizationError(const std::string &what)
 {
-    std::cerr << "SIM::Calculator::normalizationError():\n"
-        "    what: " << what
+    std::cerr << OUTPUT::charRedCode
+        << "SIM::Calculator::normalizationError():\n"
+        << OUTPUT::resetCode
+        << "    what: " << what
         << std::endl;
     
     return false;

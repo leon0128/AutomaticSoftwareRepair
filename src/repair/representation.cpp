@@ -2,6 +2,7 @@
 #include <utility>
 
 #include "configure.hpp"
+#include "utility/output.hpp"
 #include "block.hpp"
 #include "operation.hpp"
 #include "representation.hpp"
@@ -91,8 +92,10 @@ bool Representation::updateBlock()
 
 bool Representation::creationError(const std::string &what) const
 {
-    std::cerr << "Representation::creationError()\n"
-        "    what: " << what
+    std::cerr << OUTPUT::charRedCode
+        << "Representation::creationError()\n"
+        << OUTPUT::resetCode
+        << "    what: " << what
         << std::endl;
     return false;
 }

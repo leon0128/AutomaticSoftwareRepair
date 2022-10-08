@@ -1,6 +1,7 @@
 #include <iostream>
 #include <utility>
 
+#include "utility/output.hpp"
 #include "divider.hpp"
 
 namespace ANALYZER
@@ -254,7 +255,9 @@ TOKEN::Statement *Divider::createStatement(TOKEN::InitDeclarator *id)
 
 bool Divider::unsupportedError(const std::string &what)
 {
-    std::cerr << "Divider error:\n"
+    std::cerr << OUTPUT::charRedCode
+        << "Divider error:\n"
+        << OUTPUT::resetCode
         << "what: " << what
         << std::endl;
     return false;

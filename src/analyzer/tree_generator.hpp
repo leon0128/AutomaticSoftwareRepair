@@ -130,6 +130,8 @@ private:
     TOKEN::ExtendedAsm *tokExtendedAsm();
     TOKEN::AsmStatement *tokAsmStatement();
 
+    TOKEN::IncludingFile *tokIncludingFile();
+
     TOKEN::IntegerConstant *convIntegerConstant();
     TOKEN::FloatingConstant *convFloatingConstant();
     TOKEN::EnumerationConstant *convEnumerationConstant();
@@ -297,7 +299,8 @@ public:
         , TOKEN::BasicAsm*
         , TOKEN::ExtendedAsm*
         , TOKEN::AsmQualifiers*
-        , TOKEN::AsmStatement*>;
+        , TOKEN::AsmStatement*
+        , TOKEN::IncludingFile*>;
 
     std::size_t mBegin{0ull};
     std::size_t mEnd{0ull};

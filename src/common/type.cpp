@@ -2,6 +2,7 @@
 #include <map>
 #include <typeinfo>
 
+#include "utility/output.hpp"
 #include "token.hpp"
 #include "configure.hpp"
 #include "type.hpp"
@@ -579,8 +580,10 @@ std::string Type::name() const
 
 bool notSupportedError(const std::string &msg)
 {
-    std::cerr << "Type error:\n"
-        "    what: not supported.\n"
+    std::cerr << OUTPUT::charRedCode
+        << "Type error:\n"
+        << OUTPUT::resetCode
+        << "    what: not supported.\n"
         "    ---: " << msg
         << std::endl;
     return false;

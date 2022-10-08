@@ -107,7 +107,8 @@ const std::unordered_map<Punctuator::Tag, std::string> Punctuator::PUNCTUATOR_MA
         , {Tag::BITOR_ASSIGNMENT, "|="}
         , {Tag::COMMA, ","}
         , {Tag::HASH, "#"}
-        , {Tag::DOUBLE_HASH, "##"}};
+        , {Tag::DOUBLE_HASH, "##"}
+        , {Tag::AT, "@"}};
 
 Token::~Token()
 {
@@ -1746,6 +1747,25 @@ std::string &TranslationUnit::str(std::string &res, std::size_t &indent) const
     return res;
 }
 
+std::string TranslationUnit::str(std::size_t scopeId) const
+{
+    std::string contents;
+    std::size_t indent{0ull};
+
+    for(auto &&filename : SCOPE::Scope::includingFileMap().at(scopeId))
+    {
+        contents += "#include " + filename;
+        contents.push_back('\n');
+    }
+
+    if(!contents.empty())
+        contents.push_back('\n');
+
+    this->str(contents, indent);
+
+    return contents;
+}
+
 ExternalDeclaration::~ExternalDeclaration()
 {
     if(std::holds_alternative<std::monostate>(var))
@@ -1754,6 +1774,8 @@ ExternalDeclaration::~ExternalDeclaration()
         delete std::get<FunctionDefinition*>(var);
     else if(std::holds_alternative<Declaration*>(var))
         delete std::get<Declaration*>(var);
+    else if(std::holds_alternative<IncludingFile*>(var))
+        delete std::get<IncludingFile*>(var);
 }
 
 ExternalDeclaration *ExternalDeclaration::copy() const
@@ -1765,8 +1787,8 @@ ExternalDeclaration *ExternalDeclaration::copy() const
         cvar.emplace<FunctionDefinition*>(std::get<FunctionDefinition*>(var)->copy());
     else if(std::holds_alternative<Declaration*>(var))
         cvar.emplace<Declaration*>(std::get<Declaration*>(var)->copy());
-    
-
+    else if(std::holds_alternative<IncludingFile*>(var))
+        cvar.emplace<IncludingFile*>(std::get<IncludingFile*>(var)->copy());
 
     return new ExternalDeclaration(cvar);
 }
@@ -1779,7 +1801,9 @@ std::string &ExternalDeclaration::str(std::string &res, std::size_t &indent) con
         std::get<FunctionDefinition*>(var)->str(res, indent);
     else if(std::holds_alternative<Declaration*>(var))
         std::get<Declaration*>(var)->str(res, indent);
-    
+    else if(std::holds_alternative<IncludingFile*>(var))
+        std::get<IncludingFile*>(var)->str(res, indent);
+
     return res;
 }
 
@@ -6015,6 +6039,19 @@ std::string &AsmStatement::str(std::string &res, std::size_t &indent) const
     
     res.push_back(';');
     return res;
+}
+
+IncludingFile *IncludingFile::copy() const
+{
+    return new IncludingFile{*this};
+}
+
+std::string &IncludingFile::str(std::string &str
+    , std::size_t &indent) const
+{
+    str.push_back('@');
+    str += filename;
+    return str;
 }
 
 }
