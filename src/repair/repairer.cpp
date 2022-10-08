@@ -340,7 +340,7 @@ bool Repairer::outputToFile(const std::string &baseFilename
 {
     std::shared_ptr<TOKEN::TranslationUnit> translationUnit{rep->block()->createTranslationUnit()};
 
-    if(!PATH::write(baseFilename + ".c", TOKEN::str(translationUnit.get())))
+    if(!PATH::write(baseFilename + ".c", translationUnit->str(rep->block()->scopeId())))
         return outputError(baseFilename + ".c");
 
     return true;

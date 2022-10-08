@@ -13,11 +13,15 @@ SOURCE_DIRECTORIES = ./src/ \
 ## c++ compiler
 CXX = g++
 ## c++ compiler flags
-CXXFLAGS = -g3 -Wall -std=c++2a -I./src -lpthread -pthread
+CXXFLAGS = -g3 -Wall -std=c++2a -I./src
 ## c++ preprocessor
 CPP = g++ -E
 ## c++ preprocessor flags
 CPPFLAGS = 
+
+## linkage flags
+LINKAGE_FLAGS = -lpthread -pthread
+
 
 ###########################################################
 ## all files
@@ -51,7 +55,7 @@ all: $(PROGRAM)
 
 # $(PROGRAM) recipe
 $(PROGRAM): $(OBJECT_FILES)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LINKAGE_FLAGS) $^ -o $@
 
 # dependency file recipe
 $(DEPENDENCY_FILES):
