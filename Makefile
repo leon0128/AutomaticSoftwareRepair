@@ -39,7 +39,7 @@ OBJECT_FILES = $(foreach DIR, \
 ## header files
 HEADER_FILES = $(foreach DIR, \
 	$(SOURCE_DIRECTORIES), \
-	$(wildcard $(DIR)*.hpp)))
+	$(wildcard $(DIR)*.hpp))
 	
 ## dependency files
 DEPENDENCY_FILES = $(foreach DIR, \
@@ -59,7 +59,7 @@ $(PROGRAM): $(OBJECT_FILES)
 
 # dependency file recipe
 $(DEPENDENCY_FILES):
-	echo -n "$(dir $@) > $@"
+	echo -n "$(dir $@)" > $@
 	$(CXX) $(CXXFLAGS) -MM -c $(basename $@).cpp >> $@
 	echo "	rm -rf $@" >> $@
 	echo "	$(CXX) $(CXXFLAGS) -c $(basename $@).cpp -o $(basename $@).o" >> $@

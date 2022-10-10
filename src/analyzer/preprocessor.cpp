@@ -2,6 +2,7 @@
 #include <regex>
 #include <utility>
 #include <filesystem>
+#include <iomanip>
 
 #include "configure.hpp"
 #include "utility/system.hpp"
@@ -33,6 +34,9 @@ bool Preprocessor::execute(const std::string &filename)
     if(!initialize(filename))
         return false;
 
+    if(!addBuiltinFile())
+        return false;
+
     if(!readFile(mFilename))
         return false;
 
@@ -54,7 +58,7 @@ bool Preprocessor::execute(const std::string &filename)
     mContents.clear();
     if(!readFile(mPreprocessedFilename))
         return false;
-    
+
     if(!decompose())
         return false;
 
@@ -77,6 +81,18 @@ void Preprocessor::finalize()
     PATH::remove(mPreprocessedFilename);
     for(auto &&pt : mPTs)
         delete pt;
+}
+
+bool Preprocessor::addBuiltinFile()
+{
+    if(Configure::BUILTIN.empty())
+        return true;
+
+    mContents += "#include \"";
+    mContents += Configure::BUILTIN;
+    mContents += "\"\n";
+
+    return true;
 }
 
 bool Preprocessor::readFile(const std::string &filename)
@@ -145,7 +161,8 @@ bool Preprocessor::executeCommand(const std::string &input
     , const std::string &output)
 {
     std::string command{SYSTEM::command(Configure::PREPROCESSOR
-        , "-I./" + std::filesystem::path{input}.remove_filename().string()
+        , "-I./"
+        , "-I./" + std::filesystem::path{mFilename}.remove_filename().string()
         , input
         , "-o"
         , output)};

@@ -35,7 +35,7 @@ private:
     // InitDeclarator should have InitDeclarator::Sd_i.
     static TOKEN::Statement *createStatement(TOKEN::InitDeclarator*);
 
-    static bool unsupportedError(const std::string &what);
+    static bool unsupportedWarning(const std::string &className);
 
 public:
     Divider() = delete;

@@ -12,99 +12,6 @@
 namespace ANALYZER
 {
 
-const Analyzer::BaseTypeMap Analyzer::BASE_TYPE_MAP
-    {{ResultTypeTag::VOID
-        , {{BaseTypeTag::VOID}}}
-        , {ResultTypeTag::CHAR
-            , {{BaseTypeTag::CHAR}}}
-        , {ResultTypeTag::S_CHAR
-            , {{BaseTypeTag::SIGNED
-                , BaseTypeTag::CHAR}}}
-        , {ResultTypeTag::U_CHAR
-            , {{BaseTypeTag::UNSIGNED
-                , BaseTypeTag::CHAR}}}
-        , {ResultTypeTag::S_SHORT
-            , {{BaseTypeTag::SHORT}
-                , {BaseTypeTag::SIGNED
-                    , BaseTypeTag::SHORT}
-                , {BaseTypeTag::SHORT
-                    , BaseTypeTag::INT}
-                , {BaseTypeTag::SIGNED
-                    , BaseTypeTag::SHORT
-                    , BaseTypeTag::INT}}}
-        , {ResultTypeTag::U_SHORT
-            , {{BaseTypeTag::UNSIGNED
-                , BaseTypeTag::SHORT}
-                , {BaseTypeTag::UNSIGNED
-                    , BaseTypeTag::SHORT
-                    , BaseTypeTag::INT}}}
-        , {ResultTypeTag::S_INT
-            , {{BaseTypeTag::INT}
-                , {BaseTypeTag::SIGNED}
-                , {BaseTypeTag::SIGNED
-                    , BaseTypeTag::INT}}}
-        , {ResultTypeTag::U_INT
-            , {{BaseTypeTag::UNSIGNED}
-                , {BaseTypeTag::UNSIGNED
-                    , BaseTypeTag::INT}}}
-        , {ResultTypeTag::S_LONG
-            , {{BaseTypeTag::LONG}
-                , {BaseTypeTag::SIGNED
-                    , BaseTypeTag::LONG}
-                , {BaseTypeTag::LONG
-                    , BaseTypeTag::INT}
-                , {BaseTypeTag::SIGNED
-                    , BaseTypeTag::LONG
-                    , BaseTypeTag::INT}}}
-        , {ResultTypeTag::U_LONG
-            , {{BaseTypeTag::UNSIGNED
-                , BaseTypeTag::LONG}
-                , {BaseTypeTag::UNSIGNED
-                    , BaseTypeTag::LONG
-                    , BaseTypeTag::INT}}}
-        , {ResultTypeTag::S_LONG_LONG
-            , {{BaseTypeTag::LONG
-                , BaseTypeTag::LONG}
-                , {BaseTypeTag::SIGNED
-                    , BaseTypeTag::LONG
-                    , BaseTypeTag::LONG}
-                , {BaseTypeTag::LONG
-                    , BaseTypeTag::LONG
-                    , BaseTypeTag::INT}
-                , {BaseTypeTag::SIGNED
-                    , BaseTypeTag::LONG
-                    , BaseTypeTag::LONG
-                    , BaseTypeTag::INT}}}
-        , {ResultTypeTag::U_LONG_LONG
-            , {{BaseTypeTag::UNSIGNED
-                , BaseTypeTag::LONG
-                , BaseTypeTag::LONG}
-                , {BaseTypeTag::UNSIGNED
-                    , BaseTypeTag::LONG
-                    , BaseTypeTag::LONG
-                    , BaseTypeTag::INT}}}
-        , {ResultTypeTag::FLOAT
-            , {{BaseTypeTag::FLOAT}}}
-        , {ResultTypeTag::DOUBLE
-            , {{BaseTypeTag::DOUBLE}}}
-        , {ResultTypeTag::LONG_DOUBLE
-            , {{BaseTypeTag::LONG
-                , BaseTypeTag::DOUBLE}}}
-        , {ResultTypeTag::BOOL
-            , {{BaseTypeTag::BOOL}}}
-        , {ResultTypeTag::FLOAT_COMPLEX
-            , {{BaseTypeTag::FLOAT
-                , BaseTypeTag::COMPLEX}}}
-        , {ResultTypeTag::DOUBLE_COMPLEX
-            , {{BaseTypeTag::DOUBLE
-                , BaseTypeTag::COMPLEX}}}
-        , {ResultTypeTag::LONG_DOUBLE_COMPLEX
-            , {{BaseTypeTag::LONG
-                , BaseTypeTag::DOUBLE
-                , BaseTypeTag::COMPLEX}}}
-        , {ResultTypeTag::BUILTIN_VA_LIST
-            , {{BaseTypeTag::BUILTIN_VA_LIST}}}};
-
 Analyzer::Analyzer()
     : mFilename{}
     , mTranslationUnit{nullptr}
@@ -146,10 +53,11 @@ bool Analyzer::finalize()
 
 bool Analyzer::controlIncludingFile()
 {
+    SCOPE::Scope::includingFileMap().emplace(mScope->id()
+        , std::remove_reference_t<decltype(SCOPE::Scope::includingFileMap())>::mapped_type{});
+
     for(auto &&[filename, posPair] : mIncludingFileMap)
     {
-        SCOPE::Scope::includingFileMap().emplace(mScope->id()
-            , std::remove_reference_t<decltype(SCOPE::Scope::includingFileMap())>::mapped_type{});
         SCOPE::Scope::includingFileMap().at(mScope->id()).push_back(filename);
 
         for(std::size_t i{posPair.first}; i < posPair.second; i++)
@@ -829,7 +737,9 @@ bool Analyzer::analyze(const TOKEN::Initializer *i)
     }
     else if(std::holds_alternative<TOKEN::InitializerList*>(i->var))
     {
-        if(!analyze(std::get<TOKEN::InitializerList*>(i->var)))
+        auto &&il{std::get<TOKEN::InitializerList*>(i->var)};
+        if(il != nullptr
+            && !analyze(il))
             return false;
     }
     else
@@ -1481,11 +1391,11 @@ std::optional<TYPE::Type>
     Analyzer::analyzeType(const std::vector<const TOKEN::TypeSpecifier*> &tsVec)
 {
     using namespace TOKEN;
-    using TTag = BaseTypeTag;
+    using TTag = TOKEN::TypeSpecifier::Tag;
 
     std::bitset<5ull> notEmptyFlags;
 
-    BaseTypeSet tSet;
+    std::multiset<TTag> tSet;
     std::vector<const AtomicTypeSpecifier*> atsVec;
     std::vector<const StructOrUnionSpecifier*> sousVec;
     std::vector<const EnumSpecifier*> esVec;
@@ -1537,7 +1447,7 @@ std::optional<TYPE::Type>
     }
     else
     {
-        invalidTypeError("multiple type-specifier is specifierd.");
+        invalidTypeError("multiple type-specifier is specified.");
         return {std::nullopt};
     }
 
@@ -1545,11 +1455,11 @@ std::optional<TYPE::Type>
 }
 
 std::optional<TYPE::Type>
-    Analyzer::analyzeType(const BaseTypeSet &set)
+    Analyzer::analyzeType(const std::multiset<TOKEN::TypeSpecifier::Tag> &set)
 {
     TYPE::Type type;
 
-    for(const auto &mapE : BASE_TYPE_MAP)
+    for(const auto &mapE : TYPE::Base::typeMap)
     {
         for(const auto &vecE : mapE.second)
         {
@@ -1563,7 +1473,10 @@ std::optional<TYPE::Type>
 
     if(std::holds_alternative<std::monostate>(type.var))
     {
-        invalidTypeError("fail to deduce tyoe from base-type-specifier");
+        for(auto &&tag : set)
+            std::cout << TOKEN::TypeSpecifier::nameMap.at(tag) << " " << std::endl;
+
+        invalidTypeError("failed to deduce type from base-type-specifier");
         return {std::nullopt};
     }
 
@@ -2660,10 +2573,10 @@ bool Analyzer::invalidAttributeError(const std::string &message) const
 bool Analyzer::invalidTypeError(const std::string &message) const
 {
     std::cerr << OUTPUT::charRedCode
-        << "Analyzer error:\n"
+        << "ANALYZER::Analyzer::invalidTypeError():\n"
         << OUTPUT::resetCode
-        << "    what: invalid type.\n"
-        "    --: " << message
+        << "    what: " << message
+        << "\n    filename: " << mFilename
         << std::endl;
     return false;
 }
@@ -2671,10 +2584,11 @@ bool Analyzer::invalidTypeError(const std::string &message) const
 bool Analyzer::notDeclarationError(const std::string &identifier) const
 {
     std::cerr << OUTPUT::charRedCode
-        << "Analyzer error:\n"
+        << "ANALYZER::Analyzer::notDeclarationError():\n"
         << OUTPUT::resetCode
         << "    what: declaration is not found.\n"
         "    id: " << identifier
+        << "\n    filename: " << mFilename
         << std::endl;
     return false;
 }

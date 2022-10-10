@@ -1,5 +1,7 @@
 #include <iostream>
+#include <iomanip>
 
+#include "configure.hpp"
 #include "identifier.hpp"
 #include "scope.hpp"
 #include "token.hpp"
@@ -10,8 +12,8 @@ inline namespace COMMON
 namespace TOKEN
 {
 
-const std::unordered_map<Keyword::Tag, std::string> Keyword::KEYWORD_MAP
-    = {{Tag::AUTO, "auto"}
+decltype(Keyword::KEYWORD_STR_MAP) Keyword::KEYWORD_STR_MAP
+    {{Tag::AUTO, "auto"}
         , {Tag::BREAK, "break"}
         , {Tag::CASE, "case"}
         , {Tag::CHAR, "char"}
@@ -55,8 +57,80 @@ const std::unordered_map<Keyword::Tag, std::string> Keyword::KEYWORD_MAP
         , {Tag::NORETURN, "_Noreturn"}
         , {Tag::STATIC_ASSERT, "_Static_assert"}
         , {Tag::THREAD_LOCAL, "_Thread_local"}
+        , {Tag::FLOAT128, "_Float128"}
         , {Tag::ATTRIBUTE, "__attribute__"}
         , {Tag::ASM, "__asm__"}
+        , {Tag::BUILTIN_VA_LIST, "__builtin_va_list"}};
+
+decltype(Keyword::STR_KEYWORD_MAP) Keyword::STR_KEYWORD_MAP
+    {{"auto", TOKEN::Keyword::Tag::AUTO}
+        , {"break", TOKEN::Keyword::Tag::BREAK}
+        , {"case", TOKEN::Keyword::Tag::CASE}
+        , {"char", TOKEN::Keyword::Tag::CHAR}
+        , {"const", TOKEN::Keyword::Tag::CONST}
+        , {"continue", TOKEN::Keyword::Tag::CONTINUE}
+        , {"default", TOKEN::Keyword::Tag::DEFAULT}
+        , {"do", TOKEN::Keyword::Tag::DO}
+        , {"double", TOKEN::Keyword::Tag::DOUBLE}
+        , {"else", TOKEN::Keyword::Tag::ELSE}
+        , {"enum", TOKEN::Keyword::Tag::ENUM}
+        , {"extern", TOKEN::Keyword::Tag::EXTERN}
+        , {"float", TOKEN::Keyword::Tag::FLOAT}
+        , {"for", TOKEN::Keyword::Tag::FOR}
+        , {"goto", TOKEN::Keyword::Tag::GOTO}
+        , {"if", TOKEN::Keyword::Tag::IF}
+        , {"inline", TOKEN::Keyword::Tag::INLINE}
+        , {"__inline", TOKEN::Keyword::Tag::INLINE}
+        , {"int", TOKEN::Keyword::Tag::INT}
+        , {"long", TOKEN::Keyword::Tag::LONG}
+        , {"register", TOKEN::Keyword::Tag::REGISTER}
+        , {"restrict", TOKEN::Keyword::Tag::RESTRICT}
+        , {"__restrict", TOKEN::Keyword::Tag::RESTRICT}
+        , {"__restrict__", TOKEN::Keyword::Tag::RESTRICT}
+        , {"return", TOKEN::Keyword::Tag::RETURN}
+        , {"short", TOKEN::Keyword::Tag::SHORT}
+        , {"signed", TOKEN::Keyword::Tag::SIGNED}
+        , {"sizeof", TOKEN::Keyword::Tag::SIZEOF}
+        , {"static", TOKEN::Keyword::Tag::STATIC}
+        , {"struct", TOKEN::Keyword::Tag::STRUCT}
+        , {"switch", TOKEN::Keyword::Tag::SWITCH}
+        , {"typedef", TOKEN::Keyword::Tag::TYPEDEF}
+        , {"union", TOKEN::Keyword::Tag::UNION}
+        , {"unsigned", TOKEN::Keyword::Tag::UNSIGNED}
+        , {"void", TOKEN::Keyword::Tag::VOID}
+        , {"volatile", TOKEN::Keyword::Tag::VOLATILE}
+        , {"__volatile__", TOKEN::Keyword::Tag::VOLATILE}
+        , {"while", TOKEN::Keyword::Tag::WHILE}
+        , {"_Alignas", TOKEN::Keyword::Tag::ALIGNAS}
+        , {"_Alignof", TOKEN::Keyword::Tag::ALIGNOF}
+        , {"__alignof__", TOKEN::Keyword::Tag::ALIGNOF}
+        , {"_Atomic", TOKEN::Keyword::Tag::ATOMIC}
+        , {"_Bool", TOKEN::Keyword::Tag::BOOL}
+        , {"_Complex", TOKEN::Keyword::Tag::COMPLEX}
+        , {"_Generic", TOKEN::Keyword::Tag::GENERIC}
+        , {"_Imaginary", TOKEN::Keyword::Tag::IMAGINARY}
+        , {"_Noreturn", TOKEN::Keyword::Tag::NORETURN}
+        , {"_Static_assert", TOKEN::Keyword::Tag::STATIC_ASSERT}
+        , {"_Thread_local", TOKEN::Keyword::Tag::THREAD_LOCAL}
+        , {"_Float128", TOKEN::Keyword::Tag::FLOAT128}
+        , {"__attribute__", TOKEN::Keyword::Tag::ATTRIBUTE}
+        , {"__asm__", TOKEN::Keyword::Tag::ASM}
+        , {"asm", TOKEN::Keyword::Tag::ASM}
+        , {"__builtin_va_list", TOKEN::Keyword::Tag::BUILTIN_VA_LIST}};
+
+decltype(TypeSpecifier::nameMap) TypeSpecifier::nameMap
+    {{Tag::VOID, "void"}
+        , {Tag::CHAR, "char"}
+        , {Tag::SHORT, "short"}
+        , {Tag::INT, "int"}
+        , {Tag::LONG, "long"}
+        , {Tag::FLOAT, "float"}
+        , {Tag::DOUBLE, "double"}
+        , {Tag::SIGNED, "signed"}
+        , {Tag::UNSIGNED, "unsigned"}
+        , {Tag::BOOL, "_Bool"}
+        , {Tag::COMPLEX, "_Complex"}
+        , {Tag::FLOAT128, "_Float128"}
         , {Tag::BUILTIN_VA_LIST, "__builtin_va_list"}};
 
 const std::unordered_map<Punctuator::Tag, std::string> Punctuator::PUNCTUATOR_MAP
@@ -170,8 +244,8 @@ Keyword *Keyword::copy() const
 
 std::string &Keyword::str(std::string &res, std::size_t &indent) const
 {
-    if(auto iter = KEYWORD_MAP.find(tag);
-        iter != KEYWORD_MAP.end())
+    if(auto iter = KEYWORD_STR_MAP.find(tag);
+        iter != KEYWORD_STR_MAP.end())
         res += iter->second;
 
     return res;
@@ -1754,6 +1828,9 @@ std::string TranslationUnit::str(std::size_t scopeId) const
 
     for(auto &&filename : SCOPE::Scope::includingFileMap().at(scopeId))
     {
+        if(filename == "\"" + Configure::BUILTIN + "\"")
+            continue;
+
         contents += "#include " + filename;
         contents.push_back('\n');
     }
@@ -2202,49 +2279,7 @@ std::string &TypeSpecifier::str(std::string &res, std::size_t &indent) const
     if(std::holds_alternative<std::monostate>(var))
         ;
     else if(std::holds_alternative<Tag>(var))
-    {
-        switch(std::get<Tag>(var))
-        {
-            case(Tag::VOID):
-                res += "void";
-                break;
-            case(Tag::CHAR):
-                res += "char";
-                break;
-            case(Tag::SHORT):
-                res += "short";
-                break;
-            case(Tag::INT):
-                res += "int";
-                break;
-            case(Tag::LONG):
-                res += "long";
-                break;
-            case(Tag::FLOAT):
-                res += "float";
-                break;
-            case(Tag::DOUBLE):
-                res += "double";
-                break;
-            case(Tag::SIGNED):
-                res += "signed";
-                break;
-            case(Tag::UNSIGNED):
-                res += "unsigned";
-                break;
-            case(Tag::BOOL):
-                res += "_Bool";
-                break;
-            case(Tag::COMPLEX):
-                res += "_Complex";
-                break;
-            case(Tag::BUILTIN_VA_LIST):
-                res += "__builtin_va_list";
-                break;
-            
-            default:;
-        }
-    }
+        res += nameMap.at(std::get<Tag>(var));
     else if(std::holds_alternative<AtomicTypeSpecifier*>(var))
         std::get<AtomicTypeSpecifier*>(var)->str(res, indent);
     else if(std::holds_alternative<StructOrUnionSpecifier*>(var))
@@ -3153,7 +3188,10 @@ Initializer *Initializer::copy() const
     else if(std::holds_alternative<AssignmentExpression*>(var))
         cvar.emplace<AssignmentExpression*>(std::get<AssignmentExpression*>(var)->copy());
     else if(std::holds_alternative<InitializerList*>(var))
-        cvar.emplace<InitializerList*>(std::get<InitializerList*>(var)->copy());
+    {
+        auto &&il{std::get<InitializerList*>(var)};
+        cvar.emplace<InitializerList*>(il ? il->copy() : nullptr);
+    }
     
     return new Initializer(cvar);
 }
@@ -3166,8 +3204,10 @@ std::string &Initializer::str(std::string &res, std::size_t &indent) const
         std::get<AssignmentExpression*>(var)->str(res, indent);
     else if(std::holds_alternative<InitializerList*>(var))
     {
+        auto &&il{std::get<InitializerList*>(var)};
         res.push_back('{');
-        std::get<InitializerList*>(var)->str(res, indent);
+        if(il != nullptr)
+            il->str(res, indent);
         res.push_back('}');
     }
 

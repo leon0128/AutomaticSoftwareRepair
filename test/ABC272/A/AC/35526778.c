@@ -1,0 +1,1 @@
+s,a;main(k){~scanf("%d",&a)?main(s++?k+a:0):printf("%d\n",k);}

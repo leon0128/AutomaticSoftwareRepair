@@ -197,6 +197,7 @@ public:
         , VOLATILE, WHILE, ALIGNAS, ALIGNOF
         , ATOMIC, BOOL, COMPLEX, GENERIC
         , IMAGINARY, NORETURN, STATIC_ASSERT, THREAD_LOCAL
+        , FLOAT128
         , ATTRIBUTE, ASM, BUILTIN_VA_LIST
     };
 
@@ -209,7 +210,8 @@ public:
     Keyword *copy() const;
     std::string &str(std::string&, std::size_t&) const;
 
-    static const std::unordered_map<Tag, std::string> KEYWORD_MAP;
+    static const std::unordered_map<Tag, std::string> KEYWORD_STR_MAP;
+    static const std::unordered_map<std::string, Tag> STR_KEYWORD_MAP;
 };
 
 class Identifier
@@ -1423,6 +1425,7 @@ public:
         , UNSIGNED
         , BOOL
         , COMPLEX
+        , FLOAT128
         , BUILTIN_VA_LIST
     };
 
@@ -1442,6 +1445,8 @@ public:
 
     TypeSpecifier *copy() const;
     std::string &str(std::string&, std::size_t&) const;
+
+    static const std::unordered_map<Tag, std::string> nameMap;
 };
 
 class TypeQualifier

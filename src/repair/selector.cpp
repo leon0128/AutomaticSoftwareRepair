@@ -1025,7 +1025,9 @@ bool Selector::select(const TOKEN::Initializer *initializer)
     }
     else if(std::holds_alternative<InitializerList*>(initializer->var))
     {
-        if(!select(std::get<InitializerList*>(initializer->var)))
+        auto &&il{std::get<InitializerList*>(initializer->var)};
+        if(il != nullptr
+            && !select(il))
             return false;
     }
 

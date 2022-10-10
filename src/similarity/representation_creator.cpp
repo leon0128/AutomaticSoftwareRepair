@@ -820,8 +820,10 @@ bool RepresentationCreator::process(const TOKEN::Initializer *initializer)
     }
     else if(std::holds_alternative<InitializerList*>(initializer->var))
     {
+        auto &&il{std::get<InitializerList*>(initializer->var)};
         addToken("{");
-        if(!process(std::get<InitializerList*>(initializer->var)))
+        if(il != nullptr
+            && !process(il))
             return false;
         addToken("}");
     }

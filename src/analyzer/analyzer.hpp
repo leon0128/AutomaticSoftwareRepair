@@ -26,15 +26,6 @@ private:
 
     using Flags = std::bitset<NUM_FLAG_TAG>;
 
-    using ResultTypeTag = TYPE::Base::Tag;
-    using BaseTypeTag = TOKEN::TypeSpecifier::Tag;
-    using BaseTypeSet = std::multiset<BaseTypeTag>;
-    using BaseTypeCandidate = std::vector<BaseTypeSet>;
-    using BaseTypeMap = std::unordered_map<ResultTypeTag
-        , BaseTypeCandidate>;
-
-    static const BaseTypeMap BASE_TYPE_MAP;
-
 public:
     Analyzer();
     ~Analyzer();
@@ -115,7 +106,7 @@ private:
     std::optional<TYPE::Type>
         analyzeType(const std::vector<const TOKEN::TypeSpecifier*>&);
     std::optional<TYPE::Type>
-        analyzeType(const BaseTypeSet&);
+        analyzeType(const std::multiset<TOKEN::TypeSpecifier::Tag>&);
     std::optional<TYPE::Type>
         analyzeType(const std::vector<const TOKEN::AtomicTypeSpecifier*>&);
     std::optional<TYPE::Type>

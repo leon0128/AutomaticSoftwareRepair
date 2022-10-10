@@ -13,8 +13,10 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--time-log", {Tag::TIME_LOG, false}}
     , {"--repair-log", {Tag::REPAIR_LOG, false}}
     , {"--subprocess-log", {Tag::SUBPROCESS_LOG, false}}
+    , {"--no-ignoring-pool", {Tag::NO_IGNORING_POOL, false}}
     , {"--preprocessor", {Tag::PREPROCESSOR, true}}
     , {"--compiler", {Tag::COMPILER, true}}
+    , {"--builtin", {Tag::BUILTIN, true}}
     , {"--test", {Tag::TEST_SCRIPT, true}}
     , {"--exec-extension", {Tag::EXEC_EXTENSION, true}}
     , {"--null-filename", {Tag::NULL_FILENAME, true}}
@@ -148,12 +150,19 @@ bool Configure::readArgument(Tag tag
         case(Tag::SUBPROCESS_LOG):
             SHOULD_OUTPUT_SUBPROCESS_LOG = true;
             break;
+        case(Tag::NO_IGNORING_POOL):
+            SHOULD_IGNORING_POOL = false;
+            break;
         case(Tag::PREPROCESSOR):
             if(!assignString(tag, arg, PREPROCESSOR))
                 return false;
             break;
         case(Tag::COMPILER):
             if(!assignString(tag, arg, COMPILER))
+                return false;
+            break;
+        case(Tag::BUILTIN):
+            if(!assignString(tag, arg, BUILTIN))
                 return false;
             break;
         case(Tag::TEST_SCRIPT):
@@ -306,11 +315,17 @@ bool Configure::setDefaultValue()
             case(Tag::SUBPROCESS_LOG):
                 SHOULD_OUTPUT_SUBPROCESS_LOG = false;
                 break;
+            case(Tag::NO_IGNORING_POOL):
+                SHOULD_IGNORING_POOL = true;
+                break;
             case(Tag::PREPROCESSOR):
                 PREPROCESSOR = "cpp -P";
                 break;
             case(Tag::COMPILER):
                 COMPILER = "gcc";
+                break;
+            case(Tag::BUILTIN):
+                BUILTIN = "builtin.h";
                 break;
             case(Tag::TEST_SCRIPT):
                 TEST_SCRIPT = "test.sh";
@@ -343,28 +358,28 @@ bool Configure::setDefaultValue()
                 GOAL_SCORE = 11;
                 break;
             case(Tag::FAILURE):
-                FAILURE_LIMIT = 10ull;
+                FAILURE_LIMIT = 16ull;
                 break;
             case(Tag::POP):
-                POP_SIZE = 10ull;
+                POP_SIZE = 1000ull;
                 break;
             case(Tag::MAX):
                 MAX_GEN = 10ull;
                 break;
             case(Tag::ELITE):
-                NUM_ELITE = 1ull;
+                NUM_ELITE = 2ull;
                 break;
             case(Tag::TOURNAMENT):
-                TOURNAMENT_SIZE = 2ull;
+                TOURNAMENT_SIZE = 3ull;
                 break;
             case(Tag::ADDING_PROB):
-                ADDING_PROBABILITY = 0.75;
+                ADDING_PROBABILITY = 0.2;
                 break;
             case(Tag::SUBTRACTING_PROB):
-                SUBTRACTING_PROBABILITY = 0.25;
+                SUBTRACTING_PROBABILITY = 0.2;
                 break;
             case(Tag::SWAPPING_PROB):
-                SWAPPING_PROBABILITY = 0.0;
+                SWAPPING_PROBABILITY = 0.6;
                 break;
             case(Tag::NEW_CREATION_PROB):
                 NEW_CREATION_PROB = 0.20;
@@ -391,10 +406,10 @@ bool Configure::setDefaultValue()
                 SIM_TYPE3 = 4ull;
                 break;
             case(Tag::SIM_CAPACITY):
-                SIM_CAPACITY = 0.10;
+                SIM_CAPACITY = 1.0;
                 break;
             case(Tag::SIM_NUMBER_OF_USE):
-                SIM_NUMBER_OF_USE = 10ull;
+                SIM_NUMBER_OF_USE = 16ull;
                 break;
             case(Tag::SIM_CHANGE_PROB):
                 SHOULD_CHANGE_PROB = false;

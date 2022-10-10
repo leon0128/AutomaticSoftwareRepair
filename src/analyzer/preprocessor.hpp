@@ -27,6 +27,7 @@ private:
     bool initialize(const std::string &filename);
     void finalize();
 
+    bool addBuiltinFile();
     bool readFile(const std::string &filename);
     bool concatenateLine();
     bool deleteComment();

@@ -215,7 +215,7 @@ bool Repairer::test(Reps &currentReps)
 
             std::unique_lock ioLock{mIOMutex};
             std::cout << "repair-log: evaluation is end.("
-                << mTotalRep % Configure::getSafelyPOP_SIZE()
+                << (mTotalRep - 1ull) % Configure::getSafelyPOP_SIZE() + 1ull
                 << "/" << Configure::getSafelyPOP_SIZE()
                 << ")(gen:" << mTotalGen << ")"
                 << std::endl;
@@ -371,15 +371,19 @@ bool Repairer::execute(const std::string &baseFilename
         {
             for(std::size_t i{0ull}; i < size; i++)
             {
+                std::string tempFilename{PATH::getTempFilename()};
                 std::string command{SYSTEM::command("bash"
                     , Configure::getSafelyTEST_SCRIPT()
+                    , prefix + std::to_string(i)
                     , baseFilename + Configure::getSafelyEXEC_EXTENSION()
-                    , prefix + std::to_string(i))};
+                    , tempFilename)};
 
                 controlOutputLog(command, mIOMutex);
 
                 if(SYSTEM::system(command) == 0)
                     score += weight;
+
+                PATH::remove(tempFilename);
             }
 
             return true;
