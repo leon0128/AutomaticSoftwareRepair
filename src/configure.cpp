@@ -13,7 +13,8 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--time-log", {Tag::TIME_LOG, false}}
     , {"--repair-log", {Tag::REPAIR_LOG, false}}
     , {"--subprocess-log", {Tag::SUBPROCESS_LOG, false}}
-    , {"--no-ignoring-pool", {Tag::NO_IGNORING_POOL, false}}
+    , {"--no-ignore-pool", {Tag::NO_IGNORE_POOL, false}}
+    , {"--no-divide-for", {Tag::NO_DIVIDE_FOR, false}}
     , {"--preprocessor", {Tag::PREPROCESSOR, true}}
     , {"--compiler", {Tag::COMPILER, true}}
     , {"--builtin", {Tag::BUILTIN, true}}
@@ -150,9 +151,11 @@ bool Configure::readArgument(Tag tag
         case(Tag::SUBPROCESS_LOG):
             SHOULD_OUTPUT_SUBPROCESS_LOG = true;
             break;
-        case(Tag::NO_IGNORING_POOL):
-            SHOULD_IGNORING_POOL = false;
+        case(Tag::NO_IGNORE_POOL):
+            SHOULD_IGNORE_POOL = false;
             break;
+        case(Tag::NO_DIVIDE_FOR):
+            SHOULD_DIVIDE_FOR = false;
         case(Tag::PREPROCESSOR):
             if(!assignString(tag, arg, PREPROCESSOR))
                 return false;
@@ -315,8 +318,11 @@ bool Configure::setDefaultValue()
             case(Tag::SUBPROCESS_LOG):
                 SHOULD_OUTPUT_SUBPROCESS_LOG = false;
                 break;
-            case(Tag::NO_IGNORING_POOL):
-                SHOULD_IGNORING_POOL = true;
+            case(Tag::NO_IGNORE_POOL):
+                SHOULD_IGNORE_POOL = true;
+                break;
+            case(Tag::NO_DIVIDE_FOR):
+                SHOULD_DIVIDE_FOR = true;
                 break;
             case(Tag::PREPROCESSOR):
                 PREPROCESSOR = "cpp -P";

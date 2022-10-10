@@ -1,6 +1,7 @@
 #include <iostream>
 #include <utility>
 
+#include "configure.hpp"
 #include "utility/output.hpp"
 #include "divider.hpp"
 
@@ -63,33 +64,23 @@ bool Divider::divide(TOKEN::CompoundStatement *cs)
     return true;
 }
 
-bool Divider::divide(TOKEN::BlockItemList *bil
-    , std::size_t pos
-    , TOKEN::Declaration *declaration)
+bool Divider::divide(TOKEN::ExpressionStatement*)
 {
-    using namespace TOKEN;
+    return true;
+}
 
-    if(!std::holds_alternative<Declaration::Sds_idl>(declaration->var))
-        return true;
-    
-    auto &&s{std::get<Declaration::Sds_idl>(declaration->var)};
-    
-    if(!s.idl)
-        return true;
-    
-    for(auto *id : s.idl->seq)
-    {
-        if(std::holds_alternative<InitDeclarator::Sd_i>(id->var))
-        {
-            auto *statement{createStatement(id)};
-            if(!statement)
-                continue;
-            
-            bil->seq.insert(bil->seq.begin() + pos++
-                , new BlockItem{statement});
-        }
-    }
+bool Divider::divide(TOKEN::JumpStatement*)
+{
+    return true;
+}
 
+bool Divider::divide(TOKEN::AttributeStatement*)
+{
+    return true;
+}
+
+bool Divider::divide(TOKEN::AsmStatement*)
+{
     return true;
 }
 
@@ -106,7 +97,7 @@ bool Divider::divide(TOKEN::Statement *statement)
     else if(std::holds_alternative<SelectionStatement*>(statement->var))
         return divide(std::get<SelectionStatement*>(statement->var));
     else if(std::holds_alternative<IterationStatement*>(statement->var))
-        return divide(std::get<IterationStatement*>(statement->var));
+        return divide(statement, std::get<IterationStatement*>(statement->var));
     else if(std::holds_alternative<JumpStatement*>(statement->var))
         return divide(std::get<JumpStatement*>(statement->var));
     else if(std::holds_alternative<AttributeStatement*>(statement->var))
@@ -134,11 +125,6 @@ bool Divider::divide(TOKEN::LabeledStatement *ls)
     if(statement != nullptr)
         return divide(statement);
     
-    return true;
-}
-
-bool Divider::divide(TOKEN::ExpressionStatement*)
-{
     return true;
 }
 
@@ -172,42 +158,114 @@ bool Divider::divide(TOKEN::SelectionStatement *ss)
     return true;
 }
 
-bool Divider::divide(TOKEN::IterationStatement *is)
+bool Divider::divide(TOKEN::BlockItemList *bil
+    , std::size_t pos
+    , TOKEN::Declaration *declaration)
+{
+    using namespace TOKEN;
+
+    if(!std::holds_alternative<Declaration::Sds_idl>(declaration->var))
+        return true;
+    
+    auto &&s{std::get<Declaration::Sds_idl>(declaration->var)};
+    
+    if(!s.idl)
+        return true;
+    
+    for(auto *id : s.idl->seq)
+    {
+        if(std::holds_alternative<InitDeclarator::Sd_i>(id->var))
+        {
+            auto *statement{createStatement(id)};
+            if(!statement)
+                continue;
+            
+            bil->seq.insert(bil->seq.begin() + pos++
+                , new BlockItem{statement});
+        }
+    }
+
+    return true;
+}
+
+bool Divider::divide(TOKEN::Statement *statement
+    , TOKEN::IterationStatement *is)
 {
     using namespace TOKEN;
     using IS = IterationStatement;
 
-    Statement *statement{nullptr};
+    Statement *subStatement{nullptr};
     if(std::holds_alternative<IS::Sw_e_s>(is->var))
-        statement = std::get<IS::Sw_e_s>(is->var).s;
+        subStatement = std::get<IS::Sw_e_s>(is->var).s;
     else if(std::holds_alternative<IS::Sd_s_e>(is->var))
-        statement = std::get<IS::Sd_s_e>(is->var).s;
+        subStatement = std::get<IS::Sd_s_e>(is->var).s;
     else if(std::holds_alternative<IS::Sf_e_e_e_s>(is->var))
-        statement = std::get<IS::Sf_e_e_e_s>(is->var).s;
+        subStatement = std::get<IS::Sf_e_e_e_s>(is->var).s;
     else if(std::holds_alternative<IS::Sf_d_e_e_s>(is->var))
-        statement = std::get<IS::Sf_d_e_e_s>(is->var).s;
-    
-    if(statement != nullptr)
     {
-        if(!divide(statement))
+        auto &&sf{std::get<IS::Sf_d_e_e_s>(is->var)};
+        if(!divide(statement, is, sf))
+            return false;
+        subStatement = sf.s;
+    }
+
+    if(subStatement != nullptr)
+    {
+        if(!divide(subStatement))
             return false;
     }
 
     return true;
 }
 
-bool Divider::divide(TOKEN::JumpStatement*)
+bool Divider::divide(TOKEN::Statement *statement
+    , TOKEN::IterationStatement *is
+    , TOKEN::IterationStatement::Sf_d_e_e_s &sf)
 {
-    return true;
-}
+    using namespace TOKEN;
+    using D = Declaration;
+    using CS = CompoundStatement;
 
-bool Divider::divide(TOKEN::AttributeStatement*)
-{
-    return true;
-}
+    if(!Configure::SHOULD_DIVIDE_FOR)
+        return true;
 
-bool Divider::divide(TOKEN::AsmStatement*)
-{
+    if(std::holds_alternative<D::Ssad>(sf.d->var))
+        return true;
+
+    auto &&sdi{std::get<D::Sds_idl>(sf.d->var)};
+    
+    if(!sdi.idl)
+        return true;
+
+    decltype(Expression::seq) sequence;
+
+    for(auto &&id : sdi.idl->seq)
+    {
+        if(std::holds_alternative<InitDeclarator::Sd_i>(id->var))
+        {
+            auto &&newStatement{createStatement(id)};
+            if(!newStatement)
+                continue;
+            
+            auto &&es{std::get<ExpressionStatement*>(newStatement->var)};
+            for(auto &&ae : es->e->seq)
+                sequence.push_back(ae);
+            es->e->seq.clear();
+            delete newStatement;
+        }
+    }
+
+    Expression *expression{!sequence.empty()
+        ? new Expression{std::move(sequence)}
+        : nullptr};
+    Declaration *declaration{sf.d};
+    is->var.emplace<IterationStatement::Sf_e_e_e_s>(expression, sf.e0, sf.e1, sf.s);
+
+    auto &&bil{new BlockItemList{decltype(BlockItemList::seq){}}};
+    bil->seq.push_back(new BlockItem{declaration});
+    bil->seq.push_back(new BlockItem{new Statement{is}});
+    statement->var.emplace<CS*>(new CS{bil});
+
     return true;
 }
 

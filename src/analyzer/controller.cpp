@@ -35,7 +35,7 @@ bool Controller::execute()
         {
             if(!analyze(filename, false))
             {
-                if(Configure::SHOULD_IGNORING_POOL)
+                if(Configure::SHOULD_IGNORE_POOL)
                     poolIgnoringWarning(filename);
                 else
                     return false;
@@ -101,7 +101,6 @@ bool Controller::analyze(const std::string &filename
     }
 
     std::shared_ptr<TOKEN::TranslationUnit> translationUnit{treeGenerator.moveTranslationUnit()};
-
     {
         TimeMeasurer::Wrapper wrapper{TimeMeasurer::AnalyzerTag::DIVISION};
         if(!Divider::execute(translationUnit.get()))
