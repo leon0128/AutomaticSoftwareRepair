@@ -23,7 +23,8 @@ private:
         , TIME_LOG
         , REPAIR_LOG
         , SUBPROCESS_LOG
-        , NO_IGNORING_POOL
+        , NO_IGNORE_POOL
+        , NO_DIVIDE_FOR
         , PREPROCESSOR
         , COMPILER
         , BUILTIN
@@ -89,8 +90,10 @@ public:
     inline static bool SHOULD_OUTPUT_SUBPROCESS_LOG;
     GET_SAFELY(SHOULD_OUTPUT_SUBPROCESS_LOG)
     
-    inline static bool SHOULD_IGNORING_POOL;
-    GET_SAFELY(SHOULD_IGNORING_POOL)
+    inline static bool SHOULD_IGNORE_POOL;
+    GET_SAFELY(SHOULD_IGNORE_POOL)
+    inline static bool SHOULD_DIVIDE_FOR;
+    GET_SAFELY(SHOULD_DIVIDE_FOR)
 
     inline static std::string PREPROCESSOR;
     GET_SAFELY(PREPROCESSOR)
