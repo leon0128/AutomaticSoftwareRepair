@@ -11,6 +11,7 @@
 #include "utility/random.hpp"
 #include "utility/file.hpp"
 #include "utility/system.hpp"
+#include "utility/output.hpp"
 #include "common/scope.hpp"
 #include "common/token.hpp"
 #include "common/define.hpp"
@@ -214,7 +215,7 @@ bool Repairer::test(Reps &currentReps)
 
             std::unique_lock ioLock{mIOMutex};
             std::cout << "repair-log: evaluation is end.("
-                << mTotalRep % Configure::getSafelyPOP_SIZE()
+                << (mTotalRep - 1ull) % Configure::getSafelyPOP_SIZE() + 1ull
                 << "/" << Configure::getSafelyPOP_SIZE()
                 << ")(gen:" << mTotalGen << ")"
                 << std::endl;
@@ -339,7 +340,7 @@ bool Repairer::outputToFile(const std::string &baseFilename
 {
     std::shared_ptr<TOKEN::TranslationUnit> translationUnit{rep->block()->createTranslationUnit()};
 
-    if(!PATH::write(baseFilename + ".c", TOKEN::str(translationUnit.get())))
+    if(!PATH::write(baseFilename + ".c", translationUnit->str(rep->block()->scopeId())))
         return outputError(baseFilename + ".c");
 
     return true;
@@ -370,15 +371,19 @@ bool Repairer::execute(const std::string &baseFilename
         {
             for(std::size_t i{0ull}; i < size; i++)
             {
+                std::string tempFilename{PATH::getTempFilename()};
                 std::string command{SYSTEM::command("bash"
                     , Configure::getSafelyTEST_SCRIPT()
+                    , prefix + std::to_string(i)
                     , baseFilename + Configure::getSafelyEXEC_EXTENSION()
-                    , prefix + std::to_string(i))};
+                    , tempFilename)};
 
                 controlOutputLog(command, mIOMutex);
 
                 if(SYSTEM::system(command) == 0)
                     score += weight;
+
+                PATH::remove(tempFilename);
             }
 
             return true;
@@ -404,8 +409,10 @@ void Repairer::outputResultLog() const
 
 bool Repairer::repCreationError(const std::string &what) const
 {
-    std::cerr << "REPAIR::Repairer::repCreationError():\n"
-        "    what: " << what
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Repairer::repCreationError():\n"
+        << OUTPUT::resetCode
+        << "    what: " << what
         << std::endl;
     return false;
 }
@@ -413,8 +420,10 @@ bool Repairer::repCreationError(const std::string &what) const
 bool Repairer::outputError(const std::string &filename)
 {
     std::unique_lock lock{mIOMutex};
-    std::cerr << "REPAIR::Repairer::outputError():\n"
-        "    what: failed to output to file.\n"
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Repairer::outputError():\n"
+        << OUTPUT::resetCode
+        << "    what: failed to output to file.\n"
         "    filename: " << filename
         << std::endl;
     return false;
@@ -423,8 +432,10 @@ bool Repairer::outputError(const std::string &filename)
 bool Repairer::compilingError(const std::string &filename)
 {
     std::unique_lock lock{mIOMutex};
-    std::cerr << "REPAIR::Repairer::compilingError():\n"
-        "    filename" << filename
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Repairer::compilingError():\n"
+        << OUTPUT::resetCode
+        << "    filename" << filename
         << std::endl;
     return false;
 }

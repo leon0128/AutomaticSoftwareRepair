@@ -350,8 +350,10 @@ double Operation::getSimilarity(ScopeId scopeId
 
 bool Operation::initializationError(const std::string &what)
 {
-    std::cerr << "Operation::initializationError():\n"
-        "    what: " << what
+    std::cerr << OUTPUT::charRedCode
+        << "Operation::initializationError():\n"
+        << OUTPUT::resetCode
+        << "    what: " << what
         << std::endl;
     return false;
 }
@@ -621,16 +623,20 @@ std::size_t Operation::getScopeId(const BLOCK::Block *block) const
 
 bool Operation::candidateError(const std::string &functionName) const
 {
-    std::cerr << "Operation::candidateError()\n"
-        "    functionName: " << functionName
+    std::cerr << OUTPUT::charRedCode
+        << "Operation::candidateError()\n"
+        << OUTPUT::resetCode
+        << "    functionName: " << functionName
         << std::endl;
     return false;
 }
 
 bool Operation::selectionError(const std::string &what) const
 {
-    std::cerr << "Operation::selectionError()\n"
-        "    what: " << what
+    std::cerr << OUTPUT::charRedCode
+        << "Operation::selectionError()\n"
+        << OUTPUT::resetCode
+        << "    what: " << what
         << std::endl;
     return false;
 }

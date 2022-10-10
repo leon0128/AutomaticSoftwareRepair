@@ -26,15 +26,6 @@ private:
 
     using Flags = std::bitset<NUM_FLAG_TAG>;
 
-    using ResultTypeTag = TYPE::Base::Tag;
-    using BaseTypeTag = TOKEN::TypeSpecifier::Tag;
-    using BaseTypeSet = std::multiset<BaseTypeTag>;
-    using BaseTypeCandidate = std::vector<BaseTypeSet>;
-    using BaseTypeMap = std::unordered_map<ResultTypeTag
-        , BaseTypeCandidate>;
-
-    static const BaseTypeMap BASE_TYPE_MAP;
-
 public:
     Analyzer();
     ~Analyzer();
@@ -55,7 +46,14 @@ public:
 private:
     bool finalize();
 
-    bool analyze(const TOKEN::TranslationUnit*);
+    // this function deletes included contents from mTranslationUnit.
+    bool controlIncludingFile();
+    // this function controls mIncludingFileMap.
+    // second argument is indicates position of first argument in translation-unit.
+    bool controlIncludingFile(const TOKEN::IncludingFile*
+        , std::size_t translationUnitIndex);
+
+    bool analyze(TOKEN::TranslationUnit*);
     bool analyze(TOKEN::FunctionDefinition*);
     bool analyze(TOKEN::Declaration*);
     bool analyze(const TOKEN::CompoundStatement*
@@ -108,7 +106,7 @@ private:
     std::optional<TYPE::Type>
         analyzeType(const std::vector<const TOKEN::TypeSpecifier*>&);
     std::optional<TYPE::Type>
-        analyzeType(const BaseTypeSet&);
+        analyzeType(const std::multiset<TOKEN::TypeSpecifier::Tag>&);
     std::optional<TYPE::Type>
         analyzeType(const std::vector<const TOKEN::AtomicTypeSpecifier*>&);
     std::optional<TYPE::Type>
@@ -181,6 +179,7 @@ private:
     TOKEN::TranslationUnit *mTranslationUnit;
     Flags mFlags;
     SCOPE::Scope *mScope;
+    std::unordered_map<std::string, std::pair<std::size_t, std::size_t>> mIncludingFileMap;
 };
 
 enum class Analyzer::FlagTag : unsigned char

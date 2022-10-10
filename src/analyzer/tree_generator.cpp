@@ -1,68 +1,15 @@
 #include <vector>
 #include <iostream>
 #include <utility>
+#include <algorithm>
 
+#include "utility/output.hpp"
+#include "common/type.hpp"
 #include "tokenizer.hpp"
 #include "tree_generator.hpp"
 
 namespace ANALYZER
 {
-
-const std::unordered_map<std::string, TOKEN::Keyword::Tag> TreeGenerator::KEYWORD_MAP
-    = {{"auto", TOKEN::Keyword::Tag::AUTO}
-        , {"break", TOKEN::Keyword::Tag::BREAK}
-        , {"case", TOKEN::Keyword::Tag::CASE}
-        , {"char", TOKEN::Keyword::Tag::CHAR}
-        , {"const", TOKEN::Keyword::Tag::CONST}
-        , {"continue", TOKEN::Keyword::Tag::CONTINUE}
-        , {"default", TOKEN::Keyword::Tag::DEFAULT}
-        , {"do", TOKEN::Keyword::Tag::DO}
-        , {"double", TOKEN::Keyword::Tag::DOUBLE}
-        , {"else", TOKEN::Keyword::Tag::ELSE}
-        , {"enum", TOKEN::Keyword::Tag::ENUM}
-        , {"extern", TOKEN::Keyword::Tag::EXTERN}
-        , {"float", TOKEN::Keyword::Tag::FLOAT}
-        , {"for", TOKEN::Keyword::Tag::FOR}
-        , {"goto", TOKEN::Keyword::Tag::GOTO}
-        , {"if", TOKEN::Keyword::Tag::IF}
-        , {"inline", TOKEN::Keyword::Tag::INLINE}
-        , {"int", TOKEN::Keyword::Tag::INT}
-        , {"long", TOKEN::Keyword::Tag::LONG}
-        , {"register", TOKEN::Keyword::Tag::REGISTER}
-        , {"restrict", TOKEN::Keyword::Tag::RESTRICT}
-        , {"__restrict", TOKEN::Keyword::Tag::RESTRICT}
-        , {"__restrict__", TOKEN::Keyword::Tag::RESTRICT}
-        , {"return", TOKEN::Keyword::Tag::RETURN}
-        , {"short", TOKEN::Keyword::Tag::SHORT}
-        , {"signed", TOKEN::Keyword::Tag::SIGNED}
-        , {"sizeof", TOKEN::Keyword::Tag::SIZEOF}
-        , {"static", TOKEN::Keyword::Tag::STATIC}
-        , {"struct", TOKEN::Keyword::Tag::STRUCT}
-        , {"switch", TOKEN::Keyword::Tag::SWITCH}
-        , {"typedef", TOKEN::Keyword::Tag::TYPEDEF}
-        , {"union", TOKEN::Keyword::Tag::UNION}
-        , {"unsigned", TOKEN::Keyword::Tag::UNSIGNED}
-        , {"void", TOKEN::Keyword::Tag::VOID}
-        , {"volatile", TOKEN::Keyword::Tag::VOLATILE}
-        , {"__volatile__", TOKEN::Keyword::Tag::VOLATILE}
-        , {"while", TOKEN::Keyword::Tag::WHILE}
-        , {"_Alignas", TOKEN::Keyword::Tag::ALIGNAS}
-        , {"_Alignof", TOKEN::Keyword::Tag::ALIGNOF}
-        , {"__alignof__", TOKEN::Keyword::Tag::ALIGNOF}
-        , {"_Atomic", TOKEN::Keyword::Tag::ATOMIC}
-        , {"_Bool", TOKEN::Keyword::Tag::BOOL}
-        , {"_Complex", TOKEN::Keyword::Tag::COMPLEX}
-        , {"_Generic", TOKEN::Keyword::Tag::GENERIC}
-        , {"_Imaginary", TOKEN::Keyword::Tag::IMAGINARY}
-        , {"_Noreturn", TOKEN::Keyword::Tag::NORETURN}
-        , {"_Static_assert", TOKEN::Keyword::Tag::STATIC_ASSERT}
-        , {"_Thread_local", TOKEN::Keyword::Tag::THREAD_LOCAL}
-        , {"__attribute__", TOKEN::Keyword::Tag::ATTRIBUTE}
-        , {"__asm__", TOKEN::Keyword::Tag::ASM}
-        , {"asm", TOKEN::Keyword::Tag::ASM}
-        , {"__builtin_va_list", TOKEN::Keyword::Tag::BUILTIN_VA_LIST}};
-
-decltype(TreeGenerator::TEMPORARY_OBJECT) TreeGenerator::TEMPORARY_OBJECT{};
 
 // if cache has specific token, its token is returned.
 #define IF_CACHE_HAS_TOKEN_RETURN(Type) \
@@ -131,6 +78,9 @@ TOKEN::ExternalDeclaration *TreeGenerator::tokExternalDeclaration()
     else if(TOKEN::FunctionDefinition *fd = tokFunctionDefinition();
         fd != nullptr)
         return registerToCache(new TOKEN::ExternalDeclaration(fd), beginIdx);
+    else if(TOKEN::IncludingFile *i{tokIncludingFile()};
+        i != nullptr)
+        return registerToCache(new TOKEN::ExternalDeclaration{i}, beginIdx);
 
     return nullptr;
 }
@@ -403,42 +353,29 @@ TOKEN::TypeSpecifier *TreeGenerator::tokTypeSpecifier()
     IF_CACHE_HAS_TOKEN_RETURN(TOKEN::TypeSpecifier)
     std::size_t beginIdx{mIdx};
 
+    std::size_t preIdx{mIdx};
     TOKEN::TypeSpecifier::Var var;
     
-    if(isMatch(TOKEN::Keyword::Tag::VOID))
-        var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::VOID);
-    else if(isMatch(TOKEN::Keyword::Tag::CHAR))
-        var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::CHAR);
-    else if(isMatch(TOKEN::Keyword::Tag::SHORT))
-        var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::SHORT);
-    else if(isMatch(TOKEN::Keyword::Tag::INT))
-        var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::INT);
-    else if(isMatch(TOKEN::Keyword::Tag::LONG))
-        var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::LONG);
-    else if(isMatch(TOKEN::Keyword::Tag::FLOAT))
-        var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::FLOAT);
-    else if(isMatch(TOKEN::Keyword::Tag::DOUBLE))
-        var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::DOUBLE);
-    else if(isMatch(TOKEN::Keyword::Tag::SIGNED))
-        var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::SIGNED);
-    else if(isMatch(TOKEN::Keyword::Tag::UNSIGNED))
-        var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::UNSIGNED);
-    else if(isMatch(TOKEN::Keyword::Tag::BOOL))
-        var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::BOOL);
-    else if(isMatch(TOKEN::Keyword::Tag::COMPLEX))
-        var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::COMPLEX);
-    else if(isMatch(TOKEN::Keyword::Tag::BUILTIN_VA_LIST))
-        var.emplace<TOKEN::TypeSpecifier::Tag>(TOKEN::TypeSpecifier::Tag::BUILTIN_VA_LIST);
-    else if(var.emplace<TOKEN::AtomicTypeSpecifier*>(tokAtomicTypeSpecifier()) != nullptr
+    if(std::shared_ptr<TOKEN::Keyword> keyword{tokKeyword()};
+        keyword.get() != nullptr)
+    {
+        if(auto &&iter{TYPE::KEYWORD_TYPE_MAP.find(keyword->tag)};
+            iter != TYPE::KEYWORD_TYPE_MAP.end())
+        {
+            var.emplace<TOKEN::TypeSpecifier::Tag>(iter->second);
+            return registerToCache(new TOKEN::TypeSpecifier{var}, beginIdx);
+        }
+
+        mIdx = preIdx;
+    }
+
+    if(var.emplace<TOKEN::AtomicTypeSpecifier*>(tokAtomicTypeSpecifier()) != nullptr
         || var.emplace<TOKEN::StructOrUnionSpecifier*>(tokStructOrUnionSpecifier()) != nullptr
         || var.emplace<TOKEN::EnumSpecifier*>(tokEnumSpecifier()) != nullptr
         || var.emplace<TOKEN::TypedefName*>(tokTypedefName()) != nullptr)
         return registerToCache(new TOKEN::TypeSpecifier(var), beginIdx);
     
-    if(std::holds_alternative<TOKEN::TypeSpecifier::Tag>(var))
-        return registerToCache(new TOKEN::TypeSpecifier(var), beginIdx);
-    else
-        return nullptr;
+    return nullptr;
 }
 
 TOKEN::TypeQualifier *TreeGenerator::tokTypeQualifier()
@@ -936,7 +873,7 @@ TOKEN::Initializer *TreeGenerator::tokInitializer()
 
     if(TOKEN::InitializerList *il = nullptr;
         isMatch(TOKEN::Punctuator::Tag::L_CURLY_BRACKET)
-            && (il = tokInitializerList()) != nullptr
+            && (il = tokInitializerList(), true)
             && (isMatch(TOKEN::Punctuator::Tag::COMMA), true)
             && isMatch(TOKEN::Punctuator::Tag::R_CURLY_BRACKET))
         return registerToCache(new TOKEN::Initializer(il), beginIdx);
@@ -1112,7 +1049,7 @@ TOKEN::Identifier *TreeGenerator::tokIdentifier()
     if(mIdx < mSeq.get().size()
         && std::holds_alternative<TOKEN::Identifier*>(mSeq.get()[mIdx]->var))
     {
-        if(KEYWORD_MAP.find(TOKEN::str(mSeq.get()[mIdx])) == KEYWORD_MAP.end())
+        if(TOKEN::Keyword::STR_KEYWORD_MAP.find(TOKEN::str(mSeq.get()[mIdx])) == TOKEN::Keyword::STR_KEYWORD_MAP.end())
             return mIdx++, registerToCache(std::get<TOKEN::Identifier*>(mSeq.get()[mIdx - 1]->var)->copy(), beginIdx);
     }
 
@@ -2768,6 +2705,28 @@ TOKEN::MultiplicativeExpression *TreeGenerator::tokMultiplicativeExpression()
     return registerToCache(new TOKEN::MultiplicativeExpression(std::move(seq)), beginIdx);
 }
 
+TOKEN::Keyword *TreeGenerator::tokKeyword()
+{
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::Keyword)
+    std::size_t beginIdx{mIdx};
+
+    if(mIdx >= mSeq.get().size())
+        return nullptr;
+
+    auto &&pt{mSeq.get()[mIdx]};
+
+    if(!std::holds_alternative<TOKEN::Identifier*>(pt->var))
+        return nullptr;
+
+    auto &&iter{TOKEN::Keyword::STR_KEYWORD_MAP.find(TOKEN::str(pt))};
+
+    if(iter == TOKEN::Keyword::STR_KEYWORD_MAP.end())
+        return nullptr;
+    
+    mIdx++;
+    return registerToCache(new TOKEN::Keyword{iter->second}, beginIdx);
+}
+
 TOKEN::AttributeSpecifier *TreeGenerator::tokAttributeSpecifier()
 {
     IF_CACHE_HAS_TOKEN_RETURN(TOKEN::AttributeSpecifier)
@@ -3034,6 +2993,60 @@ TOKEN::AsmStatement *TreeGenerator::tokAsmStatement()
     }
 }
 
+TOKEN::IncludingFile *TreeGenerator::tokIncludingFile()
+{
+    IF_CACHE_HAS_TOKEN_RETURN(TOKEN::IncludingFile)
+    std::size_t beginIdx{mIdx};
+
+    using namespace TOKEN;
+
+    auto &&getFilename{[&](Punctuator::Tag delimiterTag)
+        -> std::string
+        {
+            std::string filename;
+            for(; mIdx < mSeq.get().size(); mIdx++)
+            {
+                if(isMatch(delimiterTag))
+                {
+                    mIdx--;
+                    break;
+                }
+                
+                filename += TOKEN::str(mSeq.get()[mIdx]);
+            }
+
+            return filename;
+        }};
+
+    std::size_t preIdx{mIdx};
+
+    std::string filename;
+
+    if(!isMatch(Punctuator::Tag::AT))
+        return nullptr;
+    
+    // @<includingFile>
+    if(isMatch(Punctuator::Tag::LESS))
+    {
+        filename.push_back('<');
+        filename += getFilename(Punctuator::Tag::GREATER);
+        filename.push_back('>');
+        if(!isMatch(Punctuator::Tag::GREATER))
+            return mIdx = preIdx, nullptr;
+    }
+    // @"includeFile"
+    else if(auto &&sl{tokStringLiteral()};
+        sl != nullptr)
+    {
+        filename = TOKEN::str(sl);
+        delete sl;
+    }
+    else
+        return mIdx = preIdx, nullptr;
+
+    return registerToCache(new IncludingFile{std::move(filename)}, beginIdx);
+}
+
 TOKEN::IntegerConstant *TreeGenerator::convIntegerConstant()
 {
     if(mIdx < mSeq.get().size()
@@ -3096,8 +3109,8 @@ TOKEN::Token *TreeGenerator::convToken()
     TOKEN::Token *returnToken{new TOKEN::Token{}};
     if(std::holds_alternative<TOKEN::Identifier*>(mSeq.get()[mIdx]->var))
     {
-        auto &&iter{KEYWORD_MAP.find(TOKEN::str(std::get<TOKEN::Identifier*>(mSeq.get()[mIdx]->var)))};
-        if(iter != KEYWORD_MAP.end())
+        auto &&iter{TOKEN::Keyword::STR_KEYWORD_MAP.find(TOKEN::str(std::get<TOKEN::Identifier*>(mSeq.get()[mIdx]->var)))};
+        if(iter != TOKEN::Keyword::STR_KEYWORD_MAP.end())
             returnToken->var.emplace<TOKEN::Keyword*>(new TOKEN::Keyword{iter->second});
         else
             returnToken->var.emplace<TOKEN::Identifier*>(std::get<TOKEN::Identifier*>(mSeq.get()[mIdx]->var)->copy());
@@ -3137,8 +3150,8 @@ bool TreeGenerator::isMatch(TOKEN::Keyword::Tag tag)
     if(mIdx < mSeq.get().size()
         && std::holds_alternative<TOKEN::Identifier*>(mSeq.get()[mIdx]->var))
     {
-        if(auto iter = KEYWORD_MAP.find(TOKEN::str(mSeq.get()[mIdx]));
-            iter != KEYWORD_MAP.end()
+        if(auto iter = TOKEN::Keyword::STR_KEYWORD_MAP.find(TOKEN::str(mSeq.get()[mIdx]));
+            iter != TOKEN::Keyword::STR_KEYWORD_MAP.end()
                 && iter->second == tag)
             return mIdx++, true;
     }
@@ -3160,22 +3173,39 @@ bool TreeGenerator::isMatch(TOKEN::Punctuator::Tag tag)
 
 bool TreeGenerator::noEvaluatedError() const
 {
-    static const constexpr std::size_t numMaxOutputTokens{60ull};
+    static const constexpr std::size_t numPreOutput{15ull};
+    static const constexpr std::size_t numPostOutput{5ull};
 
-    std::cerr << "TreeGenerator error:\n"
-        "    what: token-sequence has not been evaluated to the end.\n"
-        "    file: " << mFile << "\n"
-        "    idx: " << mIdx << "\n"
-        "    token: ";
-
-    for(std::size_t i{0ull};
-        i < numMaxOutputTokens && i + mIdx < mSeq.get().size();
-        i++)
+    std::size_t endPos{0ull};
+    if(!mCacheMap.empty())
     {
-        std::cout << TOKEN::str(mSeq.get()[i + mIdx]) << ' ';
+        for(auto &&[beginPos, element] : mCacheMap)
+            endPos = element->mEnd > endPos ? element->mEnd : endPos;
     }
 
-    std::cout << std::endl;
+    std::cerr << OUTPUT::charRedCode
+        << "ANALYZER::TreeGenerator::noEvaluatedError():\n"
+        << OUTPUT::resetCode
+        << "    what: token-sequence has not been evaluated to the end.\n"
+        "    file: " << mFile << "\n"
+        "    idx: " << endPos << "\n"
+        "    token: ";
+
+    for(std::size_t i{endPos >= numPreOutput
+            ? endPos - numPreOutput
+            : 0ull};
+        i < endPos + numPostOutput
+            && i < mSeq.get().size();
+        i++)
+    {
+        if(i + 1ull == endPos || i == endPos)
+            std::cerr << OUTPUT::charRedCode;
+        else
+            std::cerr << OUTPUT::resetCode;
+        std::cerr << TOKEN::str(mSeq.get().at(i)) << ' ';
+    }
+
+    std::cerr << OUTPUT::resetCode << std::endl;
 
     return false;
 }

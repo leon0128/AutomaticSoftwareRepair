@@ -1,5 +1,7 @@
 #include <iostream>
+#include <regex>
 
+#include "utility/output.hpp"
 #include "configure.hpp"
 
 decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
@@ -11,9 +13,11 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--time-log", {Tag::TIME_LOG, false}}
     , {"--repair-log", {Tag::REPAIR_LOG, false}}
     , {"--subprocess-log", {Tag::SUBPROCESS_LOG, false}}
+    , {"--no-ignoring-pool", {Tag::NO_IGNORING_POOL, false}}
     , {"--preprocessor", {Tag::PREPROCESSOR, true}}
     , {"--compiler", {Tag::COMPILER, true}}
-    , {"--test-script", {Tag::TEST_SCRIPT, true}}
+    , {"--builtin", {Tag::BUILTIN, true}}
+    , {"--test", {Tag::TEST_SCRIPT, true}}
     , {"--exec-extension", {Tag::EXEC_EXTENSION, true}}
     , {"--null-filename", {Tag::NULL_FILENAME, true}}
     , {"--pos-prefix", {Tag::POS_PREFIX, true}}
@@ -25,7 +29,7 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--goal", {Tag::GOAL, true}}
     , {"--failure", {Tag::FAILURE, true}}
     , {"--pop", {Tag::POP, true}}
-    , {"--max", {Tag::MAX, true}}
+    , {"--gen", {Tag::MAX, true}}
     , {"--elite", {Tag::ELITE, true}}
     , {"--tournament", {Tag::TOURNAMENT, true}}
     , {"--add-prob", {Tag::ADDING_PROB, true}}
@@ -40,38 +44,13 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--type2", {Tag::SIM_TYPE2, true}}
     , {"--type3", {Tag::SIM_TYPE3, true}}
     , {"--capacity", {Tag::SIM_CAPACITY, true}}
-    , {"--num-of-use-external", {Tag::SIM_NUMBER_OF_USE, true}}
+    , {"--num-use-external", {Tag::SIM_NUMBER_OF_USE, true}}
     , {"--change-prob", {Tag::SIM_CHANGE_PROB, false}}};
 
 bool Configure::parseCommandLineArguments(int argc, char **argv)
 {
-    for(int i{1ull}; i < argc; i++)
-    {
-        auto &&iter{flagMap.find(argv[i])};
-        if(iter != flagMap.end())
-        {
-            if(iter->second.second)
-            {
-                if(i + 1 >= argc)
-                    return noArgumentError(argv[i]);
-
-                if(!readArgument(iter->second.first, argv[i + 1]))
-                    return false;
-                
-                i++;
-            }
-            else
-            {
-                if(!readArgument(iter->second.first))
-                    return false;
-            }
-        }
-        else
-        {
-            if(!readArgument(Tag::SOURCE, argv[i]))
-                return false;
-        }
-    }
+    if(!parseOption(argc, argv))
+        return false;
 
     if(!setDefaultValue())
         return false;
@@ -83,6 +62,53 @@ bool Configure::parseCommandLineArguments(int argc, char **argv)
         return false;
 
     return true;
+}
+
+bool Configure::parseOption(int argc
+    , char **argv)
+{
+    for(int i{1}; i < argc; i++)
+    {
+        // parse target source code
+        if(!isOption(argv[i]))
+        {
+            if(!readArgument(Tag::SOURCE, argv[i]))
+                return false;
+        }
+        // option
+        else
+        {
+            auto &&iter{flagMap.find(argv[i])};
+            if(iter == flagMap.end())
+                return unknownFlagError(argv[i]);
+        
+            if(iter->second.second)
+            {
+                if(i + 1 >= argc
+                    || isOption(argv[i + 1]))
+                    return noArgumentError(argv[i]);
+                
+                if(!readArgument(iter->second.first, argv[i + 1]))
+                    return false;
+                
+                i++;
+            }
+            else
+            {
+                if(!readArgument(iter->second.first))
+                    return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
+bool Configure::isOption(const char *arg)
+{
+    static const std::regex regex{"^--(.*)"};
+
+    return std::regex_match(arg, regex);
 }
 
 bool Configure::readArgument(Tag tag
@@ -124,12 +150,19 @@ bool Configure::readArgument(Tag tag
         case(Tag::SUBPROCESS_LOG):
             SHOULD_OUTPUT_SUBPROCESS_LOG = true;
             break;
+        case(Tag::NO_IGNORING_POOL):
+            SHOULD_IGNORING_POOL = false;
+            break;
         case(Tag::PREPROCESSOR):
             if(!assignString(tag, arg, PREPROCESSOR))
                 return false;
             break;
         case(Tag::COMPILER):
             if(!assignString(tag, arg, COMPILER))
+                return false;
+            break;
+        case(Tag::BUILTIN):
+            if(!assignString(tag, arg, BUILTIN))
                 return false;
             break;
         case(Tag::TEST_SCRIPT):
@@ -282,11 +315,17 @@ bool Configure::setDefaultValue()
             case(Tag::SUBPROCESS_LOG):
                 SHOULD_OUTPUT_SUBPROCESS_LOG = false;
                 break;
+            case(Tag::NO_IGNORING_POOL):
+                SHOULD_IGNORING_POOL = true;
+                break;
             case(Tag::PREPROCESSOR):
                 PREPROCESSOR = "cpp -P";
                 break;
             case(Tag::COMPILER):
                 COMPILER = "gcc";
+                break;
+            case(Tag::BUILTIN):
+                BUILTIN = "builtin.h";
                 break;
             case(Tag::TEST_SCRIPT):
                 TEST_SCRIPT = "test.sh";
@@ -319,28 +358,28 @@ bool Configure::setDefaultValue()
                 GOAL_SCORE = 11;
                 break;
             case(Tag::FAILURE):
-                FAILURE_LIMIT = 10ull;
+                FAILURE_LIMIT = 16ull;
                 break;
             case(Tag::POP):
-                POP_SIZE = 10ull;
+                POP_SIZE = 1000ull;
                 break;
             case(Tag::MAX):
                 MAX_GEN = 10ull;
                 break;
             case(Tag::ELITE):
-                NUM_ELITE = 1ull;
+                NUM_ELITE = 2ull;
                 break;
             case(Tag::TOURNAMENT):
-                TOURNAMENT_SIZE = 2ull;
+                TOURNAMENT_SIZE = 3ull;
                 break;
             case(Tag::ADDING_PROB):
-                ADDING_PROBABILITY = 0.75;
+                ADDING_PROBABILITY = 0.2;
                 break;
             case(Tag::SUBTRACTING_PROB):
-                SUBTRACTING_PROBABILITY = 0.25;
+                SUBTRACTING_PROBABILITY = 0.2;
                 break;
             case(Tag::SWAPPING_PROB):
-                SWAPPING_PROBABILITY = 0.0;
+                SWAPPING_PROBABILITY = 0.6;
                 break;
             case(Tag::NEW_CREATION_PROB):
                 NEW_CREATION_PROB = 0.20;
@@ -367,10 +406,10 @@ bool Configure::setDefaultValue()
                 SIM_TYPE3 = 4ull;
                 break;
             case(Tag::SIM_CAPACITY):
-                SIM_CAPACITY = 0.10;
+                SIM_CAPACITY = 1.0;
                 break;
             case(Tag::SIM_NUMBER_OF_USE):
-                SIM_NUMBER_OF_USE = 10ull;
+                SIM_NUMBER_OF_USE = 16ull;
                 break;
             case(Tag::SIM_CHANGE_PROB):
                 SHOULD_CHANGE_PROB = false;
@@ -513,55 +552,69 @@ bool Configure::checkValidity()
 
 bool Configure::unknownFlagError(const std::string &flag)
 {
-    std::cerr << "Configure::unknownFlagError():\n"
-        "    flag: " << flag
+    std::cerr << OUTPUT::charRedCode
+        << "Configure::unknownFlagError():\n"
+        << OUTPUT::resetCode
+        << "    flag: " << flag
         << std::endl;
     return false;
 }
 
 bool Configure::noArgumentError(const std::string &flag)
 {
-    std::cerr << "Configure::noArgumentError():\n"
-        "    flag: " << flag
+    std::cerr << OUTPUT::charRedCode
+        << "Configure::noArgumentError():\n"
+        << OUTPUT::resetCode
+        << "    flag: " << flag
         << std::endl;
     return false;
 }
 
 bool Configure::noHasSourceError()
 {
-    std::cerr << "Configure::noHasSourceError():\n"
+    std::cerr << OUTPUT::charRedCode
+        << "Configure::noHasSourceError():\n"
+        << OUTPUT::resetCode
         << std::flush;
     return false;
 }
 
 bool Configure::duplicationError(const std::string &flag)
 {
-    std::cerr << "Configure::duplicationError():\n"
-        "    flag: " << flag
+    std::cerr << OUTPUT::charRedCode
+        << "Configure::duplicationError():\n"
+        << OUTPUT::resetCode
+        << "    flag: " << flag
         << std::endl;
     return false;
 }
 
 bool Configure::unknownTagError(Tag tag)
 {
-    std::cerr << "Configure::unknownTagError():\n"
-        "    tag: " << static_cast<int>(tag)
+    std::cerr << OUTPUT::charRedCode
+        << "Configure::unknownTagError():\n"
+        << OUTPUT::resetCode
+        << "    tag: " << static_cast<int>(tag)
         << std::endl;
     return false;
 }
 
 bool Configure::valueConvertError(const std::string &arg)
 {
-    std::cerr << "Configure::valueConvertError():\n"
-        "    arg: " << arg
+    std::cerr << OUTPUT::charRedCode
+        << "Configure::valueConvertError():\n"
+        << OUTPUT::resetCode
+        << "    arg: " << arg
         << std::endl;
     return false;
 }
 
 bool Configure::validityError(const std::string &what)
 {
-    std::cerr << "Configure::validityError():\n"
-        "    what: " << what
+    std::cerr << OUTPUT::charRedCode
+        <<  "Configure::validityError():\n"
+        << OUTPUT::resetCode
+        << "    what: " << what
         << std::endl;
     return false;
 }

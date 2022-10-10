@@ -3,7 +3,6 @@
 
 #include <deque>
 #include <string>
-#include <utility>
 
 #include "common/token.hpp"
 
@@ -13,35 +12,41 @@ namespace ANALYZER
 class Preprocessor
 {
 public:
-    using Sequence = std::deque<TOKEN::PreprocessingToken*>;
-
     Preprocessor();
     ~Preprocessor();
+
     Preprocessor(const Preprocessor&) = delete;
     Preprocessor(Preprocessor&&) = delete;
 
     bool execute(const std::string &filename);
 
-    const auto &sequence() const noexcept
-        {return mSeq;}
+    auto &&sequence() const noexcept
+        {return mPTs;}
 
 private:
+    bool initialize(const std::string &filename);
     void finalize();
 
-    bool openFile(std::string &src);
-    bool preprocess();
-    bool sequencenize(const std::string &src);
-    bool convertCharacter();
+    bool addBuiltinFile();
+    bool readFile(const std::string &filename);
+    bool concatenateLine();
+    bool deleteComment();
+    bool addMark();
+    bool writeFile(const std::string &filename);
+    bool executeCommand(const std::string &inputFilename
+        , const std::string &outputFilename);
+    bool decompose();
     bool concatenateStringLiteral();
 
-    void omitWS(const std::string &src
-        , std::size_t &idx) const;
-    bool convertEscapeSequence(TOKEN::EscapeSequence*
-        , char &res) const;
+    bool fileReadingError(const std::string &filename) const;
+    bool preprocessingError(const std::string &filename) const;
+    bool decomposingError(const std::string &filename) const;
 
-    std::string mFile;
-    std::string mTemporaryFilename;
-    Sequence mSeq;
+    std::string mFilename;
+    std::string mMarkedFilename;
+    std::string mPreprocessedFilename;
+    std::string mContents;
+    std::deque<TOKEN::PreprocessingToken*> mPTs;
 };
 
 }

@@ -13,11 +13,15 @@ SOURCE_DIRECTORIES = ./src/ \
 ## c++ compiler
 CXX = g++
 ## c++ compiler flags
-CXXFLAGS = -g3 -Wall -std=c++2a -I./src -lpthread -pthread
+CXXFLAGS = -g3 -Wall -std=c++2a -I./src
 ## c++ preprocessor
 CPP = g++ -E
 ## c++ preprocessor flags
 CPPFLAGS = 
+
+## linkage flags
+LINKAGE_FLAGS = -lpthread -pthread
+
 
 ###########################################################
 ## all files
@@ -35,7 +39,7 @@ OBJECT_FILES = $(foreach DIR, \
 ## header files
 HEADER_FILES = $(foreach DIR, \
 	$(SOURCE_DIRECTORIES), \
-	$(wildcard $(DIR)*.hpp)))
+	$(wildcard $(DIR)*.hpp))
 	
 ## dependency files
 DEPENDENCY_FILES = $(foreach DIR, \
@@ -51,11 +55,11 @@ all: $(PROGRAM)
 
 # $(PROGRAM) recipe
 $(PROGRAM): $(OBJECT_FILES)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LINKAGE_FLAGS) $^ -o $@
 
 # dependency file recipe
 $(DEPENDENCY_FILES):
-	echo -n "$(dir $@) > $@"
+	echo -n "$(dir $@)" > $@
 	$(CXX) $(CXXFLAGS) -MM -c $(basename $@).cpp >> $@
 	echo "	rm -rf $@" >> $@
 	echo "	$(CXX) $(CXXFLAGS) -c $(basename $@).cpp -o $(basename $@).o" >> $@

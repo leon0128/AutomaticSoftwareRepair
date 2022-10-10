@@ -153,7 +153,8 @@ namespace TOKENIZER
             , {"<%", TOKEN::Punctuator::Tag::L_CURLY_BRACKET}
             , {"%>", TOKEN::Punctuator::Tag::R_CURLY_BRACKET}
             , {"%:", TOKEN::Punctuator::Tag::HASH}
-            , {"%:%:", TOKEN::Punctuator::Tag::DOUBLE_HASH}};
+            , {"%:%:", TOKEN::Punctuator::Tag::DOUBLE_HASH}
+            , {"@", TOKEN::Punctuator::Tag::AT}};
 }
 
 }

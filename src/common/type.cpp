@@ -2,6 +2,7 @@
 #include <map>
 #include <typeinfo>
 
+#include "utility/output.hpp"
 #include "token.hpp"
 #include "configure.hpp"
 #include "type.hpp"
@@ -11,6 +12,149 @@ inline namespace COMMON
 
 namespace TYPE
 {
+
+decltype(KEYWORD_TYPE_MAP) KEYWORD_TYPE_MAP
+    {{TOKEN::Keyword::Tag::VOID, TOKEN::TypeSpecifier::Tag::VOID}
+        , {TOKEN::Keyword::Tag::CHAR, TOKEN::TypeSpecifier::Tag::CHAR}
+        , {TOKEN::Keyword::Tag::SHORT, TOKEN::TypeSpecifier::Tag::SHORT}
+        , {TOKEN::Keyword::Tag::INT, TOKEN::TypeSpecifier::Tag::INT}
+        , {TOKEN::Keyword::Tag::LONG, TOKEN::TypeSpecifier::Tag::LONG}
+        , {TOKEN::Keyword::Tag::FLOAT, TOKEN::TypeSpecifier::Tag::FLOAT}
+        , {TOKEN::Keyword::Tag::DOUBLE, TOKEN::TypeSpecifier::Tag::DOUBLE}
+        , {TOKEN::Keyword::Tag::SIGNED, TOKEN::TypeSpecifier::Tag::SIGNED}
+        , {TOKEN::Keyword::Tag::UNSIGNED, TOKEN::TypeSpecifier::Tag::UNSIGNED}
+        , {TOKEN::Keyword::Tag::BOOL, TOKEN::TypeSpecifier::Tag::BOOL}
+        , {TOKEN::Keyword::Tag::COMPLEX, TOKEN::TypeSpecifier::Tag::COMPLEX}
+        , {TOKEN::Keyword::Tag::FLOAT128, TOKEN::TypeSpecifier::Tag::FLOAT128}
+        , {TOKEN::Keyword::Tag::BUILTIN_VA_LIST, TOKEN::TypeSpecifier::Tag::BUILTIN_VA_LIST}};
+
+decltype(Qualifiers::nameMap) Qualifiers::nameMap
+    {{Tag::CONST, "const"}
+        , {Tag::RESTRICT, "restrict"}
+        , {Tag::VOLATILE, "volatile"}
+        , {Tag::ATOMIC, "atomic"}};
+
+decltype(Base::nameMap) Base::nameMap
+    {{Tag::VOID, "void"}
+        , {Tag::CHAR, "char"}
+        , {Tag::S_CHAR, "signed char"}
+        , {Tag::U_CHAR, "unsigned char"}
+        , {Tag::S_SHORT, "short"}
+        , {Tag::U_SHORT, "unsigned short"}
+        , {Tag::S_INT, "int"}
+        , {Tag::U_INT, "unsigned int"}
+        , {Tag::S_LONG, "long"}
+        , {Tag::U_LONG, "unsigned long"}
+        , {Tag::S_LONG_LONG, "long long"}
+        , {Tag::U_LONG_LONG, "unsigned long long"}
+        , {Tag::FLOAT, "float"}
+        , {Tag::DOUBLE, "double"}
+        , {Tag::LONG_DOUBLE, "long double"}
+        , {Tag::BOOL, "bool"}
+        , {Tag::FLOAT_COMPLEX, "float complex"}
+        , {Tag::DOUBLE_COMPLEX, "double complex"}
+        , {Tag::LONG_DOUBLE_COMPLEX, "long double complex"}
+        , {Tag::FLOAT128, "_Float128"}
+        , {Tag::FLOAT128_COMPLEX, "_Float128 complex"}
+        , {Tag::BUILTIN_VA_LIST, "builtin_va_list"}};
+
+decltype(Base::typeMap) Base::typeMap
+    {{Tag::VOID
+        , {{TOKEN::TypeSpecifier::Tag::VOID}}}
+        , {Tag::CHAR
+            , {{TOKEN::TypeSpecifier::Tag::CHAR}}}
+        , {Tag::S_CHAR
+            , {{TOKEN::TypeSpecifier::Tag::SIGNED
+                , TOKEN::TypeSpecifier::Tag::CHAR}}}
+        , {Tag::U_CHAR
+            , {{TOKEN::TypeSpecifier::Tag::UNSIGNED
+                , TOKEN::TypeSpecifier::Tag::CHAR}}}
+        , {Tag::S_SHORT
+            , {{TOKEN::TypeSpecifier::Tag::SHORT}
+                , {TOKEN::TypeSpecifier::Tag::SIGNED
+                    , TOKEN::TypeSpecifier::Tag::SHORT}
+                , {TOKEN::TypeSpecifier::Tag::SHORT
+                    , TOKEN::TypeSpecifier::Tag::INT}
+                , {TOKEN::TypeSpecifier::Tag::SIGNED
+                    , TOKEN::TypeSpecifier::Tag::SHORT
+                    , TOKEN::TypeSpecifier::Tag::INT}}}
+        , {Tag::U_SHORT
+            , {{TOKEN::TypeSpecifier::Tag::UNSIGNED
+                , TOKEN::TypeSpecifier::Tag::SHORT}
+                , {TOKEN::TypeSpecifier::Tag::UNSIGNED
+                    , TOKEN::TypeSpecifier::Tag::SHORT
+                    , TOKEN::TypeSpecifier::Tag::INT}}}
+        , {Tag::S_INT
+            , {{TOKEN::TypeSpecifier::Tag::INT}
+                , {TOKEN::TypeSpecifier::Tag::SIGNED}
+                , {TOKEN::TypeSpecifier::Tag::SIGNED
+                    , TOKEN::TypeSpecifier::Tag::INT}}}
+        , {Tag::U_INT
+            , {{TOKEN::TypeSpecifier::Tag::UNSIGNED}
+                , {TOKEN::TypeSpecifier::Tag::UNSIGNED
+                    , TOKEN::TypeSpecifier::Tag::INT}}}
+        , {Tag::S_LONG
+            , {{TOKEN::TypeSpecifier::Tag::LONG}
+                , {TOKEN::TypeSpecifier::Tag::SIGNED
+                    , TOKEN::TypeSpecifier::Tag::LONG}
+                , {TOKEN::TypeSpecifier::Tag::LONG
+                    , TOKEN::TypeSpecifier::Tag::INT}
+                , {TOKEN::TypeSpecifier::Tag::SIGNED
+                    , TOKEN::TypeSpecifier::Tag::LONG
+                    , TOKEN::TypeSpecifier::Tag::INT}}}
+        , {Tag::U_LONG
+            , {{TOKEN::TypeSpecifier::Tag::UNSIGNED
+                , TOKEN::TypeSpecifier::Tag::LONG}
+                , {TOKEN::TypeSpecifier::Tag::UNSIGNED
+                    , TOKEN::TypeSpecifier::Tag::LONG
+                    , TOKEN::TypeSpecifier::Tag::INT}}}
+        , {Tag::S_LONG_LONG
+            , {{TOKEN::TypeSpecifier::Tag::LONG
+                , TOKEN::TypeSpecifier::Tag::LONG}
+                , {TOKEN::TypeSpecifier::Tag::SIGNED
+                    , TOKEN::TypeSpecifier::Tag::LONG
+                    , TOKEN::TypeSpecifier::Tag::LONG}
+                , {TOKEN::TypeSpecifier::Tag::LONG
+                    , TOKEN::TypeSpecifier::Tag::LONG
+                    , TOKEN::TypeSpecifier::Tag::INT}
+                , {TOKEN::TypeSpecifier::Tag::SIGNED
+                    , TOKEN::TypeSpecifier::Tag::LONG
+                    , TOKEN::TypeSpecifier::Tag::LONG
+                    , TOKEN::TypeSpecifier::Tag::INT}}}
+        , {Tag::U_LONG_LONG
+            , {{TOKEN::TypeSpecifier::Tag::UNSIGNED
+                , TOKEN::TypeSpecifier::Tag::LONG
+                , TOKEN::TypeSpecifier::Tag::LONG}
+                , {TOKEN::TypeSpecifier::Tag::UNSIGNED
+                    , TOKEN::TypeSpecifier::Tag::LONG
+                    , TOKEN::TypeSpecifier::Tag::LONG
+                    , TOKEN::TypeSpecifier::Tag::INT}}}
+        , {Tag::FLOAT
+            , {{TOKEN::TypeSpecifier::Tag::FLOAT}}}
+        , {Tag::DOUBLE
+            , {{TOKEN::TypeSpecifier::Tag::DOUBLE}}}
+        , {Tag::LONG_DOUBLE
+            , {{TOKEN::TypeSpecifier::Tag::LONG
+                , TOKEN::TypeSpecifier::Tag::DOUBLE}}}
+        , {Tag::BOOL
+            , {{TOKEN::TypeSpecifier::Tag::BOOL}}}
+        , {Tag::FLOAT_COMPLEX
+            , {{TOKEN::TypeSpecifier::Tag::FLOAT
+                , TOKEN::TypeSpecifier::Tag::COMPLEX}}}
+        , {Tag::DOUBLE_COMPLEX
+            , {{TOKEN::TypeSpecifier::Tag::DOUBLE
+                , TOKEN::TypeSpecifier::Tag::COMPLEX}}}
+        , {Tag::LONG_DOUBLE_COMPLEX
+            , {{TOKEN::TypeSpecifier::Tag::LONG
+                , TOKEN::TypeSpecifier::Tag::DOUBLE
+                , TOKEN::TypeSpecifier::Tag::COMPLEX}}}
+        , {Tag::FLOAT128
+            , {{TOKEN::TypeSpecifier::Tag::FLOAT128}}}
+        , {Tag::FLOAT128_COMPLEX
+            , {{TOKEN::TypeSpecifier::Tag::FLOAT128
+                , TOKEN::TypeSpecifier::Tag::COMPLEX}}}
+        , {Tag::BUILTIN_VA_LIST
+            , {{TOKEN::TypeSpecifier::Tag::BUILTIN_VA_LIST}}}};
 
 std::optional<Type> extractType(const Typedef &typedefType)
 {
@@ -314,12 +458,6 @@ bool equalTo(std::size_t lhs
 
 std::string Qualifiers::name() const
 {
-    static const std::map<Tag, std::string> nameMap
-        {{Tag::CONST, "const"}
-            , {Tag::RESTRICT, "restrict"}
-            , {Tag::VOLATILE, "volatile"}
-            , {Tag::ATOMIC, "atomic"}};
-
     std::string qualifiersName;
     
     for(const auto &[tag, tagName] : nameMap)
@@ -336,28 +474,6 @@ std::string Qualifiers::name() const
 
 std::string Base::name() const
 {
-    static const std::map<Tag, std::string> nameMap
-        {{Tag::VOID, "void"}
-            , {Tag::CHAR, "char"}
-            , {Tag::S_CHAR, "signed char"}
-            , {Tag::U_CHAR, "unsigned char"}
-            , {Tag::S_SHORT, "short"}
-            , {Tag::U_SHORT, "unsigned short"}
-            , {Tag::S_INT, "int"}
-            , {Tag::U_INT, "unsigned int"}
-            , {Tag::S_LONG, "long"}
-            , {Tag::U_LONG, "unsigned long"}
-            , {Tag::S_LONG_LONG, "long long"}
-            , {Tag::U_LONG_LONG, "unsigned long long"}
-            , {Tag::FLOAT, "float"}
-            , {Tag::DOUBLE, "double"}
-            , {Tag::LONG_DOUBLE, "long double"}
-            , {Tag::BOOL, "bool"}
-            , {Tag::FLOAT_COMPLEX, "float complex"}
-            , {Tag::DOUBLE_COMPLEX, "double complex"}
-            , {Tag::LONG_DOUBLE_COMPLEX, "long double complex"}
-            , {Tag::BUILTIN_VA_LIST, "builtin_va_list"}};
-
     std::string baseName{quals.name()};
 
     baseName += nameMap.at(tag);
@@ -579,8 +695,10 @@ std::string Type::name() const
 
 bool notSupportedError(const std::string &msg)
 {
-    std::cerr << "Type error:\n"
-        "    what: not supported.\n"
+    std::cerr << OUTPUT::charRedCode
+        << "Type error:\n"
+        << OUTPUT::resetCode
+        << "    what: not supported.\n"
         "    ---: " << msg
         << std::endl;
     return false;

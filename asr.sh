@@ -22,14 +22,14 @@ NEGATIVE_TEST_WEIGHT=10
 TARGET_SCORE=10
 
 ## external softwares
-PREPROCESSOR="cpp -P " #-D__extension__= -D__builtin_offsetof(TYPE,MEMBER)=((size_t)&((TYPE*)0)->MEMBER)"
+PREPROCESSOR="cpp -P -I./test/ " #-D__extension__= -D__builtin_offsetof(TYPE,MEMBER)=((size_t)&((TYPE*)0)->MEMBER)"
 COMPILER="gcc"
 
 ## operation
-ADD_PROBABILITY=0.4
+ADD_PROBABILITY=0.2
 SUB_PROBABILITY=0.2
-SWAP_PROBABILITY=0.4
-MAX_NUMBER_OF_FAILURES=10
+SWAP_PROBABILITY=0.6
+MAX_NUMBER_OF_FAILURES=16
 
 ## genetic algorithm
 POPULATION=1000
@@ -71,7 +71,7 @@ $EXECUTION_NAME \
     --repair-log \
     --preprocessor "$PREPROCESSOR" \
     --compiler "$COMPILER" \
-    --test-script "$TEST_SCRIPT_FILENAME" \
+    --test "$TEST_SCRIPT_FILENAME" \
     --exec-extension "$EXEC_EXTENSION" \
     --null-filename "$NULL_FILENAME" \
     --pos-prefix "$POSITIVE_PREFIX" \
@@ -83,7 +83,7 @@ $EXECUTION_NAME \
     --goal "$TARGET_SCORE" \
     --failure "$MAX_NUMBER_OF_FAILURES" \
     --pop "$POPULATION" \
-    --max "$GENERATION" \
+    --gen "$GENERATION" \
     --elite "$NUMBER_OF_ELITE" \
     --tournament "$TOURNAMENT_SIZE" \
     --add-prob "$ADD_PROBABILITY" \
@@ -97,5 +97,5 @@ $EXECUTION_NAME \
     --type2 "$TYPE2_GRAM_SIZE" \
     --type3 "$TYPE3_GRAM_SIZE" \
     --capacity "$REDUCTION_THRESHOLD" \
-    --num-of-use-external "$NUMBER_OF_USE_EXTERNAL" \
+    --num-use-external "$NUMBER_OF_USE_EXTERNAL" \
     --change-prob

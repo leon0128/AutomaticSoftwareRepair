@@ -11,15 +11,13 @@
 #include <set>
 #include <unordered_map>
 #include <optional>
+#include <set>
+#include <deque>
+
+#include "token.hpp"
 
 inline namespace COMMON
 {
-
-namespace TOKEN
-{
-    class AssignmentExpression;
-    class ConstantExpression;
-}
 
 namespace TYPE
 {
@@ -42,7 +40,10 @@ class IdInfo;
 class StructInfo;
 class EnumInfo;
 
-inline std::unordered_map<std::size_t, std::shared_ptr<IdInfo>> TYPE_MAP{};
+inline extern std::unordered_map<std::size_t, std::shared_ptr<IdInfo>> TYPE_MAP;
+inline decltype(TYPE_MAP) TYPE_MAP{};
+
+extern std::unordered_map<TOKEN::Keyword::Tag, TOKEN::TypeSpecifier::Tag> KEYWORD_TYPE_MAP;
 
 std::optional<Type> extractType(const Typedef&);
 std::optional<Type> addQualifiers(const Type&
@@ -88,6 +89,8 @@ private:
 public:
     enum class Tag : unsigned char;
 
+    static const std::unordered_map<Tag, std::string> nameMap;
+
     std::bitset<NUM_TAG> flags{0b0000ull};
 
     std::string name() const;
@@ -97,6 +100,9 @@ class Base
 {
 public:
     enum class Tag : unsigned char;
+
+    static const std::unordered_map<Tag, std::string> nameMap;
+    static const std::unordered_map<Tag, std::deque<std::multiset<TOKEN::TypeSpecifier::Tag>>> typeMap;
 
     Tag tag{0};
     Qualifiers quals;
@@ -227,6 +233,7 @@ enum class Base::Tag : unsigned char
     , S_LONG, U_LONG, S_LONG_LONG, U_LONG_LONG
     , FLOAT, DOUBLE, LONG_DOUBLE, BOOL
     , FLOAT_COMPLEX, DOUBLE_COMPLEX, LONG_DOUBLE_COMPLEX
+    , FLOAT128, FLOAT128_COMPLEX
     , BUILTIN_VA_LIST
 };
 

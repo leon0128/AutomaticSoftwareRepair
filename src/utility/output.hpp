@@ -5,6 +5,19 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#include <string>
+
+namespace OUTPUT
+{
+    inline extern const std::string charRedCode;
+    decltype(charRedCode) charRedCode = "\x1b[31m";
+    inline extern const std::string charYellowCode;
+    decltype(charYellowCode) charYellowCode = "\x1b[33m";
+    inline extern const std::string backRedCode;
+    decltype(backRedCode) backRedCode = "\x1b[41m";
+    inline extern const std::string resetCode;
+    decltype(resetCode) resetCode = "\x1b[0m";
+}
 
 // whether OutputT type is callable std::operator(decltype(os), OutputT)
 template<class OutputT

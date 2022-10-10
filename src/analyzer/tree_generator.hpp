@@ -18,8 +18,7 @@ namespace ANALYZER
 class TreeGenerator
 {
 private:
-    static const std::unordered_map<std::string, TOKEN::Keyword::Tag> KEYWORD_MAP;
-    static const std::deque<TOKEN::PreprocessingToken*> TEMPORARY_OBJECT;
+    inline static const std::deque<TOKEN::PreprocessingToken*> TEMPORARY_OBJECT{};
 
 public:
     using Sequence = std::deque<TOKEN::PreprocessingToken*>;
@@ -120,6 +119,7 @@ private:
     TOKEN::ShiftExpression *tokShiftExpression();
     TOKEN::AdditiveExpression *tokAdditiveExpression();
     TOKEN::MultiplicativeExpression *tokMultiplicativeExpression();
+    TOKEN::Keyword *tokKeyword();
 
     TOKEN::AttributeSpecifier *tokAttributeSpecifier();
     TOKEN::AttributeSpecifierList *tokAttributeSpecifierList();
@@ -129,6 +129,8 @@ private:
     TOKEN::BasicAsm *tokBasicAsm();
     TOKEN::ExtendedAsm *tokExtendedAsm();
     TOKEN::AsmStatement *tokAsmStatement();
+
+    TOKEN::IncludingFile *tokIncludingFile();
 
     TOKEN::IntegerConstant *convIntegerConstant();
     TOKEN::FloatingConstant *convFloatingConstant();
@@ -297,7 +299,8 @@ public:
         , TOKEN::BasicAsm*
         , TOKEN::ExtendedAsm*
         , TOKEN::AsmQualifiers*
-        , TOKEN::AsmStatement*>;
+        , TOKEN::AsmStatement*
+        , TOKEN::IncludingFile*>;
 
     std::size_t mBegin{0ull};
     std::size_t mEnd{0ull};

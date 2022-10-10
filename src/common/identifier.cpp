@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "utility/output.hpp"
 #include "identifier.hpp"
 
 inline namespace COMMON
@@ -10,8 +11,10 @@ namespace IDENTIFIER
 
 bool notSupportedError(const std::string &msg)
 {
-    std::cerr << "Identifier error:\n"
-        "    what: not supported.\n"
+    std::cerr << OUTPUT::charRedCode
+        << "Identifier error:\n"
+        << OUTPUT::resetCode
+        << "    what: not supported.\n"
         "    ---: " << msg
         << std::endl;
     return false;

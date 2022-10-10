@@ -23,8 +23,10 @@ private:
         , TIME_LOG
         , REPAIR_LOG
         , SUBPROCESS_LOG
+        , NO_IGNORING_POOL
         , PREPROCESSOR
         , COMPILER
+        , BUILTIN
         , TEST_SCRIPT
         , EXEC_EXTENSION
         , NULL_FILENAME
@@ -86,11 +88,16 @@ public:
     GET_SAFELY(SHOULD_OUTPUT_REPAIR_LOG)
     inline static bool SHOULD_OUTPUT_SUBPROCESS_LOG;
     GET_SAFELY(SHOULD_OUTPUT_SUBPROCESS_LOG)
+    
+    inline static bool SHOULD_IGNORING_POOL;
+    GET_SAFELY(SHOULD_IGNORING_POOL)
 
     inline static std::string PREPROCESSOR;
     GET_SAFELY(PREPROCESSOR)
     inline static std::string COMPILER;
     GET_SAFELY(COMPILER)
+    inline static std::string BUILTIN;
+    GET_SAFELY(BUILTIN)
     inline static std::string TEST_SCRIPT;
     GET_SAFELY(TEST_SCRIPT)
     inline static std::string EXEC_EXTENSION;
@@ -162,6 +169,9 @@ public:
 #undef GET_SAFELY
 
 private:
+    static bool parseOption(int argc
+        , char **argv);
+    static bool isOption(const char *option);
     static bool readArgument(Tag
         , const std::string &arg = std::string{});
     static bool setDefaultValue();

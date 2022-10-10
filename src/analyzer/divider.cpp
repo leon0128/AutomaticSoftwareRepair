@@ -1,6 +1,7 @@
 #include <iostream>
 #include <utility>
 
+#include "utility/output.hpp"
 #include "divider.hpp"
 
 namespace ANALYZER
@@ -237,7 +238,7 @@ TOKEN::Statement *Divider::createStatement(TOKEN::InitDeclarator *id)
     }
     else if(std::holds_alternative<InitializerList*>(s.i->var))
     {
-        unsupportedError("initializer-list is not supported.");
+        unsupportedWarning("InitializerList");
         return nullptr;
     }
 
@@ -252,10 +253,13 @@ TOKEN::Statement *Divider::createStatement(TOKEN::InitDeclarator *id)
     return statement;
 }
 
-bool Divider::unsupportedError(const std::string &what)
+bool Divider::unsupportedWarning(const std::string &className)
 {
-    std::cerr << "Divider error:\n"
-        << "what: " << what
+    std::cerr << OUTPUT::charYellowCode
+        << "ANALYZER::Divider::unsupportedWarning():\n"
+        << OUTPUT::resetCode
+        << "    what: failed to support to divide class.\n"
+        << "    className: " << className
         << std::endl;
     return false;
 }

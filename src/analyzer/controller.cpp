@@ -1,5 +1,6 @@
 #include <filesystem>
 
+#include "utility/output.hpp"
 #include "common/time_measurer.hpp"
 #include "analyzer.hpp"
 #include "divider.hpp"
@@ -33,7 +34,12 @@ bool Controller::execute()
         for(auto &&filename : getFiles(pathname))
         {
             if(!analyze(filename, false))
-                return false;
+            {
+                if(Configure::SHOULD_IGNORING_POOL)
+                    poolIgnoringWarning(filename);
+                else
+                    return false;
+            }
         }
     }
 
@@ -117,6 +123,18 @@ bool Controller::analyze(const std::string &filename
         mPool.emplace_back(CodeInformation{filename, translationUnit, scope});
 
     return true;
+}
+
+bool Controller::poolIgnoringWarning(const std::string &filename) const
+{
+    std::cerr << OUTPUT::charYellowCode
+        << "ANALYZER::Controller::poolIgnoringWarning():\n"
+        << OUTPUT::resetCode
+        << "    what: failed to analyze source code in pool.\n"
+        << "          ignored this file.\n"
+        << "    filename: " << filename
+        << std::endl;
+    return false;
 }
 
 }

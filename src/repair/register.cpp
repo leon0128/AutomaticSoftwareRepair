@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "utility/output.hpp"
 #include "common/statement.hpp"
 #include "register.hpp"
 
@@ -121,8 +122,10 @@ std::optional<std::size_t> Register::registerDeclaration(TOKEN::Declaration *dec
 
 bool Register::variantError(const std::string &className)
 {
-    std::cerr << "Register::variantError():\n"
-        "    class name: " << className
+    std::cerr << OUTPUT::charRedCode
+        << "Register::variantError():\n"
+        << OUTPUT::resetCode
+        << "    class name: " << className
         << std::endl;
     return false;
 }

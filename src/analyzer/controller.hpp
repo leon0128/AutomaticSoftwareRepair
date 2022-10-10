@@ -37,6 +37,8 @@ private:
     bool analyze(const std::string &filename
         , bool isTarget);
 
+    bool poolIgnoringWarning(const std::string &filename) const;
+
     CodeInformation mTarget;
     std::deque<CodeInformation> mPool;
 };

@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "configure.hpp"
+#include "utility/output.hpp"
 #include "representation.hpp"
 #include "representation_creator.hpp"
 
@@ -819,8 +820,10 @@ bool RepresentationCreator::process(const TOKEN::Initializer *initializer)
     }
     else if(std::holds_alternative<InitializerList*>(initializer->var))
     {
+        auto &&il{std::get<InitializerList*>(initializer->var)};
         addToken("{");
-        if(!process(std::get<InitializerList*>(initializer->var)))
+        if(il != nullptr
+            && !process(il))
             return false;
         addToken("}");
     }
@@ -1906,16 +1909,20 @@ bool RepresentationCreator::setFunctionName(const TOKEN::Declarator *declarator)
 
 bool RepresentationCreator::variantError(const std::string &className) const
 {
-    std::cerr << "SIM::RepresentationCreator::variantError():\n"
-        "    class: " << className
+    std::cerr << OUTPUT::charRedCode
+        << "SIM::RepresentationCreator::variantError():\n"
+        << OUTPUT::resetCode
+        << "    class: " << className
         << std::endl;
     return false;
 }
 
 bool RepresentationCreator::tokenSizeError(const std::string &funcName) const
 {
-    std::cerr << "SIM::RepresentationCreator::tokenSizeError():\n"
-        "    what: size of tokens is less than gram-size.\n"
+    std::cerr << OUTPUT::charRedCode
+        << "SIM::RepresentationCreator::tokenSizeError():\n"
+        << OUTPUT::resetCode
+        << "    what: size of tokens is less than gram-size.\n"
         "    function-name: " << funcName
         << "\n    gram-size: " << mGramSize
         << std::endl;
