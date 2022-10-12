@@ -1,0 +1,1 @@
+b;main(a){scanf("%d %d",&a,&b);printf("%d",a|b);}

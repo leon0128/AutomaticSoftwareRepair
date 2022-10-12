@@ -32,15 +32,15 @@ int read(void)
 {
     int s = 0, f = 1;
     char ch = getchar();
-    while(ch < &#39;0&#39; || ch > &#39;9&#39;)
+    while(ch < '0' || ch > '9')
     {
-        if(ch == &#39;-&#39;)
+        if(ch == '-')
             f = -1;
         ch = getchar();
     }
-    while(ch >= &#39;0&#39; && ch <= &#39;9&#39;)
+    while(ch >= '0' && ch <= '9')
     {
-        s = s * 10 + ch - &#39;0&#39;;
+        s = s * 10 + ch - '0';
         ch = getchar();
     }
     return s * f;

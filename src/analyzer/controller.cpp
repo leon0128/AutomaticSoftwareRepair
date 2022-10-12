@@ -43,6 +43,8 @@ bool Controller::execute()
         }
     }
 
+    outputSpecifiedLog();
+
     return true;
 }
 
@@ -134,6 +136,11 @@ bool Controller::poolIgnoringWarning(const std::string &filename) const
         << "    filename: " << filename
         << std::endl;
     return false;
+}
+
+void Controller::outputSpecifiedLog() const
+{
+    
 }
 
 }

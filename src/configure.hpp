@@ -23,6 +23,7 @@ private:
         , TIME_LOG
         , REPAIR_LOG
         , SUBPROCESS_LOG
+        , SPECIFIED_LOG
         , NO_IGNORE_POOL
         , NO_DIVIDE_FOR
         , PREPROCESSOR
@@ -50,14 +51,14 @@ private:
         , NEW_CREATION_PROB
         , NUM_CONCURRENCY
         , MAX_RECURSION
-        , USE_SIMILARITY
+        , NO_USE_SIMILARITY
         , SIM_ORIGINAL
         , SIM_TYPE1
         , SIM_TYPE2
         , SIM_TYPE3
         , SIM_CAPACITY
         , SIM_NUMBER_OF_USE
-        , SIM_CHANGE_PROB
+        , SIM_NO_CHANGE_PROB
         , NUM_ENUM
     };
 
@@ -89,6 +90,8 @@ public:
     GET_SAFELY(SHOULD_OUTPUT_REPAIR_LOG)
     inline static bool SHOULD_OUTPUT_SUBPROCESS_LOG;
     GET_SAFELY(SHOULD_OUTPUT_SUBPROCESS_LOG)
+    inline static bool SHOULD_OUTPUT_SPECIFIED_LOG;
+    GET_SAFELY(SHOULD_OUTPUT_SPECIFIED_LOG)
     
     inline static bool SHOULD_IGNORE_POOL;
     GET_SAFELY(SHOULD_IGNORE_POOL)

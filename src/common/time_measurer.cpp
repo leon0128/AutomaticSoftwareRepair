@@ -38,11 +38,10 @@ void TimeMeasurer::print()
 {
     std::cout << "time:\n" << std::flush;
 
-    // this variable is reused sim-tag and repair-tag.
-    // don't forget to initialize.
-    Timer::Rep total{0};
-
     // MainTag
+    std::cout << "time-total: " 
+        << total<MainTag, std::chrono::milliseconds>() << " (ms)"
+        << std::endl;
     for(std::size_t tag{0ull}; tag < cast(MainTag::TAG_SIZE); tag++)
     {
         Timer::Rep count{timer(MainTag{tag}).count<std::chrono::milliseconds>()};
@@ -52,14 +51,12 @@ void TimeMeasurer::print()
             << count
             << " (ms)"
             << std::endl;
-        total += count;
     }
-    std::cout << "time-total: " 
-        << total << " (ms)"
-        << std::endl;
 
     // AnalyzerTag
-    total = 0;
+    std::cout << "analyzer-time: total: "
+        << total<AnalyzerTag, std::chrono::milliseconds>() << " (ms)"
+        << std::endl;
     for(std::size_t tag{0ull}; tag < cast(AnalyzerTag::TAG_SIZE); tag++)
     {
         Timer::Rep count{timer(AnalyzerTag{tag}).count<std::chrono::milliseconds>()};
@@ -69,14 +66,12 @@ void TimeMeasurer::print()
             << count
             << " (ms)"
             << std::endl;
-        total += count;
     }
-    std::cout << "analyzer-time: total: "
-        << total << " (ms)"
-        << std::endl;
 
     // SimTag
-    total = 0;
+    std::cout << "similarity-time: total: "
+        << total<SimTag, std::chrono::milliseconds>() << " (ms)"
+        << std::endl;
     for(std::size_t tag{0ull}; tag < cast(SimTag::TAG_SIZE); tag++)
     {
         Timer::Rep count{timer(SimTag{tag}).count<std::chrono::milliseconds>()};
@@ -86,14 +81,12 @@ void TimeMeasurer::print()
             << count
             << " (ms)"
             << std::endl;
-        total += count;
     }
-    std::cout << "similarity-time: total: "
-        << total << " (ms)"
-        << std::endl;
 
     // RepairTag
-    total = 0;
+    std::cout << "repair-time: total: " 
+        << total<RepairTag, std::chrono::milliseconds>() << " (ms)"
+        << std::endl;
     for(std::size_t tag{0ull}; tag < cast(RepairTag::TAG_SIZE); tag++)
     {
         Timer::Rep count{timer(RepairTag{tag}).count<std::chrono::milliseconds>()};
@@ -103,11 +96,7 @@ void TimeMeasurer::print()
             << count
             << " (ms)"
             << std::endl;
-        total += count;
     }
-    std::cout << "repair-time: total: " 
-        << total << " (ms)"
-        << std::endl;
 }
 
 }

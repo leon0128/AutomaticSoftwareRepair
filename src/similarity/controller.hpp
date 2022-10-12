@@ -36,6 +36,8 @@ private:
     
     void test(const std::deque<CodeInformation> &pool);
 
+    void outputSpecifiedLog() const;
+
     std::deque<std::deque<double>> mResults;
 };
 

@@ -39,6 +39,8 @@ private:
 
     bool poolIgnoringWarning(const std::string &filename) const;
 
+    void outputSpecifiedLog() const;
+
     CodeInformation mTarget;
     std::deque<CodeInformation> mPool;
 };

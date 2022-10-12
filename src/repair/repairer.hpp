@@ -81,6 +81,8 @@ private:
     static bool outputError(const std::string &filename);
     static bool compilingError(const std::string &filename);
 
+    void outputSpecifiedLog() const;
+
     std::shared_ptr<BLOCK::Block> mTarget;
     std::deque<std::shared_ptr<BLOCK::Block>> mPool;
 

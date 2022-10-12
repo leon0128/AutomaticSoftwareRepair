@@ -67,6 +67,11 @@ public:
 
     TimeMeasurer();
 
+    template<class Duration = std::chrono::seconds>
+    typename Duration::rep total() const;
+    template<class TagT = MainTag
+        , class Duration = std::chrono::seconds>
+    typename Duration::rep total() const;
     void print();
 
     auto &timer(MainTag tag)
@@ -125,6 +130,23 @@ inline TimeMeasurer &timeMeasurer() noexcept
 {
     static TimeMeasurer tm;
     return tm;
+}
+
+template<class Duration>
+typename Duration::rep TimeMeasurer::total() const
+{
+    return total<MainTag, Duration>();
+}
+template<class TagT
+    , class Duration>
+typename Duration::rep TimeMeasurer::total() const
+{
+    using Rep = typename Duration::rep;
+    Rep total{0};
+    for(std::size_t tag{0ull}; tag < cast(TagT::TAG_SIZE); tag++)
+        total += timer(TagT{tag}).template count<Duration>();
+
+    return total;
 }
 
 }

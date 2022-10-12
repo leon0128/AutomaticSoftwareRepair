@@ -13,6 +13,7 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--time-log", {Tag::TIME_LOG, false}}
     , {"--repair-log", {Tag::REPAIR_LOG, false}}
     , {"--subprocess-log", {Tag::SUBPROCESS_LOG, false}}
+    , {"--specified-log", {Tag::SPECIFIED_LOG, false}}
     , {"--no-ignore-pool", {Tag::NO_IGNORE_POOL, false}}
     , {"--no-divide-for", {Tag::NO_DIVIDE_FOR, false}}
     , {"--preprocessor", {Tag::PREPROCESSOR, true}}
@@ -39,14 +40,14 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--new-creation-prob", {Tag::NEW_CREATION_PROB, true}}
     , {"--num-concurrency", {Tag::NUM_CONCURRENCY, true}}
     , {"--max-recursion", {Tag::MAX_RECURSION, true}}
-    , {"--use-similarity", {Tag::USE_SIMILARITY, false}}
+    , {"--no-use-similarity", {Tag::NO_USE_SIMILARITY, false}}
     , {"--original", {Tag::SIM_ORIGINAL, true}}
     , {"--type1", {Tag::SIM_TYPE1, true}}
     , {"--type2", {Tag::SIM_TYPE2, true}}
     , {"--type3", {Tag::SIM_TYPE3, true}}
     , {"--capacity", {Tag::SIM_CAPACITY, true}}
     , {"--num-use-external", {Tag::SIM_NUMBER_OF_USE, true}}
-    , {"--change-prob", {Tag::SIM_CHANGE_PROB, false}}};
+    , {"--no-change-prob", {Tag::SIM_NO_CHANGE_PROB, false}}};
 
 bool Configure::parseCommandLineArguments(int argc, char **argv)
 {
@@ -151,6 +152,9 @@ bool Configure::readArgument(Tag tag
         case(Tag::SUBPROCESS_LOG):
             SHOULD_OUTPUT_SUBPROCESS_LOG = true;
             break;
+        case(Tag::SPECIFIED_LOG):
+            SHOULD_OUTPUT_SPECIFIED_LOG = true;
+            break;
         case(Tag::NO_IGNORE_POOL):
             SHOULD_IGNORE_POOL = false;
             break;
@@ -252,8 +256,8 @@ bool Configure::readArgument(Tag tag
             if(!assignSizeT(tag, arg, MAX_RECURSION))
                 return false;
             break;
-        case(Tag::USE_SIMILARITY):
-            SHOULD_USE_SIMILARITY = true;
+        case(Tag::NO_USE_SIMILARITY):
+            SHOULD_USE_SIMILARITY = false;
             break;
         case(Tag::SIM_ORIGINAL):
             if(!assignSizeT(tag, arg, SIM_ORIGINAL))
@@ -279,8 +283,8 @@ bool Configure::readArgument(Tag tag
             if(!assignSizeT(tag, arg, SIM_NUMBER_OF_USE))
                 return false;
             break;
-        case(Tag::SIM_CHANGE_PROB):
-            SHOULD_CHANGE_PROB = true;
+        case(Tag::SIM_NO_CHANGE_PROB):
+            SHOULD_CHANGE_PROB = false;
             break;
         default:
             return unknownTagError(tag);
@@ -304,7 +308,7 @@ bool Configure::setDefaultValue()
                 POOL.emplace_back(SOURCE_FILENAME);
                 break;
             case(Tag::RESULT):
-                RESULT_FILENAME = "result.c";
+                RESULT_FILENAME = "test/result.c";
                 break;
             case(Tag::COMMAND_LOG):
                 SHOULD_OUTPUT_COMMAND_LOG = false;
@@ -318,6 +322,9 @@ bool Configure::setDefaultValue()
             case(Tag::SUBPROCESS_LOG):
                 SHOULD_OUTPUT_SUBPROCESS_LOG = false;
                 break;
+            case(Tag::SPECIFIED_LOG):
+                SHOULD_OUTPUT_SPECIFIED_LOG = false;
+                break;
             case(Tag::NO_IGNORE_POOL):
                 SHOULD_IGNORE_POOL = true;
                 break;
@@ -325,7 +332,7 @@ bool Configure::setDefaultValue()
                 SHOULD_DIVIDE_FOR = true;
                 break;
             case(Tag::PREPROCESSOR):
-                PREPROCESSOR = "cpp -P";
+                PREPROCESSOR = "cpp -P -I./test/ -D__extension__=";
                 break;
             case(Tag::COMPILER):
                 COMPILER = "gcc";
@@ -396,8 +403,8 @@ bool Configure::setDefaultValue()
             case(Tag::MAX_RECURSION):
                 MAX_RECURSION = 16ull;
                 break;
-            case(Tag::USE_SIMILARITY):
-                SHOULD_USE_SIMILARITY = false;
+            case(Tag::NO_USE_SIMILARITY):
+                SHOULD_USE_SIMILARITY = true;
                 break;
             case(Tag::SIM_ORIGINAL):
                 SIM_ORIGINAL = 1ull;
@@ -415,10 +422,10 @@ bool Configure::setDefaultValue()
                 SIM_CAPACITY = 1.0;
                 break;
             case(Tag::SIM_NUMBER_OF_USE):
-                SIM_NUMBER_OF_USE = 16ull;
+                SIM_NUMBER_OF_USE = 32ull;
                 break;
-            case(Tag::SIM_CHANGE_PROB):
-                SHOULD_CHANGE_PROB = false;
+            case(Tag::SIM_NO_CHANGE_PROB):
+                SHOULD_CHANGE_PROB = true;
                 break;
 
             default:;

@@ -32,7 +32,7 @@ static int32_t split_str2int(
     char *end = NULL;
     int32_t val = strtol(tmp, &end, 10);
 
-    if (*end != &#39;\0&#39; && *end != &#39;\n&#39;) {
+    if (*end != '\0' && *end != '\n') {
       return NG;
     }
     split[i] = val;

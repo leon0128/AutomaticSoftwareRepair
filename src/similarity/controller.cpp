@@ -31,6 +31,8 @@ bool Controller::execute(const CodeInformation &target
     // finalize
     finalize();
 
+    outputSpecifiedLog();
+
     return isSucceessfull;
 }
 
@@ -109,6 +111,11 @@ void Controller::test(const std::deque<CodeInformation> &pool)
 
     for(auto &&element : reps)
         delete element;
+}
+
+void Controller::outputSpecifiedLog() const
+{
+    
 }
 
 }

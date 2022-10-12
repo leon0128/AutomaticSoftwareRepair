@@ -12,7 +12,7 @@ int main() {
   do { 
       scanf("%d%c", &arr[i], &temp); 
       i++; 
-  } while(temp != &#39;\n&#39;); 
+  } while(temp != '\n'); 
    
   while(s<=r) { 
       t +=arr[s];

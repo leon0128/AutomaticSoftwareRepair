@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <iostream>
+#include <sstream>
 
 #include "configure.hpp"
 
@@ -26,6 +27,9 @@ struct CodeInformation
     std::shared_ptr<TOKEN::TranslationUnit> mTranslationUnit;
     std::shared_ptr<SCOPE::Scope> mScope;
 };
+
+inline extern std::stringstream sstream;
+std::stringstream sstream{};
 
 inline extern void controlOutputLog(std::string &command)
 {

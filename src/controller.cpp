@@ -6,6 +6,7 @@
 #include "similarity/controller.hpp"
 #include "repair/controller.hpp"
 #include "common/time_measurer.hpp"
+#include "common/define.hpp"
 #include "configure.hpp"
 #include "controller.hpp"
 
@@ -61,6 +62,9 @@ bool Controller::execute(int argc, char **argv)
             return false;
     }
 
+    if(Configure::SHOULD_OUTPUT_SPECIFIED_LOG)
+        outputSpecifiedLog();
+
     return true;
 }
 
@@ -76,4 +80,15 @@ void Controller::finalize()
 {
     if(Configure::SHOULD_OUTPUT_TIME_LOG)
         timeMeasurer().print();
+    if(Configure::SHOULD_OUTPUT_SPECIFIED_LOG)
+        std::cout << sstream.str() << std::endl;
+}
+
+void Controller::outputSpecifiedLog() const
+{   
+    using TM = TimeMeasurer;
+    sstream << timeMeasurer().total<TM::MainTag, std::chrono::milliseconds>()
+        << ","
+        << timeMeasurer().total<TM::RepairTag, std::chrono::milliseconds>()
+        << ",";
 }

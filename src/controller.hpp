@@ -15,6 +15,8 @@ public:
 private:
     bool initialize(int argc, char **argv);
     void finalize();
+
+    void outputSpecifiedLog() const;
 };
 
 #endif

@@ -55,6 +55,9 @@ bool Repairer::execute(const CodeInformation &target
     if(Configure::SHOULD_OUTPUT_REPAIR_LOG)
         outputResultLog();
 
+    if(Configure::SHOULD_OUTPUT_SPECIFIED_LOG)
+        outputSpecifiedLog();
+
     return true;
 }
 
@@ -438,6 +441,15 @@ bool Repairer::compilingError(const std::string &filename)
         << "    filename" << filename
         << std::endl;
     return false;
+}
+
+void Repairer::outputSpecifiedLog() const
+{
+    sstream << std::boolalpha
+        << mIsRepaired
+        << ","
+        << mTotalRep
+        << ",";
 }
 
 }

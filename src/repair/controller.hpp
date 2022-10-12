@@ -50,6 +50,8 @@ public:
         , const std::optional<std::deque<std::deque<double>>> &similarity);
 
 private:
+
+    void outputSpecifiedLog() const;
 };
 
 }

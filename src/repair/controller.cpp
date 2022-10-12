@@ -24,7 +24,14 @@ bool Controller::execute(const CodeInformation &target
     if(!repairer.outputResult(Configure::RESULT_FILENAME))
         return false;
 
+    outputSpecifiedLog();
+
     return true;
+}
+
+void Controller::outputSpecifiedLog() const
+{
+
 }
 
 }
