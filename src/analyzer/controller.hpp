@@ -37,6 +37,9 @@ private:
     bool analyze(const std::string &filename
         , bool isTarget);
 
+    static bool analyze(const std::string &filename
+        , bool isTarget);
+
     bool poolIgnoringWarning(const std::string &filename) const;
 
     void outputSpecifiedLog() const;

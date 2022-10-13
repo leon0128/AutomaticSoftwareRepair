@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <future>
 
 #include "utility/output.hpp"
 #include "common/time_measurer.hpp"
@@ -29,19 +30,14 @@ bool Controller::execute()
         return false;
     
     // pool
+    std::deque<std::string> poolFilenames;
     for(auto &&pathname : Configure::POOL)
     {
         for(auto &&filename : getFiles(pathname))
-        {
-            if(!analyze(filename, false))
-            {
-                if(Configure::SHOULD_IGNORE_POOL)
-                    poolIgnoringWarning(filename);
-                else
-                    return false;
-            }
-        }
+            poolFilenames.push_back(filename);
     }
+
+
 
     outputSpecifiedLog();
 

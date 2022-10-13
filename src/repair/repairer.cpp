@@ -6,6 +6,7 @@
 #include <future>
 #include <numeric>
 #include <limits>
+#include <mutex>
 
 #include "configure.hpp"
 #include "utility/random.hpp"
@@ -216,7 +217,7 @@ bool Repairer::test(Reps &currentReps)
                 , indexOfFutures
                 , rep)};
 
-            std::unique_lock ioLock{mIOMutex};
+            std::unique_lock ioLock{stdioMutex};
             std::cout << "repair-log: evaluation is end.("
                 << (mTotalRep - 1ull) % Configure::getSafelyPOP_SIZE() + 1ull
                 << "/" << Configure::getSafelyPOP_SIZE()
@@ -356,7 +357,7 @@ bool Repairer::compile(const std::string &baseFilename)
         , "-o"
         , baseFilename + Configure::getSafelyEXEC_EXTENSION())};
 
-    controlOutputLog(command, mIOMutex);
+    controlOutputLog(command, stdioMutex);
 
     if(SYSTEM::system(command) != 0)
         return compilingError(baseFilename + ".c");
