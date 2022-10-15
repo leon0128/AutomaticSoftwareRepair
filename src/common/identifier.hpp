@@ -7,6 +7,8 @@
 #include <iostream>
 #include <memory>
 #include <unordered_map>
+#include <mutex>
+#include <utility>
 
 #include "type.hpp"
 
@@ -35,7 +37,15 @@ class Enum;
 class Typedef;
 class Label;
 
-inline std::unordered_map<std::size_t, std::shared_ptr<Identifier>> IDENTIFIER_MAP{};
+inline extern std::unordered_map<std::size_t, std::shared_ptr<Identifier>> IDENTIFIER_MAP;
+inline decltype(IDENTIFIER_MAP) IDENTIFIER_MAP{};
+inline extern std::recursive_mutex identifierMapMutex;
+inline decltype(identifierMapMutex) identifierMapMutex{};
+
+// wrapper
+template<class ...Args>
+extern std::pair<decltype(IDENTIFIER_MAP)::iterator, bool> emplaceSafely(Args &&...args);
+extern decltype(IDENTIFIER_MAP)::mapped_type atSafely(const decltype(IDENTIFIER_MAP)::key_type &key);
 
 bool notSupportedError(const std::string&);
 
@@ -97,6 +107,9 @@ class Identifier
 {
 private:
     inline static std::size_t NEXT_ID{0ull};
+    inline static std::mutex mMutex{};
+
+    static std::size_t nextId();
 
 public:
     enum class DerivedTag : unsigned char;
@@ -277,6 +290,13 @@ public:
 private:
     bool mIsDefined;
 };
+
+template<class ...Args>
+std::pair<decltype(IDENTIFIER_MAP)::iterator, bool> emplaceSafely(Args &&...args)
+{
+    std::unique_lock lock{identifierMapMutex};
+    return IDENTIFIER_MAP.emplace(std::forward<Args>(args)...);
+}
 
 }
 

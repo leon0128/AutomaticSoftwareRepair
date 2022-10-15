@@ -382,7 +382,7 @@ bool Repairer::execute(const std::string &baseFilename
                     , baseFilename + Configure::getSafelyEXEC_EXTENSION()
                     , tempFilename)};
 
-                controlOutputLog(command, mIOMutex);
+                controlOutputLog(command, stdioMutex);
 
                 if(SYSTEM::system(command) == 0)
                     score += weight;
@@ -423,7 +423,7 @@ bool Repairer::repCreationError(const std::string &what) const
 
 bool Repairer::outputError(const std::string &filename)
 {
-    std::unique_lock lock{mIOMutex};
+    std::unique_lock lock{stdioMutex};
     std::cerr << OUTPUT::charRedCode
         << "REPAIR::Repairer::outputError():\n"
         << OUTPUT::resetCode
@@ -435,7 +435,7 @@ bool Repairer::outputError(const std::string &filename)
 
 bool Repairer::compilingError(const std::string &filename)
 {
-    std::unique_lock lock{mIOMutex};
+    std::unique_lock lock{stdioMutex};
     std::cerr << OUTPUT::charRedCode
         << "REPAIR::Repairer::compilingError():\n"
         << OUTPUT::resetCode

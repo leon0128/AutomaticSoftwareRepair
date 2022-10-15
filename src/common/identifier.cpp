@@ -9,6 +9,12 @@ inline namespace COMMON
 namespace IDENTIFIER
 {
 
+decltype(IDENTIFIER_MAP)::mapped_type atSafely(const decltype(IDENTIFIER_MAP)::key_type &key)
+{
+    std::unique_lock lock{identifierMapMutex};
+    return IDENTIFIER_MAP.at(key);
+}
+
 bool notSupportedError(const std::string &msg)
 {
     std::cerr << OUTPUT::charRedCode
@@ -57,11 +63,17 @@ bool isSameType(const std::shared_ptr<Identifier> &lhs
     return true;
 }
 
+std::size_t Identifier::nextId()
+{
+    std::lock_guard lock{mMutex};
+    return NEXT_ID++;
+}
+
 Identifier::Identifier(DerivedTag tag
     , const std::string &str)
     : mTag{tag}
     , mStr{str}
-    , mId{NEXT_ID++}
+    , mId{nextId()}
 {
 }
 

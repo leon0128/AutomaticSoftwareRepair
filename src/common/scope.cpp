@@ -11,20 +11,29 @@ inline namespace COMMON
 namespace SCOPE
 {
 
+std::size_t Scope::nextIdSafely()
+{
+    static std::recursive_mutex mutex;
+    std::unique_lock lock{mutex};
+    return NEXT_ID++;
+}
+
 Scope::Scope(Scope *parent
     , ScopeTag tag)
-    : mId{NEXT_ID++}
+    : mId{nextIdSafely()}
     , mParent{parent}
     , mChildren{}
     , mScopeTag{tag}
     , mArr{Map{}, Map{}, Map{}, Map{}}
 {
+    std::unique_lock lock{mScopeMapMutex};
     SCOPE_MAP.emplace(mId
         , this);
 }
 
 Scope::~Scope()
 {
+    std::unique_lock lock{mScopeMapMutex};
     for(auto &&s : mChildren)
     {
         SCOPE_MAP.erase(s->id());
@@ -70,9 +79,6 @@ Scope::ReturnType Scope::addIdentifier(const std::shared_ptr<IDENTIFIER::Identif
             << std::endl;
         return {std::nullopt};
     }
-
-    IDENTIFIER_MAP.emplace(id->id()
-        , id);
 
     return {PairType{iter->second, scope->id()}};
 }

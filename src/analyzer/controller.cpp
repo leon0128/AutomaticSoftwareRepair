@@ -1,5 +1,12 @@
 #include <filesystem>
 #include <future>
+#include <mutex>
+#include <condition_variable>
+#include <future>
+#include <utility>
+#include <numeric>
+#include <functional>
+#include <iostream>
 
 #include "utility/output.hpp"
 #include "common/time_measurer.hpp"
@@ -16,6 +23,9 @@ namespace ANALYZER
 Controller::Controller()
     : mTarget{}
     , mPool{}
+    , mMemberMutex{}
+    , mTotalPoolCount{0ull}
+    , mSuccessedPoolCount{0ull}
 {
 }
 
@@ -25,8 +35,10 @@ Controller::~Controller()
 
 bool Controller::execute()
 {
+    TimeMeasurer::Wrapper wrapper{TimeMeasurer::AnalyzerTag::ANALYZING};
+
     // target
-    if(!analyze(Configure::SOURCE_FILENAME, true))
+    if(!analyze(Configure::SOURCE_FILENAME))
         return false;
     
     // pool
@@ -37,9 +49,12 @@ bool Controller::execute()
             poolFilenames.push_back(filename);
     }
 
+    if(!analyze(poolFilenames))
+        return false;
 
-
-    outputSpecifiedLog();
+    if(Configure::SHOULD_OUTPUT_ANALYZE_LOG)
+        outputAnalyzingLog();
+    setSpecifiedLog();
 
     return true;
 }
@@ -79,47 +94,124 @@ std::deque<std::string> Controller::getFiles(const std::string &pathname) const
     return files;
 }
 
-bool Controller::analyze(const std::string &filename
-    , bool isTarget)
+bool Controller::analyze(const std::string &filename)
+{
+    auto &&codeInfo{analyzeSafely(filename)};
+    if(!codeInfo.has_value())
+        return false;
+    
+    mTarget = std::move(codeInfo.value());
+    return true;
+}
+
+bool Controller::analyze(const std::deque<std::string> &filenames)
+{
+    std::mutex mutex;
+    std::condition_variable cv;
+
+    std::deque<std::future<std::optional<CodeInformation>>> futures(Configure::NUM_CONCURRENCY);
+    std::deque<std::size_t> availableIndices(futures.size());
+    std::iota(availableIndices.begin()
+        , availableIndices.end()
+        , 0ull);
+
+    // this function is used for std::async function's arguments.
+    // future object has this function.
+    auto &&analyzeWrapper{[&](std::size_t futuresIdx
+        , const std::string &filename)
+        -> std::optional<CodeInformation>
+        {
+            auto &&codeInfo{analyzeSafely(filename)};
+
+            std::unique_lock lock{mutex};
+            std::unique_lock memberLock{mMemberMutex};
+            mTotalPoolCount++;
+            if(codeInfo.has_value())
+                mSuccessedPoolCount++;
+            availableIndices.push_back(futuresIdx);
+            cv.notify_all();
+            return codeInfo;
+        }};
+    auto &&analyzeWrapperWithOutput{[&](std::size_t futuresIdx
+        , const std::string &filename)
+        -> std::optional<CodeInformation>
+        {
+            auto &&codeInfo{analyzeWrapper(futuresIdx, filename)};
+            outputAnalyzingLog(filename, filenames.size());
+            return codeInfo;
+        }};
+
+    // function that is passed to future objects.
+    std::function<std::optional<CodeInformation>(std::size_t, const std::string&)> analyzingFunc;
+    if(Configure::SHOULD_OUTPUT_ANALYZE_LOG)
+        analyzingFunc = analyzeWrapperWithOutput;
+    else
+        analyzingFunc = analyzeWrapper;
+
+    for(std::size_t i{0ull}, size{filenames.size()}; i < size;)
+    {
+        std::unique_lock lock{mutex};
+
+        if(!availableIndices.empty())
+        {
+            std::size_t futuresIdx{availableIndices.front()};
+            availableIndices.pop_front();
+
+            if(futures.at(futuresIdx).valid())
+            {
+                auto &&codeInfo{futures.at(futuresIdx).get()};
+                if(codeInfo.has_value())
+                    mPool.push_back(std::move(codeInfo.value()));
+            }
+
+            futures.at(futuresIdx)
+                = std::async(std::launch::async
+                    , analyzingFunc
+                    , futuresIdx
+                    , filenames.at(i));
+            i++;
+        }
+        else
+            cv.wait(lock, [&]{return !availableIndices.empty();});
+    }
+
+    for(auto &&future : futures)
+    {
+        if(future.valid())
+        {
+            auto &&codeInfo{future.get()};
+            if(codeInfo.has_value())
+                mPool.push_back(std::move(codeInfo.value()));
+        }
+    }
+
+    return true;
+}
+
+std::optional<CodeInformation> Controller::analyzeSafely(const std::string &filename)
 {
     Preprocessor preprocessor;
-    {
-        TimeMeasurer::Wrapper wrapper{TimeMeasurer::AnalyzerTag::PREPROCESSING};
-        if(!preprocessor.execute(filename))
-            return false;
-    }
+    if(!preprocessor.execute(filename))
+            return {std::nullopt};
 
     auto &&sequence{preprocessor.sequence()};
 
     TreeGenerator treeGenerator;
-    {
-        TimeMeasurer::Wrapper wrapper{TimeMeasurer::AnalyzerTag::TREE_GENERATION};
-        if(!treeGenerator.execute(filename, sequence))
-            return false;
-    }
+    if(!treeGenerator.execute(filename, sequence))
+        return {std::nullopt};
 
     std::shared_ptr<TOKEN::TranslationUnit> translationUnit{treeGenerator.moveTranslationUnit()};
-    {
-        TimeMeasurer::Wrapper wrapper{TimeMeasurer::AnalyzerTag::DIVISION};
-        if(!Divider::execute(translationUnit.get()))
-            return false;
-    }
+    
+    if(!Divider::execute(translationUnit.get()))
+        return {std::nullopt};
 
     Analyzer analyzer;
-    {
-        TimeMeasurer::Wrapper wrapper{TimeMeasurer::AnalyzerTag::ANALYZING};
-        if(!analyzer.execute(filename, translationUnit.get()))
-            return false;
-    }
+    if(!analyzer.execute(filename, translationUnit.get()))
+        return {std::nullopt};
 
     std::shared_ptr<SCOPE::Scope> scope{analyzer.moveScope()};
 
-    if(isTarget)
-        mTarget = CodeInformation{filename, translationUnit, scope};
-    else
-        mPool.emplace_back(CodeInformation{filename, translationUnit, scope});
-
-    return true;
+    return {CodeInformation{filename, translationUnit, scope}};
 }
 
 bool Controller::poolIgnoringWarning(const std::string &filename) const
@@ -134,7 +226,36 @@ bool Controller::poolIgnoringWarning(const std::string &filename) const
     return false;
 }
 
-void Controller::outputSpecifiedLog() const
+void Controller::outputAnalyzingLog() const
+{
+    std::cout << "analyzer-log:\n"
+        "    pool.successed rate: ";
+    if(mTotalPoolCount == 0)
+        std::cout << "0";
+    else
+        std::cout << static_cast<double>(mSuccessedPoolCount) / static_cast<double>(mTotalPoolCount);
+    std::cout << "%.("
+    << mSuccessedPoolCount
+    << "/"
+    << mTotalPoolCount
+    << ")"
+    << std::endl;
+}
+
+void Controller::outputAnalyzingLog(const std::string &filename
+    , std::size_t poolSize)
+{
+    std::unique_lock ioLock{stdioMutex};
+    std::unique_lock memberLock{mMemberMutex};
+    std::cout << "analyzer-log: "
+        << filename << " is analyzed.("
+        << mTotalPoolCount
+        << "/" << poolSize
+        << ")"
+    << std::endl;
+}
+
+void Controller::setSpecifiedLog() const
 {
     
 }

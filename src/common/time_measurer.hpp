@@ -43,10 +43,7 @@ public:
 
     enum class AnalyzerTag : std::size_t
     {
-        PREPROCESSING
-        , TREE_GENERATION
-        , DIVISION
-        , ANALYZING
+        ANALYZING
         , TAG_SIZE
     };
 

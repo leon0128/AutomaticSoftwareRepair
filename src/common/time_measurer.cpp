@@ -13,10 +13,7 @@ decltype(TimeMeasurer::mMainTagNameMap) TimeMeasurer::mMainTagNameMap
         , {MainTag::REPAIR, "repair"}};
 
 decltype(TimeMeasurer::mAnalyzerTagNameMap) TimeMeasurer::mAnalyzerTagNameMap
-    {{AnalyzerTag::PREPROCESSING, "preprocessing"}
-        , {AnalyzerTag::TREE_GENERATION, "tree generation"}
-        , {AnalyzerTag::DIVISION, "division"}
-        , {AnalyzerTag::ANALYZING, "analyzing"}};
+    {{AnalyzerTag::ANALYZING, "analyzing"}};
 
 decltype(TimeMeasurer::mSimTagNameMap) TimeMeasurer::mSimTagNameMap
     {{SimTag::METRIC, "metrics calculation"}

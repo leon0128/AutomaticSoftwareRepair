@@ -70,7 +70,7 @@ executeASR()
         $TARGET \
         $POOL \
         --result "$RESULT_FILENAME" \
-        --specified-log \
+        --time-log \
         --preprocessor "$PREPROCESSOR" \
         --compiler "$COMPILER" \
         --builtin "$BUILTIN" \
@@ -186,11 +186,11 @@ execute()
 
         echo -n $TARGET_FILENAME, >> $1
 
-        executeASR --no-use-similarity --num-use-external 100000 >> $1
+        # executeASR --no-use-similarity --num-use-external 100000 >> $1
         executeASR $POOL_OPTION --no-use-similarity --num-use-external 100000 >> $1
-        executeASR $POOL_OPTION --no-change-prob --num-use-external 64 >> $1
-        executeASR $POOL_OPTION --num-use-external 100000 >> $1
-        executeASR $POOL_OPTION --num-use-external 64 >> $1
+        # executeASR $POOL_OPTION --no-change-prob --num-use-external 64 >> $1
+        # executeASR $POOL_OPTION --num-use-external 100000 >> $1
+        # executeASR $POOL_OPTION --num-use-external 64 >> $1
 
         echo >> $1
     done
@@ -198,7 +198,7 @@ execute()
 
 # concurrency_test concurrency_time_log.csv
 
-for i in {1..5}
+for i in {1..1}
 do
     execute repair_time_test.csv
 done

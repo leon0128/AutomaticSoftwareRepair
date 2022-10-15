@@ -5,6 +5,8 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <optional>
+#include <mutex>
 
 #include "common/define.hpp"
 
@@ -32,20 +34,30 @@ public:
 private:
     std::deque<std::string> getFiles(const std::string &pathname) const;
     
-    // if isTarget is true, function's results is stored to mTarget.
-    // if isTarget is false, function's results is stored to mPool.
-    bool analyze(const std::string &filename
-        , bool isTarget);
+    // this function is used for target file.
+    bool analyze(const std::string &filename);
+    // this function is used for pool files.
+    bool analyze(const std::deque<std::string> &filenames);
 
-    static bool analyze(const std::string &filename
-        , bool isTarget);
+    // this function analyze file.
+    // if analyzing is successed, return CodeInformation,
+    // othewise return std::nullopt.
+    // this function is thread safe.
+    static std::optional<CodeInformation> analyzeSafely(const std::string &filename);
 
     bool poolIgnoringWarning(const std::string &filename) const;
 
-    void outputSpecifiedLog() const;
+    void outputAnalyzingLog() const;
+    void outputAnalyzingLog(const std::string &filename
+        , std::size_t poolSize);
+    void setSpecifiedLog() const;
 
     CodeInformation mTarget;
     std::deque<CodeInformation> mPool;
+
+    std::mutex mMemberMutex;
+    std::size_t mTotalPoolCount;
+    std::size_t mSuccessedPoolCount;
 };
 
 }
