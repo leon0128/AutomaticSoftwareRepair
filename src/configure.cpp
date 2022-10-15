@@ -13,6 +13,7 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--time-log", {Tag::TIME_LOG, false}}
     , {"--repair-log", {Tag::REPAIR_LOG, false}}
     , {"--subprocess-log", {Tag::SUBPROCESS_LOG, false}}
+    , {"--analyze-log", {Tag::ANALYZE_LOG, false}}
     , {"--specified-log", {Tag::SPECIFIED_LOG, false}}
     , {"--no-ignore-pool", {Tag::NO_IGNORE_POOL, false}}
     , {"--no-divide-for", {Tag::NO_DIVIDE_FOR, false}}
@@ -151,6 +152,9 @@ bool Configure::readArgument(Tag tag
             break;
         case(Tag::SUBPROCESS_LOG):
             SHOULD_OUTPUT_SUBPROCESS_LOG = true;
+            break;
+        case(Tag::ANALYZE_LOG):
+            SHOULD_OUTPUT_ANALYZE_LOG = true;
             break;
         case(Tag::SPECIFIED_LOG):
             SHOULD_OUTPUT_SPECIFIED_LOG = true;
@@ -321,6 +325,9 @@ bool Configure::setDefaultValue()
                 break;
             case(Tag::SUBPROCESS_LOG):
                 SHOULD_OUTPUT_SUBPROCESS_LOG = false;
+                break;
+            case(Tag::ANALYZE_LOG):
+                SHOULD_OUTPUT_ANALYZE_LOG = false;
                 break;
             case(Tag::SPECIFIED_LOG):
                 SHOULD_OUTPUT_SPECIFIED_LOG = false;

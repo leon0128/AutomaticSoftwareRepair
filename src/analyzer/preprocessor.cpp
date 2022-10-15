@@ -105,7 +105,7 @@ bool Preprocessor::readFile(const std::string &filename)
 
 bool Preprocessor::concatenateLine()
 {
-    static std::regex regex{"\\\\\\n"};
+    static const std::regex regex{"\\\\\\n"};
 
     mContents = std::regex_replace(mContents, regex, "");
 
@@ -114,7 +114,7 @@ bool Preprocessor::concatenateLine()
 
 bool Preprocessor::deleteComment()
 {
-    static std::regex regex{"(//.*)|(/\\*(.|\n)*?\\*/)"};
+    static const std::regex regex{"(//.*)|(/\\*(.|\n)*?\\*/)"};
 
     mContents = std::regex_replace(mContents, regex, " ");
 
@@ -123,7 +123,7 @@ bool Preprocessor::deleteComment()
 
 bool Preprocessor::addMark()
 {
-    static std::regex regex{"#( |\t|\n|\v|\f)*?include( |\t|\n|\v|\f)*?(<.*?>|\".*?\")"};
+    static const std::regex regex{"#( |\t|\n|\v|\f)*?include( |\t|\n|\v|\f)*?(<.*?>|\".*?\")"};
 
     std::deque<std::string> includedFiles;
     for(auto &&iter{std::sregex_iterator(mContents.begin(), mContents.end(), regex)};
@@ -257,6 +257,7 @@ bool Preprocessor::concatenateStringLiteral()
 
 bool Preprocessor::fileReadingError(const std::string &filename) const
 {   
+    std::lock_guard lock{stdioMutex};
     std::cerr << OUTPUT::charRedCode
         << "ANALYZER::Preprocessor::fileReadingError():\n"
         << OUTPUT::resetCode
@@ -268,6 +269,7 @@ bool Preprocessor::fileReadingError(const std::string &filename) const
 
 bool Preprocessor::preprocessingError(const std::string &filename) const
 {
+    std::lock_guard lock{stdioMutex};
     std::cerr << OUTPUT::charRedCode
         << "ANALYZER::Preprocessor::preprocessingError():\n"
         << OUTPUT::resetCode
@@ -279,6 +281,7 @@ bool Preprocessor::preprocessingError(const std::string &filename) const
 
 bool Preprocessor::decomposingError(const std::string &filename) const
 {
+    std::lock_guard lock{stdioMutex};
     std::cerr << OUTPUT::charRedCode
         << "ANALYZER::Preprocessor::decomposingError():\n"
         << OUTPUT::resetCode

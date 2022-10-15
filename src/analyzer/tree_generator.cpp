@@ -5,6 +5,7 @@
 
 #include "utility/output.hpp"
 #include "common/type.hpp"
+#include "common/define.hpp"
 #include "tokenizer.hpp"
 #include "tree_generator.hpp"
 
@@ -3175,6 +3176,8 @@ bool TreeGenerator::noEvaluatedError() const
 {
     static const constexpr std::size_t numPreOutput{15ull};
     static const constexpr std::size_t numPostOutput{5ull};
+
+    std::lock_guard lock{stdioMutex};
 
     std::size_t endPos{0ull};
     if(!mCacheMap.empty())

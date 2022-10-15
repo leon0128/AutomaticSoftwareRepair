@@ -7,7 +7,6 @@
 #include <functional>
 #include <string>
 #include <utility>
-#include <mutex>
 
 #include "common/define.hpp"
 
@@ -92,8 +91,6 @@ private:
     // these variable is used for log.
     std::size_t mTotalGen;
     std::size_t mTotalRep;
-
-    inline static std::mutex mIOMutex{};
 };
 
 }

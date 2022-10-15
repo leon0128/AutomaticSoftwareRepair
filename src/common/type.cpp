@@ -3,6 +3,7 @@
 #include <typeinfo>
 
 #include "utility/output.hpp"
+#include "define.hpp"
 #include "token.hpp"
 #include "configure.hpp"
 #include "type.hpp"
@@ -155,6 +156,12 @@ decltype(Base::typeMap) Base::typeMap
                 , TOKEN::TypeSpecifier::Tag::COMPLEX}}}
         , {Tag::BUILTIN_VA_LIST
             , {{TOKEN::TypeSpecifier::Tag::BUILTIN_VA_LIST}}}};
+
+decltype(TYPE_MAP)::mapped_type atSafely(const decltype(TYPE_MAP)::key_type &key)
+{
+    std::unique_lock lock{typeMapMutex};
+    return TYPE_MAP.at(key);
+}
 
 std::optional<Type> extractType(const Typedef &typedefType)
 {
@@ -331,19 +338,23 @@ bool equalTo(const Enum &lhs
     if(lhs.quals.flags != rhs.quals.flags)
         return false;
 
+    std::unique_lock lock{typeMapMutex};
     auto &&lhsIter{TYPE_MAP.find(lhs.id)};
     auto &&rhsIter{TYPE_MAP.find(rhs.id)};
-
     if(lhsIter == TYPE_MAP.end()
         || rhsIter == TYPE_MAP.end())
         return false;
 
-    if(!lhsIter->second->isDefined()
-        || !rhsIter->second->isDefined())
+    auto lhsIdInfo{lhsIter->second};
+    auto rhsIdInfo{rhsIter->second};
+    lock.unlock();
+
+    if(!lhsIdInfo->isDefined()
+        || !lhsIdInfo->isDefined())
         return false;
     
-    const auto &lhsEnum{std::dynamic_pointer_cast<EnumInfo>(lhsIter->second)};
-    const auto &rhsEnum{std::dynamic_pointer_cast<EnumInfo>(rhsIter->second)};
+    auto lhsEnum{std::dynamic_pointer_cast<EnumInfo>(lhsIdInfo)};
+    auto rhsEnum{std::dynamic_pointer_cast<EnumInfo>(rhsIdInfo)};
 
     if(lhsEnum.get() == nullptr
         || rhsEnum.get() == nullptr)
@@ -370,11 +381,11 @@ bool equalTo(const Struct &lhs
     if(lhs.quals.flags != rhs.quals.flags)
         return false;
 
-    auto &&lhsIdInfo{TYPE_MAP.at(lhs.id)};
-    auto &&rhsIdInfo{TYPE_MAP.at(rhs.id)};
+    auto lhsIdInfo{atSafely(lhs.id)};
+    auto rhsIdInfo{atSafely(rhs.id)};
 
-    const auto &lhsStruct{std::dynamic_pointer_cast<StructInfo>(lhsIdInfo)};
-    const auto &rhsStruct{std::dynamic_pointer_cast<StructInfo>(rhsIdInfo)};
+    auto lhsStruct{std::dynamic_pointer_cast<StructInfo>(lhsIdInfo)};
+    auto rhsStruct{std::dynamic_pointer_cast<StructInfo>(rhsIdInfo)};
     if(lhsStruct.get() == nullptr
         || rhsStruct.get() == nullptr)
         return false;
@@ -431,6 +442,8 @@ bool equalTo(std::size_t lhs
     , std::size_t rhs
     , std::size_t rec)
 {
+    
+    std::unique_lock lock{typeMapMutex};
     auto &&lhsIter{TYPE_MAP.find(lhs)};
     auto &&rhsIter{TYPE_MAP.find(rhs)};
 
@@ -438,10 +451,14 @@ bool equalTo(std::size_t lhs
         || rhsIter == TYPE_MAP.end())
         return false;
 
-    if(lhsIter->second->derivedTag() != rhsIter->second->derivedTag())
+    auto lhsIdInfo{lhsIter->second};
+    auto rhsIdInfo{rhsIter->second};
+    lock.unlock();
+
+    if(lhsIdInfo->derivedTag() != rhsIdInfo->derivedTag())
         return false;
     
-    switch(lhsIter->second->derivedTag())
+    switch(lhsIdInfo->derivedTag())
     {
         case(IdInfo::DerivedTag::STRUCT):
             return equalTo(Struct{lhs}
@@ -568,8 +585,8 @@ std::string Enum::name() const
 {
     std::string enumName{quals.name()};
 
-    auto &&idInfo{TYPE_MAP.at(id)};
-    auto &&enumInfo{std::dynamic_pointer_cast<EnumInfo>(idInfo)};
+    auto idInfo{atSafely(id)};
+    auto enumInfo{std::dynamic_pointer_cast<EnumInfo>(idInfo)};
 
     if(enumInfo.get() != nullptr)
     {
@@ -587,7 +604,7 @@ std::string Struct::name() const
 {
     std::string structName{quals.name()};
 
-    auto &&idInfo{TYPE_MAP.at(id)};
+    auto idInfo{atSafely(id)};
     auto &&structInfo{std::dynamic_pointer_cast<StructInfo>(idInfo)};
 
     if(structInfo.get() == nullptr)
@@ -695,6 +712,7 @@ std::string Type::name() const
 
 bool notSupportedError(const std::string &msg)
 {
+    std::lock_guard lock{stdioMutex};
     std::cerr << OUTPUT::charRedCode
         << "Type error:\n"
         << OUTPUT::resetCode
@@ -713,10 +731,18 @@ bool passingMaxRecursionWarning()
     return true;
 }
 
+std::size_t IdInfo::nextId()
+{
+    static std::mutex mutex;
+
+    std::lock_guard lock{mutex};
+    return NEXT_ID++;
+}
+
 IdInfo::IdInfo(DerivedTag dTag
     , const std::string &tag)
     : mDerivedTag{dTag}
-    , mId{NEXT_ID++}
+    , mId{nextId()}
     , mTag{tag}
     , mIsDefined{false}
 {

@@ -154,7 +154,7 @@ bool Selector::getSameTypeIdentifier(const std::shared_ptr<IDENTIFIER::Identifie
         i++)
     {
         if(!isSameType(id
-            , Scope::identifierMap().at(idList[i])))
+            , IDENTIFIER_MAP.at(idList[i])))
         {
             idList.erase(idList.begin() + i);
             i--;
@@ -201,7 +201,7 @@ bool Selector::select(TOKEN::Identifier *identifier)
             return invalidVariantError("TOKEN::Identifier");
 
         const auto &idPair{std::get<TI::Id>(identifier->var)};
-        const auto &idPtr{SCOPE::Scope::identifierMap().at(idPair.first)};
+        const auto &idPtr{IDENTIFIER::IDENTIFIER_MAP.at(idPair.first)};
 
         std::vector<std::size_t> idList;
         if(!getVisibleIdentifierList(idPtr
@@ -225,7 +225,7 @@ bool Selector::select(TOKEN::Identifier *identifier)
             return invalidVariantError("TOKEN::Identifier");
         
         const auto &idPair{std::get<TI::Id>(identifier->var)};
-        const auto &idPtr{SCOPE::Scope::identifierMap().at(idPair.first)};
+        const auto &idPtr{IDENTIFIER::IDENTIFIER_MAP.at(idPair.first)};
 
         std::vector<std::size_t> idList;
         if(!getVisibleIdentifierList(idPtr

@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <mutex>
 
 #include "configure.hpp"
 
@@ -30,6 +31,9 @@ struct CodeInformation
 
 inline extern std::stringstream sstream;
 std::stringstream sstream{};
+
+inline extern std::mutex stdioMutex;
+std::mutex stdioMutex{};
 
 inline extern void controlOutputLog(std::string &command)
 {

@@ -10,6 +10,8 @@
 #include <memory>
 #include <vector>
 #include <deque>
+#include <mutex>
+#include <utility>
 
 inline namespace COMMON
 {
@@ -30,12 +32,15 @@ private:
     inline static std::size_t NEXT_ID{0ull};
     inline static std::unordered_map<std::size_t
         , Scope*> SCOPE_MAP{};
-    inline static std::unordered_map<std::size_t
-        , std::shared_ptr<IDENTIFIER::Identifier>> IDENTIFIER_MAP{};
+    inline static std::recursive_mutex mScopeMapMutex{};
+
     // first: scope-id that indicates translation-unit.
     // second: deque of included file. ex. {"<stdio.h>, "\"header.h\"", ...}
     inline static std::unordered_map<std::size_t
         , std::deque<std::string>> INCLUDING_FILE_MAP{};
+    inline static std::recursive_mutex mIncludingFileMapMutex{};
+
+    static std::size_t nextIdSafely();
 
 public:
     using PairType = std::pair<std::shared_ptr<IDENTIFIER::Identifier>
@@ -54,10 +59,10 @@ public:
 
     inline static auto &&scopeMap()
         {return SCOPE_MAP;}
-    inline static auto &&identifierMap()
-        {return IDENTIFIER_MAP;}
     inline static auto &&includingFileMap()
         {return INCLUDING_FILE_MAP;}
+    inline static auto &&includingFileMapMutex()
+        {return mIncludingFileMapMutex;}
 
     Scope(Scope*
         , ScopeTag);

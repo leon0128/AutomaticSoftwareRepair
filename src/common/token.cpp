@@ -325,7 +325,7 @@ std::string &Identifier::str(std::string &res, std::size_t &indent) const
     else if(std::holds_alternative<Id>(var))
     {
         const auto &s{std::get<Id>(var)};
-        const auto &idPtr{SCOPE::Scope::identifierMap().at(s.first)};
+        const auto &idPtr{IDENTIFIER::IDENTIFIER_MAP.at(s.first)};
         res += idPtr->str();
     }
 

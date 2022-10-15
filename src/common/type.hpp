@@ -13,6 +13,7 @@
 #include <optional>
 #include <set>
 #include <deque>
+#include <mutex>
 
 #include "token.hpp"
 
@@ -42,8 +43,15 @@ class EnumInfo;
 
 inline extern std::unordered_map<std::size_t, std::shared_ptr<IdInfo>> TYPE_MAP;
 inline decltype(TYPE_MAP) TYPE_MAP{};
+inline extern std::recursive_mutex typeMapMutex;
+inline decltype(typeMapMutex) typeMapMutex{};
 
-extern std::unordered_map<TOKEN::Keyword::Tag, TOKEN::TypeSpecifier::Tag> KEYWORD_TYPE_MAP;
+extern const std::unordered_map<TOKEN::Keyword::Tag, TOKEN::TypeSpecifier::Tag> KEYWORD_TYPE_MAP;
+
+// wrapper
+template<class ...Args>
+extern std::pair<decltype(TYPE_MAP)::iterator, bool> emplaceSafely(Args &&...args);
+extern decltype(TYPE_MAP)::mapped_type atSafely(const decltype(TYPE_MAP)::key_type &key);
 
 std::optional<Type> extractType(const Typedef&);
 std::optional<Type> addQualifiers(const Type&
@@ -248,6 +256,8 @@ class IdInfo
 {
 private:
     inline static std::size_t NEXT_ID{0ull};
+    // return next-id then next-id is incremented
+    static std::size_t nextId();
 
 public:
     enum class DerivedTag : unsigned char;
@@ -303,6 +313,13 @@ public:
 
     EnumInfo(const std::string&);
 };
+
+template<class ...Args>
+std::pair<decltype(TYPE_MAP)::iterator, bool> emplaceSafely(Args &&...args)
+{
+    std::unique_lock lock{typeMapMutex};
+    return TYPE_MAP.emplace(std::forward<Args>(args)...);
+}
 
 }
 

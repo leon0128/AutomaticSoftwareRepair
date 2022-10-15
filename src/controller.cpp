@@ -81,7 +81,7 @@ void Controller::finalize()
     if(Configure::SHOULD_OUTPUT_TIME_LOG)
         timeMeasurer().print();
     if(Configure::SHOULD_OUTPUT_SPECIFIED_LOG)
-        std::cout << sstream.str() << std::endl;
+        std::cout << sstream.str() << std::flush;
 }
 
 void Controller::outputSpecifiedLog() const
