@@ -19,7 +19,7 @@ NUMBER_OF_POSITIVE=0
 NUMBER_OF_NEGATIVE=4
 POSITIVE_TEST_WEIGHT=1
 NEGATIVE_TEST_WEIGHT=10
-TARGET_SCORE=40
+TARGET_SCORE=41
 
 ## external softwares
 PREPROCESSOR="cpp -P -I./test/ -D__extension__="
@@ -70,7 +70,6 @@ executeASR()
         $TARGET \
         $POOL \
         --result "$RESULT_FILENAME" \
-        --time-log \
         --preprocessor "$PREPROCESSOR" \
         --compiler "$COMPILER" \
         --builtin "$BUILTIN" \
@@ -187,7 +186,7 @@ execute()
         echo -n $TARGET_FILENAME, >> $1
 
         # executeASR --no-use-similarity --num-use-external 100000 >> $1
-        executeASR $POOL_OPTION --no-use-similarity --num-use-external 100000 >> $1
+        executeASR $POOL_OPTION --no-use-similarity --num-use-external 100000
         # executeASR $POOL_OPTION --no-change-prob --num-use-external 64 >> $1
         # executeASR $POOL_OPTION --num-use-external 100000 >> $1
         # executeASR $POOL_OPTION --num-use-external 64 >> $1

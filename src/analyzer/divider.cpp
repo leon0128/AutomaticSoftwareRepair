@@ -295,10 +295,7 @@ TOKEN::Statement *Divider::createStatement(TOKEN::InitDeclarator *id)
         statement = new Statement{expressionStatement};
     }
     else if(std::holds_alternative<InitializerList*>(s.i->var))
-    {
-        unsupportedWarning("InitializerList");
         return nullptr;
-    }
 
     auto *asl0{s.asl0};
     auto *declarator{s.d};
@@ -316,7 +313,7 @@ bool Divider::unsupportedWarning(const std::string &className)
     std::cerr << OUTPUT::charYellowCode
         << "ANALYZER::Divider::unsupportedWarning():\n"
         << OUTPUT::resetCode
-        << "    what: failed to support to divide class.\n"
+        << "    what: failed to divide statement.\n"
         << "    className: " << className
         << std::endl;
     return false;

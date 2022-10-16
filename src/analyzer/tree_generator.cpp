@@ -1218,9 +1218,14 @@ TOKEN::InitializerList *TreeGenerator::tokInitializerList()
 
     std::vector<TOKEN::InitializerList::Sd_i> seq;
 
+    bool isFirst{true};
     while(true)
     {
         std::size_t pre = mIdx;
+
+        if(!isFirst && !isMatch(TOKEN::Punctuator::Tag::COMMA))
+            break;
+
         if(TOKEN::InitializerList::Sd_i s;
             (s.d = tokDesignation(), true)
                 && (s.i = tokInitializer()) != nullptr)
@@ -1232,6 +1237,8 @@ TOKEN::InitializerList *TreeGenerator::tokInitializerList()
             delete s.i;
             break;
         }
+
+        isFirst = false;
     }
 
     if(!seq.empty())
