@@ -354,8 +354,13 @@ bool Selector::select(const TOKEN::CompoundStatement *cs)
     for(const auto *bi : cs->bil->seq)
     {
         if(std::holds_alternative<Declaration*>(bi->var))
-            return notSupportError("declaration is not supported.");
-        
+        {
+            if(mIsFittable)
+                return false;
+            else
+                return notSupportError("declaration is not supported.");            
+        }
+
         if(std::holds_alternative<Statement*>(bi->var))
         {
             if(!select(std::get<Statement*>(bi->var)))
@@ -1573,7 +1578,7 @@ bool Selector::select(const TOKEN::AsmStatement *as)
 bool Selector::clearError() const
 {
     std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector error:\n"
+        << "REPAIR::Selector::clearError():\n"
         << OUTPUT::resetCode
         << "    what: failed to clear previous value.\n"
         << std::flush;
@@ -1583,7 +1588,7 @@ bool Selector::clearError() const
 bool Selector::invalidStatementError() const
 {
     std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector error:\n"
+        << "REPAIR::Selector::invalidStatementError():\n"
         << OUTPUT::resetCode
         << "    what: invalid statement.\n"
         << std::flush;
@@ -1593,7 +1598,7 @@ bool Selector::invalidStatementError() const
 bool Selector::invalidVariantError(const std::string &className) const
 {
     std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector error:\n"
+        << "REPAIR::Selector::invalidVariantError():\n"
         << OUTPUT::resetCode
         << "    what: variant has invalid entity.\n"
         "    class: " << className
@@ -1604,7 +1609,7 @@ bool Selector::invalidVariantError(const std::string &className) const
 bool Selector::isNotFoundIdentifier() const
 {
     std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector error:\n"
+        << "REPAIR::Selector::isNotFoundIdentifier():\n"
         << OUTPUT::resetCode
         << "    what: not found identifier that is same type.\n"
         << std::flush;
@@ -1614,9 +1619,9 @@ bool Selector::isNotFoundIdentifier() const
 bool Selector::notSupportError(const std::string &name) const
 {
     std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector error:\n"
+        << "REPAIR::Selector::notSupportError():\n"
         << OUTPUT::resetCode
-        << "    what: not support.\n"
+        << "    what: no support.\n"
         "    ---: " << name
         << std::endl;
     return false;
@@ -1625,7 +1630,7 @@ bool Selector::notSupportError(const std::string &name) const
 bool Selector::lackIdError() const
 {
     std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector error:\n"
+        << "REPAIR::Selector::lackIdError():\n"
         << OUTPUT::resetCode
         << "    what: lack of id-list.\n"
         << std::flush;
@@ -1635,7 +1640,7 @@ bool Selector::lackIdError() const
 bool Selector::unusedIdError() const
 {
     std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector error:\n"
+        << "REPAIR::Selector::unusedIdError():\n"
         << OUTPUT::resetCode
         << "    what: exists unused identifier-id.\n"
         << std::flush;

@@ -6,81 +6,8 @@
 #include <string>
 #include <memory>
 
-namespace TOKEN
-{
-    class Identifier;
-    class Statement;
-    class ExpressionStatement;
-    class JumpStatement;
-    class LabeledStatement;
-    class CompoundStatement;
-    class SelectionStatement;
-    class IterationStatement;
-    class Expression;
-    class AssignmentExpression;
-    class ConditionalExpression;
-    class LogicalORExpression;
-    class LogicalANDExpression;
-    class InclusiveORExpression;
-    class ExclusiveORExpression;
-    class ANDExpression;
-    class EqualityExpression;
-    class RelationalExpression;
-    class ShiftExpression;
-    class AdditiveExpression;
-    class MultiplicativeExpression;
-    class CastExpression;
-    class UnaryExpression;
-    class PostfixExpression;
-    class PrimaryExpression;
-    class Constant;
-    class GenericSelection;
-    class GenericAssocList;
-    class GenericAssociation;
-    class EnumerationConstant;
-    class ConstantExpression;
-    class StaticAssertDeclaration;
+#include "common/token.hpp"
 
-    class ArgumentExpressionList;
-    class InitializerList;
-    class Designation;
-    class DesignatorList;
-    class Designator;
-    class Initializer;
-    class TypeName;
-    class SpecifierQualifierList;
-    class TypeSpecifier;
-    class AtomicTypeSpecifier;
-    class StructOrUnionSpecifier;
-    class StructDeclarationList;
-    class StructDeclaration;
-    class StructDeclaratorList;
-    class StructDeclarator;
-    class Declarator;
-    class DirectDeclarator;
-    class ParameterTypeList;
-    class ParameterList;
-    class ParameterDeclaration;
-    class DeclarationSpecifiers;
-    class AlignmentSpecifier;
-    class EnumSpecifier;
-    class EnumeratorList;
-    class Enumerator;
-    class TypedefName;
-    class TypeQualifier;
-    class AbstractDeclarator;
-    class Pointer;
-    class DirectAbstractDeclarator;
-
-    class AttributeSpecifierList;
-    class AttributeSpecifier;
-    class AttributeStatement;
-
-    class AsmQualifiers;
-    class BasicAsm;
-    class ExtendedAsm;
-    class AsmStatement;
-}
 namespace IDENTIFIER
 {
     class Identifier;
@@ -88,8 +15,6 @@ namespace IDENTIFIER
 
 namespace REPAIR
 {
-
-class Selector;
 
 class Selector
 {
@@ -99,6 +24,9 @@ private:
 public:
     Selector();
     ~Selector();
+
+    Selector(const Selector&) = delete;
+    Selector(Selector&&) = delete;
 
     // remove previous value
     bool execute(std::size_t scopeId
