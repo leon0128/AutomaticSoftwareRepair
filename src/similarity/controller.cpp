@@ -26,7 +26,7 @@ bool Controller::execute(const CodeInformation &target
     bool isSucceessfull{initialize(pool)
         && calculate(target)};
 
-    // test(tus);
+    test(pool);
 
     // finalize
     finalize();
@@ -96,14 +96,20 @@ void Controller::test(const std::deque<CodeInformation> &pool)
 
     std::deque<std::deque<double>> similarity;
 
+    std::cout << ",";
     for(auto &&element : reps)
     {
+        std::cout << element->mFilename << "::" << element->mFunctionName << ",";
         similarity.push_back(Calculator::calculateSimilarity(element));
         Calculator::normalize(similarity.back());
     }
+    std::cout << std::endl;
 
-    for(auto &&row : similarity)
+    for(std::size_t i{0ull}; i < similarity.size(); i++)
     {
+        std::cout << reps.at(i)->mFilename << "::" << reps.at(i)->mFunctionName << ",";
+        auto &&row{similarity.at(i)};
+
         for(auto &&column : row)
             std::cout << column << ",";
         std::cout << std::endl;

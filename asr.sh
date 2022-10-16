@@ -172,21 +172,22 @@ done
 execute()
 {
     ## header
-    echo -n target, >> $1
+    # echo -n target, >> $1
     for i in {0..4}
     do
-        echo -n $i.isSuccess,$i.created,$i.totalTime,$i.repairTime, >> $1
+        echo
+        # echo -n $i.isSuccess,$i.created,$i.totalTime,$i.repairTime, >> $1
     done
-    echo >> $1
+    # echo >> $1
     for TAR in ${TARGETS[@]}
     do
         TARGET_FILENAME=$TAR
         TEST_SCRIPT_FILENAME=${TARGET_TESTCASE_MAP[$TAR]}
 
-        echo -n $TARGET_FILENAME, >> $1
+        # echo -n $TARGET_FILENAME, >> $1
 
         # executeASR --no-use-similarity --num-use-external 100000 >> $1
-        executeASR $POOL_OPTION --no-use-similarity --num-use-external 100000
+        executeASR $POOL_OPTION --num-use-external 100000 >> $1
         # executeASR $POOL_OPTION --no-change-prob --num-use-external 64 >> $1
         # executeASR $POOL_OPTION --num-use-external 100000 >> $1
         # executeASR $POOL_OPTION --num-use-external 64 >> $1
@@ -199,5 +200,5 @@ execute()
 
 for i in {1..1}
 do
-    execute repair_time_test.csv
+    execute similarity.csv
 done
