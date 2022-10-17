@@ -436,7 +436,7 @@ bool Configure::setDefaultValue()
                 SIM_CAPACITY = 1.0;
                 break;
             case(Tag::SIM_NUMBER_OF_USE):
-                SIM_NUMBER_OF_USE = 32ull;
+                SIM_NUMBER_OF_USE = 32'768ull;
                 break;
             case(Tag::SIM_NO_CHANGE_PROB):
                 SHOULD_CHANGE_PROB = true;

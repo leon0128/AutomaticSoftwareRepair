@@ -54,8 +54,6 @@ bool Controller::execute(int argc, char **argv)
         similarity = similarityController.moveResults();
     }
 
-    return true;
-
     // repair
     REPAIR::Controller repairController;
     {

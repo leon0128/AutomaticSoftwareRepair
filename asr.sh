@@ -19,7 +19,7 @@ NUMBER_OF_POSITIVE=0
 NUMBER_OF_NEGATIVE=4
 POSITIVE_TEST_WEIGHT=1
 NEGATIVE_TEST_WEIGHT=10
-TARGET_SCORE=41
+TARGET_SCORE=40
 
 ## external softwares
 PREPROCESSOR="cpp -P -I./test/ -D__extension__="
@@ -30,7 +30,7 @@ BUILTIN="builtin.h"
 ADD_PROBABILITY=0.2
 SUB_PROBABILITY=0.2
 SWAP_PROBABILITY=0.6
-MAX_NUMBER_OF_FAILURES=64
+MAX_NUMBER_OF_FAILURES=1024
 
 ## genetic algorithm
 POPULATION=1000
@@ -44,7 +44,7 @@ TYPE1_GRAM_SIZE=4
 TYPE2_GRAM_SIZE=4
 TYPE3_GRAM_SIZE=4
 REDUCTION_THRESHOLD=1.0
-NUMBER_OF_USE_EXTERNAL=64
+NUMBER_OF_USE_EXTERNAL=32768
 
 ## others
 NUMBER_OF_CONCURRENCY=32
@@ -71,6 +71,7 @@ executeASR()
         $POOL \
         --result "$RESULT_FILENAME" \
         --preprocessor "$PREPROCESSOR" \
+        --specified-log \
         --compiler "$COMPILER" \
         --builtin "$BUILTIN" \
         --test "$TEST_SCRIPT_FILENAME" \
@@ -116,7 +117,7 @@ concurrency_test()
 
 CONTESTS=()
 EXTERNAL_DIRS=()
-TARGETS=("test/ABC272/A/WA/35469736.c")
+TARGETS=()
 declare -A TARGET_TESTCASE_MAP
 for CON in $(ls test/)
 do
@@ -138,7 +139,7 @@ do
     do
         FILE=$WA_DIR
         FILE+=$TAR
-        # TARGETS+=($FILE)
+        TARGETS+=($FILE)
         TARGET_TESTCASE_MAP[$FILE]=$TEST_FILE
     done
 done
@@ -172,25 +173,25 @@ done
 execute()
 {
     ## header
-    # echo -n target, >> $1
+    echo -n target, >> $1
     for i in {0..4}
     do
-        echo
-        # echo -n $i.isSuccess,$i.created,$i.totalTime,$i.repairTime, >> $1
+        echo -n $i.isSuccess,$i.created,$i.totalTime,$i.repairTime, >> $1
     done
-    # echo >> $1
+    echo >> $1
+
     for TAR in ${TARGETS[@]}
     do
         TARGET_FILENAME=$TAR
         TEST_SCRIPT_FILENAME=${TARGET_TESTCASE_MAP[$TAR]}
 
-        # echo -n $TARGET_FILENAME, >> $1
+        echo -n $TARGET_FILENAME, >> $1
 
-        # executeASR --no-use-similarity --num-use-external 100000 >> $1
-        executeASR $POOL_OPTION --num-use-external 100000 >> $1
-        # executeASR $POOL_OPTION --no-change-prob --num-use-external 64 >> $1
-        # executeASR $POOL_OPTION --num-use-external 100000 >> $1
-        # executeASR $POOL_OPTION --num-use-external 64 >> $1
+        executeASR --no-use-similarity >> $1
+        executeASR $POOL_OPTION --no-use-similarity >> $1
+        executeASR $POOL_OPTION --no-change-prob --num-use-external 64 >> $1
+        executeASR $POOL_OPTION >> $1
+        executeASR $POOL_OPTION --num-use-external 64 >> $1
 
         echo >> $1
     done
@@ -200,5 +201,5 @@ execute()
 
 for i in {1..1}
 do
-    execute similarity.csv
+    execute repair_test.csv
 done
