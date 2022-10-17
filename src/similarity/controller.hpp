@@ -36,6 +36,8 @@ private:
     
     void test(const std::deque<CodeInformation> &pool);
 
+    void outputSimilarityLog(const CodeInformation &target
+        , const std::deque<CodeInformation>&) const;
     void outputSpecifiedLog() const;
 
     std::deque<std::deque<double>> mResults;

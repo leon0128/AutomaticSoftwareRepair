@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <iterator>
 
+#include "configure.hpp"
 #include "representation.hpp"
 #include "representation_creator.hpp"
 #include "calculator.hpp"
@@ -26,10 +27,13 @@ bool Controller::execute(const CodeInformation &target
     bool isSucceessfull{initialize(pool)
         && calculate(target)};
 
-    test(pool);
+    // test(pool);
 
     // finalize
     finalize();
+
+    if(Configure::SHOULD_OUTPUT_SIMILARITY_LOG)
+        outputSimilarityLog(target, pool);
 
     outputSpecifiedLog();
 
@@ -117,6 +121,36 @@ void Controller::test(const std::deque<CodeInformation> &pool)
 
     for(auto &&element : reps)
         delete element;
+}
+
+void Controller::outputSimilarityLog(const CodeInformation &target
+    , const std::deque<CodeInformation> &pool) const
+{
+    using RC = RepresentationCreator;
+
+    auto &&targetReps{RC::create(target.mFilename, target.mTranslationUnit.get())};
+
+    std::cout << "similarity-log:\n"
+        "    target";
+    for(auto &&rep : targetReps)
+        std::cout << "," << rep->mFilename << "::" << rep->mFunctionName;
+    std::cout << std::endl;
+
+    for(std::size_t i{0ull}; i < mResults.size(); i++)
+    {
+        auto &&row{mResults.at(i)};
+        std::cout << "    "
+            << targetReps.at(i)->mFilename
+            << "::"
+            << targetReps.at(i)->mFunctionName;
+    
+        for(auto &&column : row)
+            std::cout << "," << column;
+        std::cout << std::endl;
+    }
+
+    for(auto &&rep : targetReps)
+        delete rep;
 }
 
 void Controller::outputSpecifiedLog() const
