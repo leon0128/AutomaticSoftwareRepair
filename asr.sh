@@ -106,7 +106,7 @@ executeASR()
 notice()
 {
     post="Content-type:application/json"
-    data+='{"text":"'
+    data='{"text":"'
     for e in $@
     do
         data+=$e
@@ -133,7 +133,7 @@ concurrency_test()
 
 CONTESTS=()
 EXTERNAL_DIRS=()
-TARGETS=("test/ABC272/A/WA/35469736.c")
+TARGETS=()
 declare -A TARGET_TESTCASE_MAP
 for CON in $(ls test/)
 do
@@ -155,7 +155,7 @@ do
     do
         FILE=$WA_DIR
         FILE+=$TAR
-        # TARGETS+=($FILE)
+        TARGETS+=($FILE)
         TARGET_TESTCASE_MAP[$FILE]=$TEST_FILE
     done
 done
@@ -219,5 +219,5 @@ for i in {1..1}
 do
     notice ex::start
     execute repair_test.csv
-    notice ex::end
+    notice ex::start
 done
