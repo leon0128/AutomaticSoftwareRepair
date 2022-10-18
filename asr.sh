@@ -102,6 +102,22 @@ executeASR()
         $@
 }
 
+# notice
+notice()
+{
+    post="Content-type:application/json"
+    data+='{"text":"'
+    for e in $@
+    do
+        data+=$e
+    done
+    data+='"'
+    data+="}"
+    curl -X POST -H 'Content-type:application/json' \
+        --data $data \
+        $SLACK_WEBHOOK_URL
+}
+
 # concurrency test
 concurrency_test()
 {
@@ -117,7 +133,7 @@ concurrency_test()
 
 CONTESTS=()
 EXTERNAL_DIRS=()
-TARGETS=()
+TARGETS=("test/ABC272/A/WA/35469736.c")
 declare -A TARGET_TESTCASE_MAP
 for CON in $(ls test/)
 do
@@ -139,7 +155,7 @@ do
     do
         FILE=$WA_DIR
         FILE+=$TAR
-        TARGETS+=($FILE)
+        # TARGETS+=($FILE)
         TARGET_TESTCASE_MAP[$FILE]=$TEST_FILE
     done
 done
@@ -189,9 +205,9 @@ execute()
 
         executeASR --no-use-similarity >> $1
         executeASR $POOL_OPTION --no-use-similarity >> $1
-        executeASR $POOL_OPTION --no-change-prob --num-use-external 64 >> $1
+        executeASR $POOL_OPTION --no-change-prob --num-use-external 128 >> $1
         executeASR $POOL_OPTION >> $1
-        executeASR $POOL_OPTION --num-use-external 64 >> $1
+        executeASR $POOL_OPTION --num-use-external 128 >> $1
 
         echo >> $1
     done
@@ -201,5 +217,7 @@ execute()
 
 for i in {1..1}
 do
+    notice ex::start
     execute repair_test.csv
+    notice ex::end
 done
