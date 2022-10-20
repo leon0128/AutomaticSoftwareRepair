@@ -99,7 +99,7 @@ bool Operation::initialize(const std::shared_ptr<BLOCK::Block> &target
 
     if(!initializeSimilarity(target, pool, similarity))
         return false;
-    
+
     if(!discard())
         return false;
 
@@ -271,27 +271,10 @@ bool Operation::initializeSimilarity(const std::shared_ptr<BLOCK::Block> &target
 
 bool Operation::discard()
 {
-    auto &&isSimilar{[](ScopeId scopeId
-        , std::size_t statId)
-        -> bool
-        {
-            auto &&destScopeId{SCOPE_BELONGED_SCOPE_MAP.at(scopeId)};
-            auto &&srcScopeId{SCOPE_BELONGED_SCOPE_MAP.at(STAT_BELONGED_SCOPE_MAP.at(statId))};
-
-            auto &&iter{std::find_if(SIMILARITY.at(destScopeId).begin()
-                , SIMILARITY.at(destScopeId).end()
-                , [&](auto &&pair){return pair.first == srcScopeId;})};
-
-            if(iter == SIMILARITY.at(destScopeId).end())
-                return false;
-
-            return iter - SIMILARITY.at(destScopeId).begin() < static_cast<long int>(Configure::SIM_NUMBER_OF_USE);
-        }};
-
     for(auto &&[scopeId, statIds] : SELECTABLE_STATEMENT_MAP)
     {
         std::erase_if(statIds
-            , [&](auto &&pair){return !isSimilar(scopeId, pair.second);});
+            , [&](auto &&pair){return getRank(scopeId, pair.second) > Configure::SIM_NUMBER_OF_USE;});
     }
 
     return true;
@@ -307,8 +290,17 @@ bool Operation::setProbability()
         double sum{0.0};
         for(auto &&[prob, statId] : statIds)
         {
+            // if change prob and use proportion,
+            // prob's value is similarity.
+            // else if change prob and no use proportion,
+            // prob's value is (number of external functions - rank).
+            // otherwise prob's value is 1.0.
             prob = Configure::SHOULD_CHANGE_PROB
-                    ? getSimilarity(scopeId, statId)
+                    ? (Configure::SHOULD_USE_PROPROTION
+                        ? getSimilarity(scopeId, statId)
+                        : SIMILARITY.at(SCOPE_BELONGED_SCOPE_MAP.at(scopeId)).size()
+                            - getRank(scopeId, statId)
+                            + 1ull)
                     : 1.0;
             sum += prob;
         }
@@ -346,6 +338,21 @@ double Operation::getSimilarity(ScopeId scopeId
     }
 
     return iter->second;
+}
+
+std::size_t Operation::getRank(ScopeId scopeId
+    , std::size_t srcStatId)
+{
+    auto &&destScopeId{SCOPE_BELONGED_SCOPE_MAP.at(scopeId)};
+    auto &&srcScopeId{SCOPE_BELONGED_SCOPE_MAP.at(STAT_BELONGED_SCOPE_MAP.at(srcStatId))};
+
+    auto &&iter{std::find_if(SIMILARITY.at(destScopeId).begin()
+        , SIMILARITY.at(destScopeId).end()
+        , [&](auto &&pair){return pair.first == srcScopeId;})};
+    if(iter == SIMILARITY.at(destScopeId).end())
+        return 0ull;
+    
+    return static_cast<std::size_t>(iter - SIMILARITY.at(destScopeId).begin()) + 1ull;
 }
 
 bool Operation::initializationError(const std::string &what)

@@ -61,6 +61,7 @@ private:
         , SIM_CAPACITY
         , SIM_NUMBER_OF_USE
         , SIM_NO_CHANGE_PROB
+        , USE_PROPORTION
         , NUM_ENUM
     };
 
@@ -177,6 +178,8 @@ public:
     GET_SAFELY(SIM_NUMBER_OF_USE)
     inline static bool SHOULD_CHANGE_PROB;
     GET_SAFELY(SHOULD_CHANGE_PROB)
+    inline static bool SHOULD_USE_PROPROTION;
+    GET_SAFELY(SHOULD_USE_PROPROTION)
 
 #undef GET_SAFELY
 
