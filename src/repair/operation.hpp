@@ -100,6 +100,8 @@ private:
     static bool setProbability();
     static Prob getSimilarity(ScopeId destScopeId
         , std::size_t srcStatId);
+    static std::size_t getRank(ScopeId destScopeId
+        , std::size_t srcStatId);
 
     static bool initializationError(const std::string &what);
 
