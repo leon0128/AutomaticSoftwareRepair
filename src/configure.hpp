@@ -43,6 +43,7 @@ private:
         , NEG_WEIGHT
         , GOAL
         , FAILURE
+        , CREATE_SAME_OP
         , POP
         , MAX
         , ELITE
@@ -136,6 +137,8 @@ public:
 
     inline static std::size_t FAILURE_LIMIT;
     GET_SAFELY(FAILURE_LIMIT)
+    inline static bool SHOULD_CREATE_SAME_OP;
+    GET_SAFELY(SHOULD_CREATE_SAME_OP)
 
     inline static std::size_t POP_SIZE;
     GET_SAFELY(POP_SIZE)

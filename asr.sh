@@ -72,6 +72,7 @@ executeASR()
         --result "$RESULT_FILENAME" \
         --preprocessor "$PREPROCESSOR" \
         --specified-log \
+        --subprocess-log \
         --compiler "$COMPILER" \
         --builtin "$BUILTIN" \
         --test "$TEST_SCRIPT_FILENAME" \
@@ -133,7 +134,7 @@ concurrency_test()
 
 CONTESTS=()
 EXTERNAL_DIRS=()
-TARGETS=()
+TARGETS=("test/ABC265/A/WA/34202153.c")
 declare -A TARGET_TESTCASE_MAP
 for CON in $(ls test/)
 do
@@ -155,7 +156,7 @@ do
     do
         FILE=$WA_DIR
         FILE+=$TAR
-        TARGETS+=($FILE)
+        # TARGETS+=($FILE)
         TARGET_TESTCASE_MAP[$FILE]=$TEST_FILE
     done
 done

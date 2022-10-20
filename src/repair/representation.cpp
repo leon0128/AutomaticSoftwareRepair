@@ -28,21 +28,36 @@ Representation::Representation()
 Representation::~Representation()
 {
     delete mBlock;
-    for(auto *op : mOps)
-        delete op;
 }
 
 bool Representation::addOperation()
 {
-    OPERATION::Operation op{mBlock, POOL};
+    std::shared_ptr<OPERATION::Operation> op{new OPERATION::Operation{mBlock, POOL}};
 
-    if(op.tag() != OPERATION::Tag::NONE)
-        mOps.emplace_back(new OPERATION::Operation{std::move(op)});
-    else
+    if(op->tag() == OPERATION::Tag::NONE)
         return false;
+
+    if(!Configure::SHOULD_CREATE_SAME_OP
+        && mOps.empty())
+    {
+        for(auto &&[iter, endIter]{OPERATION::Operation::firstOperationMap.equal_range(op->srcId())};
+            iter != endIter;
+            iter++)
+        {
+            if(*(iter->second) == *op)
+                return false;
+        }
+        
+        OPERATION::Operation::firstOperationMap.emplace(op->srcId(), op);
+    }
+
+    mOps.emplace_back(op);
 
     if(!updateBlock())
+    {
+        mOps.pop_back();
         return false;
+    }
 
     return true;
 }
@@ -53,33 +68,33 @@ Representation *Representation::copy() const
 }
 
 Representation::Representation(const BLOCK::Block *block
-    , const std::deque<const OPERATION::Operation*> &ops)
+    , const std::deque<std::shared_ptr<OPERATION::Operation>> &ops)
     : mBlock{block->copy()}
     , mOps{}
 {
-    for(const auto *op : ops)
-        mOps.push_back(new OPERATION::Operation{*op});
+    for(auto &&op : ops)
+        mOps.push_back(op);
 }
 
 bool Representation::updateBlock()
 {
     using namespace OPERATION;
 
-    const auto *op{mOps.back()};
+    auto &&op{mOps.back()};
 
     switch(op->tag())
     {
         case(Tag::ADD):
-            if(!mBlock->add(op->dst()
+            if(!mBlock->add(op->targetPos()
                 , op->statId()))
                 return false;
             break;
         case(Tag::DEL):
-            if(!mBlock->subtract(op->dst()))
+            if(!mBlock->subtract(op->targetPos()))
                 return false;
             break;
         case(Tag::REP):
-            if(!mBlock->replace(op->dst()
+            if(!mBlock->replace(op->targetPos()
                 , op->statId()))
                 return false;
             break;

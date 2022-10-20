@@ -367,9 +367,10 @@ bool Operation::initializationError(const std::string &what)
 
 Operation::Operation()
     : mTag{Tag::NONE}
-    , mDst{}
+    , mTargetPos{}
     , mSrcId{std::numeric_limits<std::size_t>::max()}
     , mStatId{std::numeric_limits<std::size_t>::max()}
+    , mAltIds{}
 {
 }
 
@@ -385,9 +386,10 @@ Operation::Operation(const BLOCK::Block *target
     , const std::deque<std::shared_ptr<BLOCK::Block>> &pool
     , Tag tag)
     : mTag{tag}
-    , mDst{}
+    , mTargetPos{}
     , mSrcId{std::numeric_limits<std::size_t>::max()}
     , mStatId{std::numeric_limits<std::size_t>::max()}
+    , mAltIds{}
 {
     switch(tag)
     {
@@ -463,7 +465,7 @@ bool Operation::selectDestinationFunction()
     if(SELECTABLE_DESTINATION_INDICES.empty())
         return candidateError("selectDestinationFunction()");
     
-    mDst.push_back(SELECTABLE_DESTINATION_INDICES[RANDOM::RAND(SELECTABLE_DESTINATION_INDICES.size())]);
+    mTargetPos.push_back(SELECTABLE_DESTINATION_INDICES[RANDOM::RAND(SELECTABLE_DESTINATION_INDICES.size())]);
 
     return true;
 }
@@ -483,7 +485,7 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
             if(idx >= block->stats().size())
                 break;
             else
-                mDst.push_back(idx);
+                mTargetPos.push_back(idx);
         }
         else if(wasIfBlock)
         {
@@ -492,7 +494,7 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
                 idx = RANDOM::RAND(block->stats().size() + 1ull);
                 
                 if(idx <= block->stats().size())
-                    mDst.push_back(idx);
+                    mTargetPos.push_back(idx);
                 if(idx >= block->stats().size())
                     break;
             }
@@ -500,20 +502,20 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
             {
                 idx = RANDOM::RAND(block->stats().size() + 1ull);
                 if(idx < block->stats().size())
-                    mDst.push_back(idx);
+                    mTargetPos.push_back(idx);
                 else
                 {
-                    mDst.pop_back();
+                    mTargetPos.pop_back();
                     break;
                 }
             }
         }
-        else if(mDst.size() == 1ull)
+        else if(mTargetPos.size() == 1ull)
         {
             if(isAddition)
             {
                 idx = RANDOM::RAND(block->stats().size() + 1ull);
-                mDst.push_back(idx);
+                mTargetPos.push_back(idx);
                 if(idx >= block->stats().size())
                     break;
             }
@@ -522,7 +524,7 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
                 if(block->stats().empty())
                     return selectionError("function has no statement");
                 idx = RANDOM::RAND(block->stats().size());
-                mDst.push_back(idx);
+                mTargetPos.push_back(idx);
             }
         }
         else
@@ -532,7 +534,7 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
                 idx = RANDOM::RAND(block->stats().size() + 2ull);
                 
                 if(idx <= block->stats().size())
-                    mDst.push_back(idx);
+                    mTargetPos.push_back(idx);
                 if(idx >= block->stats().size())
                     break;
             }
@@ -542,13 +544,13 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
                 if(idx >= block->stats().size())
                     break;
                 else
-                    mDst.push_back(idx);
+                    mTargetPos.push_back(idx);
             }
         }
 
         wasIfBlock = block->isIfBlock();
     }
-    while((block = block->stats().at(mDst.back()).second));
+    while((block = block->stats().at(mTargetPos.back()).second));
 
     return true;
 }
@@ -603,7 +605,7 @@ bool Operation::selectAlternativeIdentifier(const BLOCK::Block *block)
 void Operation::clear()
 {
     mTag = Tag::NONE;
-    mDst.clear();
+    mTargetPos.clear();
     mSrcId = std::numeric_limits<std::size_t>::max();
     mStatId = std::numeric_limits<std::size_t>::max();
 }
@@ -612,7 +614,7 @@ CStatPair Operation::getStatPair(const BLOCK::Block *block) const
 {
     CStatPair statPair{0ull, block};
 
-    for(const auto &idx : mDst)
+    for(const auto &idx : mTargetPos)
         statPair = statPair.second->stats().at(idx);
 
     return statPair;
@@ -621,9 +623,9 @@ CStatPair Operation::getStatPair(const BLOCK::Block *block) const
 std::size_t Operation::getScopeId(const BLOCK::Block *block) const
 {
     for(std::size_t i{0ull};
-        i + 1ull < mDst.size();
+        i + 1ull < mTargetPos.size();
         i++)
-        block = block->stats().at(mDst[i]).second;
+        block = block->stats().at(mTargetPos[i]).second;
     
     return block->scopeId();
 }
@@ -646,6 +648,30 @@ bool Operation::selectionError(const std::string &what) const
         << "    what: " << what
         << std::endl;
     return false;
+}
+
+bool operator==(const Operation &lhs
+    , const Operation &rhs)
+{
+    if(lhs.tag() != rhs.tag())
+        return false;
+    
+    if(lhs.targetPos() != rhs.targetPos())
+        return false;
+    
+    if(lhs.srcId() != rhs.srcId())
+        return false;
+    
+    if(lhs.altIds() != rhs.altIds())
+        return false;
+    
+    return true;
+}
+
+bool operator!=(const Operation &lhs
+    , const Operation &rhs)
+{
+    return !(lhs == rhs);
 }
 
 }

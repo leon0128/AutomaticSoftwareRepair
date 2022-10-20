@@ -32,6 +32,7 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--neg-weight", {Tag::NEG_WEIGHT, true}}
     , {"--goal", {Tag::GOAL, true}}
     , {"--failure", {Tag::FAILURE, true}}
+    , {"--create-same-op", {Tag::CREATE_SAME_OP, false}}
     , {"--pop", {Tag::POP, true}}
     , {"--gen", {Tag::MAX, true}}
     , {"--elite", {Tag::ELITE, true}}
@@ -225,6 +226,9 @@ bool Configure::readArgument(Tag tag
             if(!assignSizeT(tag, arg, FAILURE_LIMIT))
                 return false;
             break;
+        case(Tag::CREATE_SAME_OP):
+            SHOULD_CREATE_SAME_OP = true;
+            break;
         case(Tag::POP):
             if(!assignSizeT(tag, arg, POP_SIZE))
                 return false;
@@ -389,7 +393,10 @@ bool Configure::setDefaultValue()
                 GOAL_SCORE = 11;
                 break;
             case(Tag::FAILURE):
-                FAILURE_LIMIT = 16ull;
+                FAILURE_LIMIT = 256ull;
+                break;
+            case(Tag::CREATE_SAME_OP):
+                SHOULD_CREATE_SAME_OP = false;
                 break;
             case(Tag::POP):
                 POP_SIZE = 1000ull;
