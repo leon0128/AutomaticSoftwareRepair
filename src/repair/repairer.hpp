@@ -49,6 +49,7 @@ private:
         , const std::optional<std::deque<std::deque<double>>> &similarity);
 
     bool repair();
+    bool repairUsingBruteForce();
     // this function adds new Representation to currentReps.
     // if prevReps is empty, all of Representations are created newly.
     // otherwise, Representations are created derived or newly. 

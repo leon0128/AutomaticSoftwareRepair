@@ -42,13 +42,14 @@ public:
 
 private:
     BLOCK::Block *mBlock;
-    std::deque<const OPERATION::Operation*> mOps;
+    std::deque<std::shared_ptr<OPERATION::Operation>> mOps;
 
 public:
     Representation();
     ~Representation();
 
     bool addOperation();
+    bool addOperation(std::shared_ptr<OPERATION::Operation> &op);
 
     Representation *copy() const;
 
@@ -57,7 +58,7 @@ public:
 
 private:
     Representation(const BLOCK::Block*
-        , const std::deque<const OPERATION::Operation*>&);
+        , const std::deque<std::shared_ptr<OPERATION::Operation>>&);
 
     // update block, apply mOps.back()
     bool updateBlock();

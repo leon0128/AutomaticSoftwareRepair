@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <deque>
 
 #include "common/token.hpp"
 
@@ -40,10 +41,10 @@ public:
     // function returns true, elsewise, function returns false.
     bool isIfBlock() const;
 
-    bool add(const std::vector<std::size_t> &pos
+    bool add(const std::deque<std::size_t> &pos
         , std::size_t statId);
-    bool subtract(const std::vector<std::size_t> &pos);
-    bool replace(const std::vector<std::size_t> &pos
+    bool subtract(const std::deque<std::size_t> &pos);
+    bool replace(const std::deque<std::size_t> &pos
         , std::size_t statId);
 
     TOKEN::TranslationUnit *createTranslationUnit() const;
@@ -68,7 +69,7 @@ private:
     Block(std::size_t scopeId);
 
     // use pos[0], pos[1], ... , pos[size - 2]
-    Block *getBlock(const std::vector<std::size_t> &pos);
+    Block *getBlock(const std::deque<std::size_t> &pos);
 
     StatPair createStatPair(const TOKEN::Statement*);
     // sub-block has argument's scope-id

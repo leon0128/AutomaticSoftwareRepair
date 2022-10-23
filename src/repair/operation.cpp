@@ -6,6 +6,7 @@
 
 #include "utility/output.hpp"
 #include "utility/random.hpp"
+#include "common/token.hpp"
 #include "common/statement.hpp"
 #include "configure.hpp"
 #include "register.hpp"
@@ -112,10 +113,10 @@ bool Operation::initialize(const std::shared_ptr<BLOCK::Block> &target
 bool Operation::initializeSelectableStatement(const std::shared_ptr<BLOCK::Block> &target
     , const std::deque<std::shared_ptr<BLOCK::Block>> &pool)
 {
-    for(auto &&[statId, subBlock] : target->stats())
+    for(auto &&idx : SELECTABLE_DESTINATION_INDICES)
     {
-        if(subBlock != nullptr)
-            insertScopeId(subBlock);
+        if(target->stats().at(idx).second != nullptr)
+            insertScopeId(target->stats().at(idx).second);
     }
 
     for(const auto &pair : SELECTABLE_STATEMENT_MAP)
@@ -355,6 +356,219 @@ std::size_t Operation::getRank(ScopeId scopeId
     return static_cast<std::size_t>(iter - SIMILARITY.at(destScopeId).begin()) + 1ull;
 }
 
+bool Operation::initializeFirstOperations(const std::shared_ptr<BLOCK::Block> &target)
+{
+    // create op
+    for(Operation op;
+        auto &&targetIdx : SELECTABLE_DESTINATION_INDICES)
+    {
+        auto &&funcBlock{target->stats().at(targetIdx).second};
+        op.mTargetPos.push_back(targetIdx);
+
+        if(!createFirstOperation(funcBlock, op))
+            return false;
+        op.mTargetPos.pop_back();
+    }
+
+    if(!adjustFirstOperationsProb())
+        return false;
+
+    if(firstOperations.size() > Configure::NUM_FIRST_OP_GENERATION)
+        firstOperations.resize(Configure::NUM_FIRST_OP_GENERATION);
+
+    return true;
+}
+
+bool Operation::createFirstOperation(const BLOCK::Block *block
+    , Operation &op)
+{
+    auto &&execAllBlock{[&]()
+        -> bool
+        {
+            for(std::size_t i{0ull}; i < block->stats().size(); i++)
+            {
+                auto &&[statId, subBlock]{block->stats().at(i)};
+                if(!subBlock)
+                    continue;
+                op.mTargetPos.push_back(i);
+                if(!createFirstOperation(subBlock, op))
+                    return false;
+                op.mTargetPos.pop_back();
+            }
+
+            return true;
+        }};
+    auto &&createOps{[&](auto &&createdStats)
+        -> bool
+        {
+            for(auto &&[baseId, createdId, ids, prob] : createdStats)
+            {
+                op.mSrcId = baseId;
+                op.mStatId = createdId;
+                op.mAltIds = ids;
+                firstOperations.emplace_back(prob, std::make_shared<Operation>(op));
+            }
+            return true;
+        }};
+
+    if(block->isIfBlock())
+        return execAllBlock();
+
+    // get<0>: statement id which is based.
+    // get<1>: statement id which is created.
+    // get<2>: identifier's indices.
+    // get<3>: prob
+    std::deque<std::tuple<std::size_t, std::size_t, std::deque<std::size_t>, double>> createdStats{};
+    
+    for(auto &&[prob, statId] : SELECTABLE_STATEMENT_MAP.at(block->scopeId()))
+    {
+        std::deque<std::deque<std::size_t>> candidate;
+        auto &&baseStat{std::get<std::shared_ptr<TOKEN::Statement>>(STATEMENT::STATEMENT_MAP.at(statId))};
+        if(Selector selector;
+            !selector.execute(block->scopeId()
+            , baseStat.get()
+            , candidate))
+            continue;
+
+        if(candidate.empty())
+            createdStats.emplace_back(statId, statId, std::deque<std::size_t>{}, prob);
+
+        std::deque<std::size_t> ids;
+        if(!createAllStatement(createdStats
+            , candidate
+            , 0ull
+            , ids
+            , baseStat
+            , statId
+            , prob))
+            continue;
+    }
+
+    for(std::size_t i{0ull}; i < block->stats().size(); i++)
+    {
+        op.mTargetPos.push_back(i);
+
+        // del
+        op.mTag = Tag::DEL;
+        op.mSrcId = std::numeric_limits<std::size_t>::max();
+        op.mStatId = std::numeric_limits<std::size_t>::max();
+        op.mAltIds.clear();
+        firstOperations.emplace_back(1.0, std::make_shared<Operation>(op));
+
+        // add
+        op.mTag = Tag::ADD;
+        if(!createOps(createdStats))
+            return false;
+        // rep
+        op.mTag = Tag::REP;
+        if(!createOps(createdStats))
+            return false;
+
+        op.mTargetPos.pop_back();
+    }
+    // add last pos
+    op.mTargetPos.push_back(block->stats().size());
+    op.mTag = Tag::ADD;
+    if(!createOps(createdStats))
+        return false;
+    op.mTargetPos.pop_back();
+
+    if(!execAllBlock())
+        return false;
+    
+    return true;
+}
+
+bool Operation::createAllStatement(std::deque<std::tuple<std::size_t, std::size_t, std::deque<std::size_t>, double>> &createdStats
+    , const std::deque<std::deque<std::size_t>> &candidate
+    , std::size_t candidateIndex
+    , std::deque<std::size_t> &ids
+    , const std::shared_ptr<TOKEN::Statement> &base
+    , std::size_t baseId
+    , double prob)
+{
+    // create statement
+    if(candidateIndex >= candidate.size())
+    {
+        std::shared_ptr<TOKEN::Statement> copy{base->copy()};
+        if(!Selector{}.execute(ids, copy.get()))
+            return false;
+        auto &&createdStatId{Register::execute(copy.get())};
+        if(!createdStatId)
+            return false;
+        
+        createdStats.emplace_back(baseId, createdStatId.value(), ids, prob);
+        return true;
+    }
+
+    // set ids
+    for(auto &&candidateId : candidate.at(candidateIndex))
+    {
+        ids.push_back(candidateId);
+
+        if(!createAllStatement(createdStats
+            , candidate
+            , candidateIndex + 1ull
+            , ids
+            , base
+            , baseId
+            , prob))
+            return false;
+
+        ids.pop_back();
+    }
+
+    return true;
+}
+
+bool Operation::adjustFirstOperationsProb()
+{
+    std::deque<std::reference_wrapper<double>> addProbs, delProbs, repProbs;
+    double addSum{0.0}, delSum{0.0}, repSum{0.0};
+
+    for(auto &&[prob, op] : firstOperations)
+    {
+        switch(op->tag())
+        {
+            case(Tag::ADD):
+                addSum += prob;
+                addProbs.push_back(prob);
+                break;
+            case(Tag::DEL):
+                delSum += prob;
+                delProbs.push_back(prob);
+                break;
+            case(Tag::REP):
+                repSum += prob;
+                repProbs.push_back(prob);
+                break;
+            
+            default:;
+        }
+    }
+
+    for(auto &&prob : addProbs)
+        prob.get() = prob.get() / addSum * Configure::ADDING_PROBABILITY;
+    for(auto &&prob : delProbs)
+        prob.get() = prob.get() / delSum * Configure::SUBTRACTING_PROBABILITY;
+    for(auto &&prob : repProbs)
+        prob.get() = prob.get() / repSum * Configure::SWAPPING_PROBABILITY;
+
+    if(Configure::SHOULD_USE_BRUTE_FORCE
+        && !Configure::SHOULD_USE_SIMILARITY)
+    {
+        std::random_shuffle(firstOperations.begin()
+            , firstOperations.end()
+            , RANDOM::RAND);
+    }
+
+    std::sort(firstOperations.begin()
+        , firstOperations.end()
+        , [](auto &&lhs, auto &&rhs){return lhs.first > rhs.first;});
+
+    return true;
+}
+
 bool Operation::initializationError(const std::string &what)
 {
     std::cerr << OUTPUT::charRedCode
@@ -367,9 +581,10 @@ bool Operation::initializationError(const std::string &what)
 
 Operation::Operation()
     : mTag{Tag::NONE}
-    , mDst{}
+    , mTargetPos{}
     , mSrcId{std::numeric_limits<std::size_t>::max()}
     , mStatId{std::numeric_limits<std::size_t>::max()}
+    , mAltIds{}
 {
 }
 
@@ -385,9 +600,10 @@ Operation::Operation(const BLOCK::Block *target
     , const std::deque<std::shared_ptr<BLOCK::Block>> &pool
     , Tag tag)
     : mTag{tag}
-    , mDst{}
+    , mTargetPos{}
     , mSrcId{std::numeric_limits<std::size_t>::max()}
     , mStatId{std::numeric_limits<std::size_t>::max()}
+    , mAltIds{}
 {
     switch(tag)
     {
@@ -463,7 +679,7 @@ bool Operation::selectDestinationFunction()
     if(SELECTABLE_DESTINATION_INDICES.empty())
         return candidateError("selectDestinationFunction()");
     
-    mDst.push_back(SELECTABLE_DESTINATION_INDICES[RANDOM::RAND(SELECTABLE_DESTINATION_INDICES.size())]);
+    mTargetPos.push_back(SELECTABLE_DESTINATION_INDICES[RANDOM::RAND(SELECTABLE_DESTINATION_INDICES.size())]);
 
     return true;
 }
@@ -483,7 +699,7 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
             if(idx >= block->stats().size())
                 break;
             else
-                mDst.push_back(idx);
+                mTargetPos.push_back(idx);
         }
         else if(wasIfBlock)
         {
@@ -492,7 +708,7 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
                 idx = RANDOM::RAND(block->stats().size() + 1ull);
                 
                 if(idx <= block->stats().size())
-                    mDst.push_back(idx);
+                    mTargetPos.push_back(idx);
                 if(idx >= block->stats().size())
                     break;
             }
@@ -500,20 +716,20 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
             {
                 idx = RANDOM::RAND(block->stats().size() + 1ull);
                 if(idx < block->stats().size())
-                    mDst.push_back(idx);
+                    mTargetPos.push_back(idx);
                 else
                 {
-                    mDst.pop_back();
+                    mTargetPos.pop_back();
                     break;
                 }
             }
         }
-        else if(mDst.size() == 1ull)
+        else if(mTargetPos.size() == 1ull)
         {
             if(isAddition)
             {
                 idx = RANDOM::RAND(block->stats().size() + 1ull);
-                mDst.push_back(idx);
+                mTargetPos.push_back(idx);
                 if(idx >= block->stats().size())
                     break;
             }
@@ -522,7 +738,7 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
                 if(block->stats().empty())
                     return selectionError("function has no statement");
                 idx = RANDOM::RAND(block->stats().size());
-                mDst.push_back(idx);
+                mTargetPos.push_back(idx);
             }
         }
         else
@@ -532,7 +748,7 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
                 idx = RANDOM::RAND(block->stats().size() + 2ull);
                 
                 if(idx <= block->stats().size())
-                    mDst.push_back(idx);
+                    mTargetPos.push_back(idx);
                 if(idx >= block->stats().size())
                     break;
             }
@@ -542,13 +758,13 @@ bool Operation::selectDestinationStatement(const BLOCK::Block *block
                 if(idx >= block->stats().size())
                     break;
                 else
-                    mDst.push_back(idx);
+                    mTargetPos.push_back(idx);
             }
         }
 
         wasIfBlock = block->isIfBlock();
     }
-    while((block = block->stats().at(mDst.back()).second));
+    while((block = block->stats().at(mTargetPos.back()).second));
 
     return true;
 }
@@ -581,7 +797,7 @@ bool Operation::selectAlternativeIdentifier(const BLOCK::Block *block)
 
     std::shared_ptr<TOKEN::Statement> statement{std::get<std::shared_ptr<TOKEN::Statement>>(STATEMENT::STATEMENT_MAP.at(mSrcId))->copy()};
 
-    std::vector<std::size_t> ids;
+    std::deque<std::size_t> ids;
     Selector selector;
     if(!selector.execute(scopeId
         , statement.get()
@@ -603,7 +819,7 @@ bool Operation::selectAlternativeIdentifier(const BLOCK::Block *block)
 void Operation::clear()
 {
     mTag = Tag::NONE;
-    mDst.clear();
+    mTargetPos.clear();
     mSrcId = std::numeric_limits<std::size_t>::max();
     mStatId = std::numeric_limits<std::size_t>::max();
 }
@@ -612,7 +828,7 @@ CStatPair Operation::getStatPair(const BLOCK::Block *block) const
 {
     CStatPair statPair{0ull, block};
 
-    for(const auto &idx : mDst)
+    for(const auto &idx : mTargetPos)
         statPair = statPair.second->stats().at(idx);
 
     return statPair;
@@ -621,9 +837,9 @@ CStatPair Operation::getStatPair(const BLOCK::Block *block) const
 std::size_t Operation::getScopeId(const BLOCK::Block *block) const
 {
     for(std::size_t i{0ull};
-        i + 1ull < mDst.size();
+        i + 1ull < mTargetPos.size();
         i++)
-        block = block->stats().at(mDst[i]).second;
+        block = block->stats().at(mTargetPos[i]).second;
     
     return block->scopeId();
 }
@@ -646,6 +862,30 @@ bool Operation::selectionError(const std::string &what) const
         << "    what: " << what
         << std::endl;
     return false;
+}
+
+bool operator==(const Operation &lhs
+    , const Operation &rhs)
+{
+    if(lhs.tag() != rhs.tag())
+        return false;
+    
+    if(lhs.targetPos() != rhs.targetPos())
+        return false;
+    
+    if(lhs.srcId() != rhs.srcId())
+        return false;
+    
+    if(lhs.altIds() != rhs.altIds())
+        return false;
+    
+    return true;
+}
+
+bool operator!=(const Operation &lhs
+    , const Operation &rhs)
+{
+    return !(lhs == rhs);
 }
 
 }

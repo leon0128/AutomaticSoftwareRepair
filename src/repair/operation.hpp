@@ -6,6 +6,16 @@
 #include <utility>
 #include <unordered_map>
 #include <deque>
+#include <memory>
+#include <tuple>
+
+inline namespace COMMON
+{
+namespace TOKEN
+{
+    class Statement;
+}
+}
 
 namespace REPAIR
 {
@@ -23,6 +33,7 @@ namespace OPERATION
 
 enum class Tag : unsigned char;
 class Operation;
+class OperationHash;
 
 Tag selectTag();
 
@@ -68,11 +79,17 @@ private:
     static std::unordered_map<ScopeId, std::size_t> SCOPE_COLUMN_MAP;
 
 public:
+    // this object contains operation that is Rep's first it.
+    //  first: prob
+    //  second: Operation
+    inline static std::deque<std::pair<double, std::shared_ptr<Operation>>> firstOperations{};
+
     static bool initialize(const std::shared_ptr<BLOCK::Block> &target
         , const std::deque<std::shared_ptr<BLOCK::Block>> &pool);
     static bool initialize(const std::shared_ptr<BLOCK::Block> &target
         , const std::deque<std::shared_ptr<BLOCK::Block>> &pool
         , const std::deque<std::deque<double>> &similarity);
+    static bool initializeFirstOperations(const std::shared_ptr<BLOCK::Block> &target);
 
 private:
     static bool initializeSelectableStatement(const std::shared_ptr<BLOCK::Block> &target
@@ -103,13 +120,28 @@ private:
     static std::size_t getRank(ScopeId destScopeId
         , std::size_t srcStatId);
 
+    // helper for initializeFirstOperations
+    static bool createFirstOperation(const BLOCK::Block *block
+        , Operation &op);
+    // helper for createFirstOperation
+    static bool createAllStatement(std::deque<std::tuple<std::size_t, std::size_t, std::deque<std::size_t>, double>> &createdStats
+        , const std::deque<std::deque<std::size_t>> &candidate
+        , std::size_t candidateIndex
+        , std::deque<std::size_t> &ids
+        , const std::shared_ptr<TOKEN::Statement> &base
+        , std::size_t baseId
+        , double prob);
+    // helper for initializeFirsetOperations
+    static bool adjustFirstOperationsProb();
+
     static bool initializationError(const std::string &what);
 
 private:
     Tag mTag;
-    std::vector<std::size_t> mDst; // for addition, deletion and replacement
+    std::deque<std::size_t> mTargetPos; // for addition, deletion and replacement
     std::size_t mSrcId; // source statement id, for addition and replacement
     std::size_t mStatId; // alternative statement id, for addition and replacement
+    std::deque<std::size_t> mAltIds;
 
 public:
     Operation();
@@ -121,12 +153,14 @@ public:
 
     Tag tag() const noexcept
         {return mTag;}
-    const std::vector<std::size_t> &dst() const noexcept
-        {return mDst;}
+    auto &&targetPos() const noexcept
+        {return mTargetPos;}
     std::size_t srcId() const noexcept
         {return mSrcId;}
     std::size_t statId() const noexcept
         {return mStatId;}
+    auto &&altIds() const noexcept
+        {return mAltIds;}
 
 private:
     bool selectAdditionalPosition(const BLOCK::Block *target
@@ -153,6 +187,11 @@ private:
     bool candidateError(const std::string &functionName) const;
     bool selectionError(const std::string &what) const;
 };
+
+extern bool operator==(const Operation &lhs
+    , const Operation &rhs);
+extern bool operator!=(const Operation &lhs
+    , const Operation &rhs);
 
 }
 

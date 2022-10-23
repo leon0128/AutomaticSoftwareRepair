@@ -52,7 +52,7 @@ bool Block::isIfBlock() const
         && mStats.front().first == std::numeric_limits<std::size_t>::max();
 }
 
-bool Block::add(const std::vector<std::size_t> &pos
+bool Block::add(const std::deque<std::size_t> &pos
     , std::size_t statId)
 {
     using namespace TOKEN;
@@ -66,7 +66,7 @@ bool Block::add(const std::vector<std::size_t> &pos
     return true;
 }
 
-bool Block::subtract(const std::vector<std::size_t> &pos)
+bool Block::subtract(const std::deque<std::size_t> &pos)
 {
     Block *block{getBlock(pos)};
 
@@ -76,7 +76,7 @@ bool Block::subtract(const std::vector<std::size_t> &pos)
     return true;
 }
 
-bool Block::replace(const std::vector<std::size_t> &pos
+bool Block::replace(const std::deque<std::size_t> &pos
     , std::size_t statId)
 {
     using namespace TOKEN;
@@ -267,7 +267,7 @@ Block::Block(std::size_t scopeId)
 {
 }
 
-Block *Block::getBlock(const std::vector<std::size_t> &pos)
+Block *Block::getBlock(const std::deque<std::size_t> &pos)
 {
     Block *block{this};
     for(std::size_t i{0ull};
