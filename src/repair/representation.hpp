@@ -49,6 +49,7 @@ public:
     ~Representation();
 
     bool addOperation();
+    bool addOperation(std::shared_ptr<OPERATION::Operation> &op);
 
     Representation *copy() const;
 

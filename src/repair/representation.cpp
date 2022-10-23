@@ -2,6 +2,7 @@
 #include <utility>
 
 #include "configure.hpp"
+#include "utility/random.hpp"
 #include "utility/output.hpp"
 #include "block.hpp"
 #include "operation.hpp"
@@ -32,27 +33,47 @@ Representation::~Representation()
 
 bool Representation::addOperation()
 {
-    std::shared_ptr<OPERATION::Operation> op{new OPERATION::Operation{mBlock, POOL}};
-
-    if(op->tag() == OPERATION::Tag::NONE)
-        return false;
-
-    if(!Configure::SHOULD_CREATE_SAME_OP
+    std::shared_ptr<OPERATION::Operation> operation;
+    if(!OPERATION::Operation::firstOperations.empty()
         && mOps.empty())
     {
-        for(auto &&[iter, endIter]{OPERATION::Operation::firstOperationMap.equal_range(op->srcId())};
-            iter != endIter;
-            iter++)
+        double prob{RANDOM::RAND.floating<double>()}, sum{0.0};
+        for(; !operation;)
         {
-            if(*(iter->second) == *op)
-                return false;
+            for(auto &&iter{OPERATION::Operation::firstOperations.begin()};
+                iter != OPERATION::Operation::firstOperations.end();
+                iter++)
+            {
+                if((sum += iter->first) >= prob)
+                {
+                    operation = iter->second;
+                    OPERATION::Operation::firstOperations.erase(iter);
+                    break;
+                }
+            }
         }
-        
-        OPERATION::Operation::firstOperationMap.emplace(op->srcId(), op);
+    }
+    else
+    {
+        operation = std::make_shared<OPERATION::Operation>(mBlock, POOL);
+        if(operation->tag() == OPERATION::Tag::NONE)
+            return false;
     }
 
-    mOps.emplace_back(op);
+    mOps.emplace_back(operation);
 
+    if(!updateBlock())
+    {
+        mOps.pop_back();
+        return false;
+    }
+
+    return true;
+}
+
+bool Representation::addOperation(std::shared_ptr<OPERATION::Operation> &op)
+{
+    mOps.emplace_back(op);
     if(!updateBlock())
     {
         mOps.pop_back();

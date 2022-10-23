@@ -3,6 +3,7 @@
 #include <limits>
 #include <algorithm>
 
+#include "configure.hpp"
 #include "utility/output.hpp"
 #include "utility/random.hpp"
 #include "common/scope.hpp"
@@ -15,9 +16,11 @@ namespace REPAIR
 
 Selector::Selector()
     : mIsSelection{false}
+    , mIsCandidate{false}
     , mIsFittable{false}
     , mScopeId{std::numeric_limits<decltype(mScopeId)>::max()}
     , mIds{std::ref(INIT_VALUE)}
+    , mCandidateIds{std::ref(CANDIDATE_INIT_VALUE)}
     , mIdx{0ull}
     , mCIds{std::cref(INIT_VALUE)}
     , mIsFittables{}
@@ -30,9 +33,10 @@ Selector::~Selector()
 
 bool Selector::execute(std::size_t scopeId
     , const TOKEN::Statement *statement
-    , std::vector<std::size_t> &ids)
+    , std::deque<std::size_t> &ids)
 {
     mIsSelection = true;
+    mIsCandidate = false;
     mIsFittable = false;
 
     if(!clear())
@@ -47,10 +51,31 @@ bool Selector::execute(std::size_t scopeId
     return true;
 }
 
-bool Selector::execute(const std::vector<std::size_t> &ids
+bool Selector::execute(std::size_t scopeId
+    , const TOKEN::Statement *statement
+    , std::deque<std::deque<std::size_t>> &candidateIds)
+{
+    mIsSelection = true;
+    mIsCandidate = true;
+    mIsFittable = false;
+
+    if(!clear())
+        return false;
+    
+    mScopeId = scopeId;
+    mCandidateIds = std::ref(candidateIds);
+
+    if(!select(statement))
+        return false;
+
+    return true;
+}
+
+bool Selector::execute(const std::deque<std::size_t> &ids
     , const TOKEN::Statement *statement)
 {
     mIsSelection = false;
+    mIsCandidate = false;
     mIsFittable = false;
     
     if(!clear())
@@ -72,6 +97,7 @@ bool Selector::isFittable(std::size_t scopeId
     , const TOKEN::Statement *statement)
 {
     mIsSelection = false;
+    mIsCandidate = false;
     mIsFittable = true;
 
     if(!clear())
@@ -91,6 +117,7 @@ bool Selector::clear()
 {
     mScopeId = std::numeric_limits<decltype(mScopeId)>::max();
     mIds = std::ref(INIT_VALUE);
+    mCandidateIds = std::ref(CANDIDATE_INIT_VALUE);
 
     mIdx = 0ull;
     mCIds = std::cref(INIT_VALUE);
@@ -101,7 +128,7 @@ bool Selector::clear()
 }
 
 bool Selector::getVisibleIdentifierList(const std::shared_ptr<IDENTIFIER::Identifier> &id
-    , std::vector<std::size_t> &idList)
+    , std::deque<std::size_t> &idList)
 {
     using namespace SCOPE;
     using namespace IDENTIFIER;
@@ -144,7 +171,7 @@ bool Selector::getVisibleIdentifierList(const std::shared_ptr<IDENTIFIER::Identi
 }
 
 bool Selector::getSameTypeIdentifier(const std::shared_ptr<IDENTIFIER::Identifier> &id
-    , std::vector<std::size_t> &idList)
+    , std::deque<std::size_t> &idList)
 {
     using namespace IDENTIFIER;
     using namespace SCOPE;
@@ -164,7 +191,7 @@ bool Selector::getSameTypeIdentifier(const std::shared_ptr<IDENTIFIER::Identifie
     return true;
 }
 
-bool Selector::selectOne(const std::vector<std::size_t> &idList
+bool Selector::selectOne(const std::deque<std::size_t> &idList
     , std::size_t &result)
 {
     if(idList.empty())
@@ -203,7 +230,7 @@ bool Selector::select(TOKEN::Identifier *identifier)
         const auto &idPair{std::get<TI::Id>(identifier->var)};
         const auto &idPtr{IDENTIFIER::IDENTIFIER_MAP.at(idPair.first)};
 
-        std::vector<std::size_t> idList;
+        std::deque<std::size_t> idList;
         if(!getVisibleIdentifierList(idPtr
             , idList))
             return false;
@@ -211,13 +238,22 @@ bool Selector::select(TOKEN::Identifier *identifier)
         if(!getSameTypeIdentifier(idPtr
             , idList))
             return false;
-        
-        std::size_t result{0ull};
-        if(!selectOne(idList
-            , result))
-            return false;
-        
-        mIds.get().push_back(result);
+
+        if(mIsCandidate)
+        {
+            if(idList.empty())
+                return false;
+            mCandidateIds.get().push_back(std::move(idList));
+        }
+        else
+        {
+            std::size_t result{0ull};
+            if(!selectOne(idList
+                , result))
+                return false;
+            
+            mIds.get().push_back(result);
+        }
     }
     else if(mIsFittable)
     {
@@ -227,7 +263,7 @@ bool Selector::select(TOKEN::Identifier *identifier)
         const auto &idPair{std::get<TI::Id>(identifier->var)};
         const auto &idPtr{IDENTIFIER::IDENTIFIER_MAP.at(idPair.first)};
 
-        std::vector<std::size_t> idList;
+        std::deque<std::size_t> idList;
         if(!getVisibleIdentifierList(idPtr
             , idList))
             return false;
@@ -275,6 +311,9 @@ bool Selector::select(const TOKEN::JumpStatement *js)
 {
     using JS = TOKEN::JumpStatement;
 
+    if(!Configure::SHOULD_USE_CONTROL_FLOW)
+        return false;
+
     if(std::holds_alternative<JS::Sg_i>(js->var))
     {
         const auto &s{std::get<JS::Sg_i>(js->var)};
@@ -304,6 +343,9 @@ bool Selector::select(const TOKEN::ExpressionStatement *es)
 bool Selector::select(const TOKEN::LabeledStatement *ls)
 {
     using LS = TOKEN::LabeledStatement;
+
+    if(!Configure::SHOULD_USE_CONTROL_FLOW)
+        return false;
 
     if(std::holds_alternative<LS::Si_s>(ls->var))
     {

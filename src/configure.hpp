@@ -43,7 +43,10 @@ private:
         , NEG_WEIGHT
         , GOAL
         , FAILURE
+        , USE_CONTROL_FLOW
         , CREATE_SAME_OP
+        , USE_BRUTE_FORCE
+        , NUM_FIRST_OP_GENERATION
         , POP
         , MAX
         , ELITE
@@ -137,8 +140,14 @@ public:
 
     inline static std::size_t FAILURE_LIMIT;
     GET_SAFELY(FAILURE_LIMIT)
+    inline static bool SHOULD_USE_CONTROL_FLOW;
+    GET_SAFELY(SHOULD_USE_CONTROL_FLOW)
     inline static bool SHOULD_CREATE_SAME_OP;
     GET_SAFELY(SHOULD_CREATE_SAME_OP)
+    inline static bool SHOULD_USE_BRUTE_FORCE;
+    GET_SAFELY(SHOULD_USE_BRUTE_FORCE)
+    inline static std::size_t NUM_FIRST_OP_GENERATION;
+    GET_SAFELY(NUM_FIRST_OP_GENERATION)
 
     inline static std::size_t POP_SIZE;
     GET_SAFELY(POP_SIZE)

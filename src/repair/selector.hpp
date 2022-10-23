@@ -2,9 +2,9 @@
 #define REPAIR_SELECTOR_HPP
 
 #include <functional>
-#include <vector>
 #include <string>
 #include <memory>
+#include <deque>
 
 #include "common/token.hpp"
 
@@ -19,7 +19,8 @@ namespace REPAIR
 class Selector
 {
 private:
-    inline static std::vector<std::size_t> INIT_VALUE{};
+    inline static std::deque<std::size_t> INIT_VALUE{};
+    inline static std::deque<std::deque<std::size_t>> CANDIDATE_INIT_VALUE{};
 
 public:
     Selector();
@@ -31,9 +32,13 @@ public:
     // remove previous value
     bool execute(std::size_t scopeId
         , const TOKEN::Statement*
-        , std::vector<std::size_t>&);
+        , std::deque<std::size_t>&);
+    // get candidate identifiers.
+    bool execute(std::size_t scopeId
+        , const TOKEN::Statement*
+        , std::deque<std::deque<std::size_t>>&);
     // convert iddentifier-id to idList
-    bool execute(const std::vector<std::size_t>&
+    bool execute(const std::deque<std::size_t>&
         , const TOKEN::Statement*);
 
     // if statement fits to scope, this return true.
@@ -48,13 +53,13 @@ private:
 
     // insert visible identifier-id to argument.
     bool getVisibleIdentifierList(const std::shared_ptr<IDENTIFIER::Identifier>&
-        , std::vector<std::size_t>&);
+        , std::deque<std::size_t>&);
     // remove different type to identifier from vector for argument.
     bool getSameTypeIdentifier(const std::shared_ptr<IDENTIFIER::Identifier>&
-        , std::vector<std::size_t>&);
+        , std::deque<std::size_t>&);
     // select one from vector for argument.
     // result: size of vector == 1
-    bool selectOne(const std::vector<std::size_t>&
+    bool selectOne(const std::deque<std::size_t>&
         , std::size_t&);
 
     bool convert(TOKEN::Identifier*);
@@ -142,13 +147,15 @@ private:
     bool unusedIdError() const;
 
     bool mIsSelection;
+    bool mIsCandidate;
     bool mIsFittable;
 
     std::size_t mScopeId;
-    std::reference_wrapper<std::vector<std::size_t>> mIds;
+    std::reference_wrapper<std::deque<std::size_t>> mIds;
+    std::reference_wrapper<std::deque<std::deque<std::size_t>>> mCandidateIds;
 
     std::size_t mIdx;
-    std::reference_wrapper<const std::vector<std::size_t>> mCIds;
+    std::reference_wrapper<const std::deque<std::size_t>> mCIds;
 
     std::vector<bool> mIsFittables;
 };

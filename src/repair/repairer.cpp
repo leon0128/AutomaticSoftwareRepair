@@ -50,8 +50,16 @@ bool Repairer::execute(const CodeInformation &target
             return false;
     }
 
-    if(!repair())
-        return false;
+    if(Configure::SHOULD_USE_BRUTE_FORCE)
+    {
+        if(!repairUsingBruteForce())
+            return false;
+    }
+    else
+    {
+        if(!repair())
+            return false;
+    }
 
     if(Configure::SHOULD_OUTPUT_REPAIR_LOG)
         outputResultLog();
@@ -106,6 +114,10 @@ bool Repairer::initialize(const CodeInformation &target
             return false;
     }
 
+    if(!Configure::SHOULD_CREATE_SAME_OP
+        && !OPERATION::Operation::initializeFirstOperations(mTarget))
+        return false;
+
     return true;
 }
 
@@ -138,6 +150,122 @@ bool Repairer::repair()
         if(mIsRepaired)
             break;
     }
+
+    return true;
+}
+
+bool Repairer::repairUsingBruteForce()
+{
+    using namespace REPRESENTATION;
+    
+    TimeMeasurer::Wrapper wrapper{TimeMeasurer::RepairTag::EVALUATION};
+
+    // this mutex is used for futures and availableIndices.
+    std::mutex mutex;
+    std::condition_variable cv;
+
+    std::deque<std::future<std::pair<std::shared_ptr<Representation>, int>>> futures(Configure::NUM_CONCURRENCY);
+    // availableIndices is used to notify finished future object to main thread.
+    std::deque<std::size_t> availableIndices(futures.size());
+    std::iota(availableIndices.begin()
+        , availableIndices.end()
+        , 0ull);
+
+    std::size_t firstOpSize{OPERATION::Operation::firstOperations.size()};
+    int maxScore{std::numeric_limits<int>::min()};
+
+    // this function is used for std::async function.
+    // future object has this function.
+    auto &&evaluateWrapper{[&](std::size_t indexOfFutures
+        , std::shared_ptr<Representation> rep)
+        -> std::pair<std::shared_ptr<Representation>, int>
+        {
+            int score{evaluateRep(rep)};
+
+            std::unique_lock lock{mutex};
+            mTotalRep++;
+            availableIndices.push_back(indexOfFutures);
+
+            cv.notify_all();
+            return {rep, score};
+        }};
+
+    auto &&evaluateWrapperWithOutput{[&](std::size_t indexOfFutures
+        , std::shared_ptr<Representation> rep)
+        -> std::pair<std::shared_ptr<Representation>, int>
+        {
+            auto &&result{evaluateWrapper(indexOfFutures, rep)};
+
+            std::unique_lock ioLock{stdioMutex};
+            std::cout << "repair-log: evaluation is end.("
+                << mTotalRep
+                << "/" << firstOpSize
+                << ")"
+                << std::endl;
+            return result;
+        }};
+
+    // function that is passed to future.
+    std::function<std::pair<std::shared_ptr<Representation>, int>(std::size_t, std::shared_ptr<Representation>)> evaluateFunc;
+    if(Configure::SHOULD_OUTPUT_REPAIR_LOG)
+        evaluateFunc = evaluateWrapperWithOutput;
+    else
+        evaluateFunc = evaluateWrapper;
+
+    // execute all evaluation.
+    for(std::size_t i{0ull}; i < firstOpSize;)
+    {
+        std::unique_lock lock{mutex};
+
+        // if available future object exists,
+        // result of previous future object is assigned currentReps
+        // and new future object is set to futures.
+        if(!availableIndices.empty())
+        {
+            std::size_t indexOfFutures{availableIndices.front()};
+            availableIndices.pop_front();
+            
+            if(futures.at(indexOfFutures).valid())
+            {
+                auto &&[rep, score]{futures.at(indexOfFutures).get()};
+                if(score >= maxScore)
+                {
+                    maxScore = score;
+                    mResult = rep->copy();
+                }
+                if(score >= Configure::getSafelyGOAL_SCORE())
+                    break;
+            }
+
+            std::shared_ptr<Representation> rep{new Representation{}};
+            rep->addOperation(OPERATION::Operation::firstOperations.at(i).second);
+            futures.at(indexOfFutures)
+                = std::async(std::launch::async
+                    , evaluateFunc
+                    , indexOfFutures
+                    , rep);
+            i++;
+        }
+        else
+            cv.wait(lock, [&]{return !availableIndices.empty();});
+    }
+
+    // wait until execution of future objects is end.
+    for(auto &&future : futures)
+    {
+        if(future.valid())
+        {
+            auto &&[rep, score]{future.get()};
+            if(score >= maxScore)
+            {
+                maxScore = score;
+                mResult = rep->copy();
+            }
+        }
+    }
+
+    // set results to member variables.
+    mIsRepaired = maxScore >= Configure::GOAL_SCORE;
 
     return true;
 }
