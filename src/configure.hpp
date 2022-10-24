@@ -47,6 +47,7 @@ private:
         , CREATE_SAME_OP
         , USE_BRUTE_FORCE
         , NUM_FIRST_OP_GENERATION
+        , SAME_OP_FAILURE
         , POP
         , MAX
         , ELITE
@@ -148,6 +149,8 @@ public:
     GET_SAFELY(SHOULD_USE_BRUTE_FORCE)
     inline static std::size_t NUM_FIRST_OP_GENERATION;
     GET_SAFELY(NUM_FIRST_OP_GENERATION)
+    inline static std::size_t SAME_OP_FAILURE;
+    GET_SAFELY(SAME_OP_FAILURE)
 
     inline static std::size_t POP_SIZE;
     GET_SAFELY(POP_SIZE)

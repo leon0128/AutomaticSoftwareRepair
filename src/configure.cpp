@@ -36,6 +36,7 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--create-same-op", {Tag::CREATE_SAME_OP, false}}
     , {"--use-brute-force", {Tag::USE_BRUTE_FORCE, false}}
     , {"--num-first-op", {Tag::NUM_FIRST_OP_GENERATION, true}}
+    , {"--same-op-failure", {Tag::SAME_OP_FAILURE, true}}
     , {"--pop", {Tag::POP, true}}
     , {"--gen", {Tag::MAX, true}}
     , {"--elite", {Tag::ELITE, true}}
@@ -242,6 +243,10 @@ bool Configure::readArgument(Tag tag
             if(!assignSizeT(tag, arg, NUM_FIRST_OP_GENERATION))
                 return false;
             break;
+        case(Tag::SAME_OP_FAILURE):
+            if(!assignSizeT(tag, arg, SAME_OP_FAILURE))
+                return false;
+            break;
         case(Tag::POP):
             if(!assignSizeT(tag, arg, POP_SIZE))
                 return false;
@@ -419,6 +424,9 @@ bool Configure::setDefaultValue()
                 break;
             case(Tag::NUM_FIRST_OP_GENERATION):
                 NUM_FIRST_OP_GENERATION = 10000ull;
+                break;
+            case(Tag::SAME_OP_FAILURE):
+                SAME_OP_FAILURE = 10000ull;
                 break;
             case(Tag::POP):
                 POP_SIZE = 1000ull;

@@ -83,6 +83,11 @@ public:
     //  first: prob
     //  second: Operation
     inline static std::deque<std::pair<double, std::shared_ptr<Operation>>> firstOperations{};
+    // this object contains operation that is created.
+    //  first: srcId (if operation::tag is sub, srcId's value is max).
+    inline static std::unordered_multimap<std::size_t, std::shared_ptr<Operation>> createdOperations{};
+    // this object indicates count of same op created.
+    inline static std::size_t createdSameOpCount{0ull};
 
     static bool initialize(const std::shared_ptr<BLOCK::Block> &target
         , const std::deque<std::shared_ptr<BLOCK::Block>> &pool);
