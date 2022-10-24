@@ -114,7 +114,7 @@ bool Repairer::initialize(const CodeInformation &target
             return false;
     }
 
-    if(!Configure::SHOULD_CREATE_SAME_OP
+    if(Configure::SHOULD_USE_BRUTE_FORCE
         && !OPERATION::Operation::initializeFirstOperations(mTarget))
         return false;
 

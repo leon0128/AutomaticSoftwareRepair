@@ -34,6 +34,8 @@ Representation::~Representation()
 bool Representation::addOperation()
 {
     std::shared_ptr<OPERATION::Operation> operation;
+
+    // for brute-force
     if(!OPERATION::Operation::firstOperations.empty()
         && mOps.empty())
     {
@@ -53,6 +55,39 @@ bool Representation::addOperation()
             }
         }
     }
+    // no create same op
+    else if(mOps.empty()
+        && !Configure::SHOULD_CREATE_SAME_OP
+        && OPERATION::Operation::createdSameOpCount < Configure::SAME_OP_FAILURE)
+    {
+        for(bool isDuplicated{false};
+            OPERATION::Operation::createdSameOpCount < Configure::SAME_OP_FAILURE;
+            OPERATION::Operation::createdSameOpCount++)
+        {
+            operation = std::make_shared<OPERATION::Operation>(mBlock, POOL);
+            if(operation->tag() == OPERATION::Tag::NONE)
+                return false;
+
+            isDuplicated = false;
+            for(auto &&[iter, endIter]{OPERATION::Operation::createdOperations.equal_range(operation->srcId())};
+                iter != endIter;
+                iter++)
+            {
+                if(*(iter->second) == *operation)
+                {
+                    isDuplicated = true;
+                    break;
+                }
+            }
+        
+            if(!isDuplicated)
+            {
+                OPERATION::Operation::createdOperations.emplace(operation->srcId(), operation);
+                break;
+            }
+        }
+    }
+    // create any op
     else
     {
         operation = std::make_shared<OPERATION::Operation>(mBlock, POOL);
