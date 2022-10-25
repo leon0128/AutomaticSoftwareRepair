@@ -72,7 +72,6 @@ executeASR()
         --result "$RESULT_FILENAME" \
         --preprocessor "$PREPROCESSOR" \
         --specified-log \
-        --subprocess-log \
         --compiler "$COMPILER" \
         --builtin "$BUILTIN" \
         --test "$TEST_SCRIPT_FILENAME" \
@@ -134,7 +133,7 @@ concurrency_test()
 
 CONTESTS=()
 EXTERNAL_DIRS=()
-TARGETS=("test/ABC265/A/WA/34202153.c")
+TARGETS=("test/ABC272/A/WA/35469736.c" "test/ABC272/A/WA/35469736.c" "test/ABC272/A/WA/35469736.c" "test/ABC272/A/WA/35469736.c" "test/ABC272/A/WA/35469736.c")
 declare -A TARGET_TESTCASE_MAP
 for CON in $(ls test/)
 do
@@ -206,9 +205,9 @@ execute()
 
         executeASR --no-use-similarity >> $1
         executeASR $POOL_OPTION --no-use-similarity >> $1
-        executeASR $POOL_OPTION --no-change-prob --num-use-external 128 >> $1
+        executeASR $POOL_OPTION --no-change-prob --num-use-external 64 >> $1
         executeASR $POOL_OPTION >> $1
-        executeASR $POOL_OPTION --num-use-external 128 >> $1
+        executeASR $POOL_OPTION --num-use-external 64 >> $1
 
         echo >> $1
     done
@@ -220,5 +219,5 @@ for i in {1..1}
 do
     notice ex::start
     execute repair_test.csv
-    notice ex::start
+    notice ex::end
 done
