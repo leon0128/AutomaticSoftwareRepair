@@ -1,6 +1,4 @@
 target,0.isSuccess,0.created,0.totalTime,0.repairTime,1.isSuccess,1.created,1.totalTime,1.repairTime,2.isSuccess,2.created,2.totalTime,2.repairTime,3.isSuccess,3.created,3.totalTime,3.repairTime,4.isSuccess,4.created,4.totalTime,4.repairTime,
-test/ABC272/A/WA/35469736.c,target,0.isSuccess,0.created,0.totalTime,0.repairTime,1.isSuccess,1.created,1.totalTime,1.repairTime,2.isSuccess,2.created,2.totalTime,2.repairTime,3.isSuccess,3.created,3.totalTime,3.repairTime,4.isSuccess,4.created,4.totalTime,4.repairTime,
-target,0.isSuccess,0.created,0.totalTime,0.repairTime,1.isSuccess,1.created,1.totalTime,1.repairTime,2.isSuccess,2.created,2.totalTime,2.repairTime,3.isSuccess,3.created,3.totalTime,3.repairTime,4.isSuccess,4.created,4.totalTime,4.repairTime,
 test/ABC265/A/WA/34202153.c,false,10000,56507,55944,false,10000,142794,119928,false,10000,178738,146907,false,10000,174038,142277,false,10000,191186,159295,
 test/ABC265/A/WA/34206891.c,false,10000,59574,59091,false,10000,119159,96590,false,10000,140466,109211,false,10000,149979,118888,false,10000,113983,82671,
 test/ABC265/A/WA/34207296.c,
