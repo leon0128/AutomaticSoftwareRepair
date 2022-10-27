@@ -136,6 +136,7 @@ CONTESTS=()
 EXTERNAL_DIRS=()
 TARGETS=()
 declare -A TARGET_TESTCASE_MAP
+declare -A SAME_POOL_MAP
 for CON in $(ls test/)
 do
     CONTESTS+=($CON)
@@ -158,14 +159,15 @@ do
         FILE+=$TAR
         TARGETS+=($FILE)
         TARGET_TESTCASE_MAP[$FILE]=$TEST_FILE
+        SAME_POOL_MAP[$FILE]=$AC_DIR
     done
 done
 
 POOL_OPTION=""
-for EX in ${EXTERNAL_DIRS[@]}
-do
-    POOL_OPTION+="--pool $EX "
-done
+# for EX in ${EXTERNAL_DIRS[@]}
+# do
+    # POOL_OPTION+="--pool $EX "
+# done
 
 # 0. 
 ## no use external sources.
@@ -193,7 +195,7 @@ execute()
     echo -n target, >> $1
     for i in {0..4}
     do
-        echo -n $i.isSuccess,$i.created,$i.totalTime,$i.repairTime, >> $1
+        echo -n $i.isSuccess,$i.created, >> $1
     done
     echo >> $1
 
@@ -204,11 +206,12 @@ execute()
 
         echo -n $TARGET_FILENAME, >> $1
 
-        executeASR --no-use-similarity >> $1
-        executeASR $POOL_OPTION --no-use-similarity >> $1
-        executeASR $POOL_OPTION --no-change-prob --num-use-external 128 >> $1
-        executeASR $POOL_OPTION >> $1
-        executeASR $POOL_OPTION --num-use-external 128 >> $1
+        SAME_POOL=$(./poc --same $TAR $EXTERNAL_DIRS)
+        OTHER_POOL=$(./poc --other $TAR $EXTERNAL_DIRS)
+        executeASR $SAME_POOL --no-use-similarity >> $1
+        executeASR $SAME_POOL >> $1
+        executeASR $OTHER_POOL --no-use-similarity >> $1
+        executeASR $OTHER_POOL >> $1
 
         echo >> $1
     done
