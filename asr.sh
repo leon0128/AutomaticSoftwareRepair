@@ -134,7 +134,7 @@ concurrency_test()
 
 CONTESTS=()
 EXTERNAL_DIRS=()
-TARGETS=()
+TARGETS=("test/ABC265/A/WA/34202153.c")
 declare -A TARGET_TESTCASE_MAP
 declare -A SAME_POOL_MAP
 for CON in $(ls test/)
@@ -157,7 +157,7 @@ do
     do
         FILE=$WA_DIR
         FILE+=$TAR
-        TARGETS+=($FILE)
+        # TARGETS+=($FILE)
         TARGET_TESTCASE_MAP[$FILE]=$TEST_FILE
         SAME_POOL_MAP[$FILE]=$AC_DIR
     done
@@ -193,7 +193,7 @@ execute()
 {
     ## header
     echo -n target, >> $1
-    for i in {0..4}
+    for i in {0..3}
     do
         echo -n $i.isSuccess,$i.created, >> $1
     done
@@ -206,8 +206,9 @@ execute()
 
         echo -n $TARGET_FILENAME, >> $1
 
-        SAME_POOL=$(./poc --same $TAR $EXTERNAL_DIRS)
-        OTHER_POOL=$(./poc --other $TAR $EXTERNAL_DIRS)
+        SAME_POOL=$(./poc --same $TAR ${EXTERNAL_DIRS[@]})
+        OTHER_POOL=$(./poc --other $TAR ${EXTERNAL_DIRS[@]})
+
         executeASR $SAME_POOL --no-use-similarity >> $1
         executeASR $SAME_POOL >> $1
         executeASR $OTHER_POOL --no-use-similarity >> $1
@@ -221,7 +222,7 @@ execute()
 
 for i in {1..1}
 do
-    notice ex::start
+    notice $(hostname) ::start
     execute repair_test.csv
-    notice ex::end
+    notice $(hostname) ::end
 done
