@@ -164,10 +164,10 @@ do
 done
 
 POOL_OPTION=""
-# for EX in ${EXTERNAL_DIRS[@]}
-# do
-    # POOL_OPTION+="--pool $EX "
-# done
+for EX in ${EXTERNAL_DIRS[@]}
+do
+    POOL_OPTION+="--pool $EX "
+done
 
 # 0. 
 ## no use external sources.
@@ -192,29 +192,25 @@ POOL_OPTION=""
 execute()
 {
     ## header
-    echo -n target, >> $1
+    # echo -n target, >> $1
     for i in {0..3}
     do
-        echo -n $i.isSuccess,$i.created, >> $1
+        echo
+        # echo -n $i.isSuccess,$i.created, >> $1
     done
-    echo >> $1
+    # echo >> $1
 
     for TAR in ${TARGETS[@]}
     do
         TARGET_FILENAME=$TAR
         TEST_SCRIPT_FILENAME=${TARGET_TESTCASE_MAP[$TAR]}
 
-        echo -n $TARGET_FILENAME, >> $1
+        # echo -n $TARGET_FILENAME, >> $1
 
-        SAME_POOL=$(./poc --same $TAR ${EXTERNAL_DIRS[@]})
-        OTHER_POOL=$(./poc --other $TAR ${EXTERNAL_DIRS[@]})
+        REDUCTION_THRESHOLD=0.0
+        executeASR >> $1
 
-        executeASR $SAME_POOL --no-use-similarity >> $1
-        executeASR $SAME_POOL >> $1
-        executeASR $OTHER_POOL --no-use-similarity >> $1
-        executeASR $OTHER_POOL >> $1
-
-        echo >> $1
+        # baecho >> $1
     done
 }
 
@@ -223,6 +219,17 @@ execute()
 for i in {1..1}
 do
     notice $(hostname) ::start
-    execute repair_test.csv
+    REDUCTION_THRESHOLD=1.0
+    execute 221117_similarity_1.csv
+    REDUCTION_THRESHOLD=0.8
+    execute 221117_similarity_08.csv
+    REDUCTION_THRESHOLD=0.6
+    execute 221117_similarity_06.csv
+    REDUCTION_THRESHOLD=0.4
+    execute 221117_similarity_04.csv
+    REDUCTION_THRESHOLD=0.2
+    execute 221117_similarity_02.csv
+    REDUCTION_THRESHOLD=0.1
+    execute 221117_similarity_01.csv
     notice $(hostname) ::end
 done
