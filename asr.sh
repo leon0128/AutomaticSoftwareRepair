@@ -207,8 +207,7 @@ execute()
 
         # echo -n $TARGET_FILENAME, >> $1
 
-        REDUCTION_THRESHOLD=0.0
-        executeASR >> $1
+        executeASR $POOL_OPTION >> $1
 
         # baecho >> $1
     done
