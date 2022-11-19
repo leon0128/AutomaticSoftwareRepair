@@ -31,7 +31,7 @@ bool Controller::execute(const CodeInformation &target
     bool isSucceessfull{initialize(pool)
         && calculate(target)};
 
-    test(pool);
+    // test(pool);
 
     // finalize
     finalize();
@@ -41,7 +41,6 @@ bool Controller::execute(const CodeInformation &target
 
     outputSpecifiedLog();
 
-    return false;
     return isSucceessfull;
 }
 

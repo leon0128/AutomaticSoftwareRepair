@@ -43,7 +43,7 @@ ORIGINAL_GRAM_SIZE=1
 TYPE1_GRAM_SIZE=4
 TYPE2_GRAM_SIZE=4
 TYPE3_GRAM_SIZE=4
-REDUCTION_THRESHOLD=1.0
+REDUCTION_THRESHOLD=0.1
 NUMBER_OF_USE_EXTERNAL=32768
 
 ## others
@@ -134,7 +134,7 @@ concurrency_test()
 
 CONTESTS=()
 EXTERNAL_DIRS=()
-TARGETS=("test/ABC265/A/WA/34202153.c")
+TARGETS=()
 declare -A TARGET_TESTCASE_MAP
 declare -A SAME_POOL_MAP
 for CON in $(ls test/)
@@ -157,7 +157,7 @@ do
     do
         FILE=$WA_DIR
         FILE+=$TAR
-        # TARGETS+=($FILE)
+        TARGETS+=($FILE)
         TARGET_TESTCASE_MAP[$FILE]=$TEST_FILE
         SAME_POOL_MAP[$FILE]=$AC_DIR
     done
@@ -192,24 +192,24 @@ done
 execute()
 {
     ## header
-    # echo -n target, >> $1
-    for i in {0..3}
+    echo -n target, >> $1
+    for i in {0..1}
     do
-        echo
-        # echo -n $i.isSuccess,$i.created, >> $1
+        echo -n $i.isSuccess,$i.created, >> $1
     done
-    # echo >> $1
+    echo >> $1
 
     for TAR in ${TARGETS[@]}
     do
         TARGET_FILENAME=$TAR
         TEST_SCRIPT_FILENAME=${TARGET_TESTCASE_MAP[$TAR]}
 
-        # echo -n $TARGET_FILENAME, >> $1
+        echo -n $TARGET_FILENAME, >> $1
 
+        executeASR $POOL_OPTION --no-use-similarity >> $1
         executeASR $POOL_OPTION >> $1
 
-        # baecho >> $1
+        echo >> $1
     done
 }
 
@@ -219,16 +219,6 @@ for i in {1..1}
 do
     notice $(hostname) ::start
     REDUCTION_THRESHOLD=1.0
-    execute 221117_similarity_1.csv
-    REDUCTION_THRESHOLD=0.8
-    execute 221117_similarity_08.csv
-    REDUCTION_THRESHOLD=0.6
-    execute 221117_similarity_06.csv
-    REDUCTION_THRESHOLD=0.4
-    execute 221117_similarity_04.csv
-    REDUCTION_THRESHOLD=0.2
-    execute 221117_similarity_02.csv
-    REDUCTION_THRESHOLD=0.1
-    execute 221117_similarity_01.csv
+    execute results/221119_repair_all_cap01.csv
     notice $(hostname) ::end
 done
