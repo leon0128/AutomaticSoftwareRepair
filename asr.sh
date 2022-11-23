@@ -218,7 +218,6 @@ execute()
 for i in {1..1}
 do
     notice $(hostname) ::start
-    REDUCTION_THRESHOLD=1.0
     execute results/221119_repair_all_cap01.csv
     notice $(hostname) ::end
 done
