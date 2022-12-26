@@ -2,6 +2,10 @@
 #include <algorithm>
 #include <iterator>
 
+#include <map>
+#include <functional>
+#include <tuple>
+
 #include "configure.hpp"
 #include "representation.hpp"
 #include "representation_creator.hpp"
@@ -99,23 +103,66 @@ void Controller::test(const std::deque<CodeInformation> &pool)
     }
 
     std::deque<std::deque<double>> similarity;
-
-    std::cout << ",";
     for(auto &&element : reps)
     {
-        std::cout << element->mFilename << "::" << element->mFunctionName << ",";
         similarity.push_back(Calculator::calculateSimilarity(element));
-        Calculator::normalize(similarity.back());
     }
-    std::cout << std::endl;
 
+    std::map<std::string, std::size_t> contestCountMap;
+
+    // <functionName, deque<similarity, contest, function>>
+    std::deque<std::pair<std::string, std::deque<std::tuple<double, std::string, std::string>>>> rankedDeque;
     for(std::size_t i{0ull}; i < similarity.size(); i++)
     {
-        std::cout << reps.at(i)->mFilename << "::" << reps.at(i)->mFunctionName << ",";
-        auto &&row{similarity.at(i)};
+        std::string contestName{reps.at(i)->mFilename.substr(5ull, 6ull)};
+        if(contestCountMap.contains(contestName))
+            contestCountMap.at(contestName)++;
+        else
+            contestCountMap.emplace(contestName, 1ull);
+    }
 
-        for(auto &&column : row)
-            std::cout << column << ",";
+    for(std::size_t rowIndex{0ull}; rowIndex < similarity.size(); rowIndex++)
+    {
+        auto &&row{similarity.at(rowIndex)};
+        rankedDeque.emplace_back(reps.at(rowIndex)->mFilename + "::" + reps.at(rowIndex)->mFunctionName
+            , std::deque<std::tuple<double, std::string, std::string>>());
+        for(std::size_t columnIndex{0ull}; columnIndex < row.size(); columnIndex++)
+        {
+            rankedDeque.back().second.emplace_back(std::make_tuple(row.at(columnIndex)
+                , reps.at(columnIndex)->mFilename.substr(5ull, 6ull)
+                , reps.at(columnIndex)->mFilename + "::" + reps.at(columnIndex)->mFunctionName));
+        }
+
+        std::sort(rankedDeque.back().second.begin()
+            , rankedDeque.back().second.end()
+            , [](auto &&lhs, auto &&rhs){return std::get<0>(lhs) > std::get<0>(rhs);});
+    }
+
+    std::deque<std::pair<std::string, std::deque<double>>> averages;
+    for(auto &&[functionName, deque] : rankedDeque)
+    {
+        std::map<std::string, std::size_t> rankSumMap;
+        for(std::size_t i{0ull}; i < deque.size(); i++)
+        {
+            auto &&[sim, contest, function]{deque.at(i)};
+            if(!rankSumMap.contains(contest))
+                rankSumMap.emplace(contest, 0ull);
+            rankSumMap.at(contest) += i + 1ull;
+        }
+        averages.emplace_back(functionName, std::deque<double>());
+        for(auto &&[contest, rankSum] : rankSumMap)
+            averages.back().second.emplace_back(static_cast<double>(rankSum) / static_cast<double>(contestCountMap.at(contest)));
+    }
+
+    std::cout << "target";
+    for(auto &&[contest, count] : contestCountMap)
+        std::cout << "," << contest;
+    std::cout << std::endl;
+    for(auto &&[function, average] : averages)
+    {
+        std::cout << function;
+        for(auto &&avg : average)
+            std::cout << "," << avg;
         std::cout << std::endl;
     }
 

@@ -27,8 +27,8 @@ COMPILER="gcc"
 BUILTIN="builtin.h"
 
 ## operation
-ADD_PROBABILITY=0.2
-SUB_PROBABILITY=0.2
+ADD_PROBABILITY=0.3
+SUB_PROBABILITY=0.1
 SWAP_PROBABILITY=0.6
 MAX_NUMBER_OF_FAILURES=1024
 
@@ -43,7 +43,7 @@ ORIGINAL_GRAM_SIZE=1
 TYPE1_GRAM_SIZE=4
 TYPE2_GRAM_SIZE=4
 TYPE3_GRAM_SIZE=4
-REDUCTION_THRESHOLD=1.0
+REDUCTION_THRESHOLD=0.1
 NUMBER_OF_USE_EXTERNAL=32768
 
 ## others
@@ -72,7 +72,6 @@ executeASR()
         --result "$RESULT_FILENAME" \
         --preprocessor "$PREPROCESSOR" \
         --specified-log \
-        --subprocess-log \
         --compiler "$COMPILER" \
         --builtin "$BUILTIN" \
         --test "$TEST_SCRIPT_FILENAME" \
@@ -100,6 +99,7 @@ executeASR()
         --type2 "$TYPE2_GRAM_SIZE" \
         --type3 "$TYPE3_GRAM_SIZE" \
         --capacity "$REDUCTION_THRESHOLD" \
+        --new-creation-prob 0.5 \
         $@
 }
 
@@ -134,8 +134,9 @@ concurrency_test()
 
 CONTESTS=()
 EXTERNAL_DIRS=()
-TARGETS=("test/ABC265/A/WA/34202153.c")
+TARGETS=()
 declare -A TARGET_TESTCASE_MAP
+declare -A SAME_POOL_MAP
 for CON in $(ls test/)
 do
     CONTESTS+=($CON)
@@ -156,8 +157,9 @@ do
     do
         FILE=$WA_DIR
         FILE+=$TAR
-        # TARGETS+=($FILE)
+        TARGETS+=($FILE)
         TARGET_TESTCASE_MAP[$FILE]=$TEST_FILE
+        SAME_POOL_MAP[$FILE]=$AC_DIR
     done
 done
 
@@ -191,9 +193,9 @@ execute()
 {
     ## header
     echo -n target, >> $1
-    for i in {0..4}
+    for i in {0..1}
     do
-        echo -n $i.isSuccess,$i.created,$i.totalTime,$i.repairTime, >> $1
+        echo -n $i.isSuccess,$i.created, >> $1
     done
     echo >> $1
 
@@ -204,11 +206,8 @@ execute()
 
         echo -n $TARGET_FILENAME, >> $1
 
-        executeASR --no-use-similarity >> $1
         executeASR $POOL_OPTION --no-use-similarity >> $1
-        executeASR $POOL_OPTION --no-change-prob --num-use-external 128 >> $1
         executeASR $POOL_OPTION >> $1
-        executeASR $POOL_OPTION --num-use-external 128 >> $1
 
         echo >> $1
     done
@@ -218,7 +217,7 @@ execute()
 
 for i in {1..1}
 do
-    notice ex::start
-    execute repair_test.csv
-    notice ex::start
+    notice $(hostname) ::start
+    execute results/221119_repair_all_cap01.csv
+    notice $(hostname) ::end
 done
