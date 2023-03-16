@@ -183,7 +183,7 @@ public:
 class Keyword
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , AUTO, BREAK, CASE, CHAR
@@ -280,7 +280,7 @@ public:
 class Punctuator
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , L_SQUARE_BRACKET, R_SQUARE_BRACKET, L_PARENTHESIS, R_PARENTHESIS
@@ -422,7 +422,7 @@ public:
 class CharacterConstant
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , L
@@ -446,7 +446,7 @@ public:
 class EncodingPrefix
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , u8
@@ -741,7 +741,7 @@ public:
 class HexadecimalPrefix
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , x
@@ -824,7 +824,7 @@ public:
 class Sign
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , PLUS
@@ -922,7 +922,7 @@ public:
 class FloatingSuffix
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , f
@@ -1044,7 +1044,7 @@ public:
 class PPNumber
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , PERIOD
@@ -1130,7 +1130,7 @@ public:
 class UnsignedSuffix
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , u
@@ -1150,7 +1150,7 @@ public:
 class LongSuffix
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , l
@@ -1170,7 +1170,7 @@ public:
 class LongLongSuffix
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , ll
@@ -1387,7 +1387,7 @@ public:
 class StorageClassSpecifier
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , TYPEDEF
@@ -1411,7 +1411,7 @@ public:
 class TypeSpecifier
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , VOID
@@ -1452,7 +1452,7 @@ public:
 class TypeQualifier
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , CONST
@@ -1474,7 +1474,7 @@ public:
 class FunctionSpecifier
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , INLINE
@@ -1985,7 +1985,7 @@ public:
 class StructOrUnion
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , STRUCT
@@ -2155,7 +2155,7 @@ public:
 class AssignmentOperator
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , ASSIGNMENT
@@ -2476,7 +2476,7 @@ public:
 class UnaryOperator
 {
 public:
-    enum class Tag : signed char
+    enum class Tag : unsigned char
     {
         NONE
         , ADDRESS
