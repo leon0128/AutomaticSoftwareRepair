@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 
 #include "cache_encoder.hpp"
 
@@ -7,22 +8,28 @@ namespace ANALYZER
 {
 
 CacheEncoder::CacheEncoder()
-    : mFilename{}
-    , mStream{std::ios_base::binary}
+    : mStream{std::ios_base::out | std::ios_base::binary}
 {
 }
 
 bool CacheEncoder::execute(const std::string &filename
     , const TOKEN::TranslationUnit *tu)
 {
-    mFilename = filename;
-
     if(!encode(tu))
         return false;
 
     if(!output(filename))
         return false;
 
+    return true;
+}
+
+bool CacheEncoder::align(std::stringstream::pos_type alignmentSize)
+{
+    static const char padding[0xff]{'\0'};
+
+    auto &&paddingSize{(alignmentSize - mStream.tellp() % alignmentSize) % alignmentSize};
+    mStream.write(padding, paddingSize);
     return true;
 }
 
