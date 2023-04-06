@@ -42,14 +42,6 @@ bool Controller::execute()
     if(!analyze(Configure::SOURCE_FILENAME))
         return false;
 
-    // temporary
-    CacheEncoder cacheEncoder;
-    if(!cacheEncoder.execute(mTarget.mFilename
-        , mTarget.mTranslationUnit.get()))
-        return false;
-    else
-        return false;
-
     // pool
     std::deque<std::string> poolFilenames;
     for(auto &&pathname : Configure::POOL)

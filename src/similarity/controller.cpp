@@ -31,7 +31,7 @@ bool Controller::execute(const CodeInformation &target
     bool isSucceessfull{initialize(pool)
         && calculate(target)};
 
-    // test(pool);
+    test(pool);
 
     // finalize
     finalize();
@@ -41,6 +41,7 @@ bool Controller::execute(const CodeInformation &target
 
     outputSpecifiedLog();
 
+    return false;
     return isSucceessfull;
 }
 
@@ -109,6 +110,8 @@ void Controller::test(const std::deque<CodeInformation> &pool)
     }
 
     std::map<std::string, std::size_t> contestCountMap;
+
+    // deque<index, sco>
 
     // <functionName, deque<similarity, contest, function>>
     std::deque<std::pair<std::string, std::deque<std::tuple<double, std::string, std::string>>>> rankedDeque;
