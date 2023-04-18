@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
 #include <iterator>
 #include <vector>
@@ -105,114 +106,92 @@ void Controller::test(const std::deque<CodeInformation> &pool)
             , std::back_inserter(reps));
     }
 
-    std::deque<std::deque<double>> similarity;
-    for(auto &&element : reps)
-        similarity.push_back(Calculator::calculateSimilarity(element));
+    std::vector<double> thresholds;
+    std::vector<double> maps;
+    std::vector<double> errors;
+    thresholds.reserve(101ull);
+    maps.reserve(101ull);
+    errors.reserve(101ull);
 
-    std::map<std::string, std::size_t> contestCountMap;
-    std::vector<std::vector<std::pair<std::size_t, double>>> rankedContests(reps.size()
-        , std::vector<std::pair<std::size_t, double>>(reps.size()));
-
-    for(std::size_t i{0ull}; i < similarity.size(); i++)
+    for(int i{0}; i <= 100; i++)
     {
-        std::string contestName{reps.at(i)->mFilename.substr(5ull, 6ull)};
-        if(contestCountMap.contains(contestName))
-            contestCountMap.at(contestName)++;
-        else
-            contestCountMap.emplace(contestName, 1ull);
+        Configure::SIM_CAPACITY = static_cast<double>(i) / 100.0;
 
-        for(std::size_t j{0ull}; j < similarity.size(); j++)
-            rankedContests[i][j] = std::make_pair(j, similarity[i][j]);
+        std::deque<std::deque<double>> similarity;
+        for(auto &&element : reps)
+            similarity.push_back(Calculator::calculateSimilarity(element));
 
-        std::sort(rankedContests[i].begin()
-            , rankedContests[i].end()
-            , [](const auto &lhs, const auto &rhs){return lhs.second > rhs.second;});
-    }
+        std::map<std::string, std::size_t> contestCountMap;
+        std::vector<std::vector<std::pair<std::size_t, double>>> rankedContests(reps.size()
+            , std::vector<std::pair<std::size_t, double>>(reps.size()));
 
-    double map{0.0};
-    std::map<std::string, double> mapMap;
-    for(std::size_t rowIdx{0ull}; rowIdx < rankedContests.size(); rowIdx++)
-    {
-        std::string contestName{reps.at(rowIdx)->mFilename.substr(5ull, 6ull)};
-
-        double sumPrecision{0.0};
-        double tpCount{0.0};
-        std::size_t sameContestCount{contestCountMap.at(contestName)};
-
-        for(std::size_t columnIdx{0ull}; columnIdx < sameContestCount; columnIdx++)
+        for(std::size_t i{0ull}; i < similarity.size(); i++)
         {
-            if(contestName == reps.at(rankedContests[rowIdx][columnIdx].first)->mFilename.substr(5ull, 6ull))
-                tpCount += 1.0;
+            if(!similarity[i].empty()
+                && similarity[i].front() > -0.5)
+            {
+                std::string contestName{reps.at(i)->mFilename.substr(5ull, 6ull)};
+                if(contestCountMap.contains(contestName))
+                    contestCountMap.at(contestName)++;
+                else
+                    contestCountMap.emplace(contestName, 1ull);
+            }
 
-            sumPrecision += tpCount / (static_cast<double>(columnIdx) + 1.0);
+            for(std::size_t j{0ull}; j < similarity.size(); j++)
+                rankedContests[i][j] = std::make_pair(j, similarity[i][j]);
+
+            std::sort(rankedContests[i].begin()
+                , rankedContests[i].end()
+                , [](const auto &lhs, const auto &rhs){return lhs.second > rhs.second;});
         }
 
-        double averagePrecision{sumPrecision / static_cast<double>(sameContestCount)};
-        map += averagePrecision;
+        double map{0.0};
+        std::size_t errorCount{0ull};
+        for(std::size_t rowIdx{0ull}; rowIdx < rankedContests.size(); rowIdx++)
+        {
+            if(!rankedContests[rowIdx].empty()
+                && rankedContests[rowIdx].front().second < -0.5)
+            {
+                errorCount++;
+                continue;
+            }
 
-        mapMap.at(contestName) += averagePrecision;
-            
+            std::string contestName{reps.at(rowIdx)->mFilename.substr(5ull, 6ull)};
+
+            double sumPrecision{0.0};
+            double tpCount{0.0};
+            std::size_t sameContestCount{contestCountMap.at(contestName)};
+
+            for(std::size_t columnIdx{0ull}; columnIdx < sameContestCount; columnIdx++)
+            {
+                if(contestName == reps.at(rankedContests[rowIdx][columnIdx].first)->mFilename.substr(5ull, 6ull))
+                    tpCount += 1.0;
+
+                sumPrecision += tpCount / (static_cast<double>(columnIdx) + 1.0);
+            }
+
+            double averagePrecision{sumPrecision / static_cast<double>(sameContestCount)};
+            map += averagePrecision;
+        }
+
+        if(errorCount != rankedContests.size())
+            map /= static_cast<double>(rankedContests.size() - errorCount);
+
+        thresholds.push_back(Configure::SIM_CAPACITY);
+        maps.push_back(map);
+        errors.push_back(static_cast<double>(errorCount) / static_cast<double>(similarity.size()));
     }
-    map /= static_cast<double>(rankedContests.size());
 
-    double mmr{0.0};
-    for(std::size_t rowIdx{0ull}; rowIdx < rankedContests.size(); rowIdx++)
-    {
-        std::string contestName{reps[rowIdx]->mFilename.substr(5ull, 6ull)};
-        std::size_t rank{0ull};
-        while(contestName != reps[rankedContests[rowIdx][rank].first]->mFilename.substr(5ull, 6ull))
-            rank++;
-        mmr += 1.0 / (static_cast<double>(rank) + 1.0);
-    }
-    mmr /= static_cast<double>(rankedContests.size());
-
-    std::cout << "MAP: " << map << std::endl;
-    std::cout << "MMR: " << mmr << std::endl;
-
-    // for(std::size_t rowIndex{0ull}; rowIndex < similarity.size(); rowIndex++)
-    // {
-    //     auto &&row{similarity.at(rowIndex)};
-    //     rankedDeque.emplace_back(reps.at(rowIndex)->mFilename + "::" + reps.at(rowIndex)->mFunctionName
-    //         , std::deque<std::tuple<double, std::string, std::string>>());
-    //     for(std::size_t columnIndex{0ull}; columnIndex < row.size(); columnIndex++)
-    //     {
-    //         rankedDeque.back().second.emplace_back(std::make_tuple(row.at(columnIndex)
-    //             , reps.at(columnIndex)->mFilename.substr(5ull, 6ull)
-    //             , reps.at(columnIndex)->mFilename + "::" + reps.at(columnIndex)->mFunctionName));
-    //     }
-
-    //     std::sort(rankedDeque.back().second.begin()
-    //         , rankedDeque.back().second.end()
-    //         , [](auto &&lhs, auto &&rhs){return std::get<0>(lhs) > std::get<0>(rhs);});
-    // }
-
-    // std::deque<std::pair<std::string, std::deque<double>>> averages;
-    // for(auto &&[functionName, deque] : rankedDeque)
-    // {
-    //     std::map<std::string, std::size_t> rankSumMap;
-    //     for(std::size_t i{0ull}; i < deque.size(); i++)
-    //     {
-    //         auto &&[sim, contest, function]{deque.at(i)};
-    //         if(!rankSumMap.contains(contest))
-    //             rankSumMap.emplace(contest, 0ull);
-    //         rankSumMap.at(contest) += i + 1ull;
-    //     }
-    //     averages.emplace_back(functionName, std::deque<double>());
-    //     for(auto &&[contest, rankSum] : rankSumMap)
-    //         averages.back().second.emplace_back(static_cast<double>(rankSum) / static_cast<double>(contestCountMap.at(contest)));
-    // }
-
-    // std::cout << "target";
-    // for(auto &&[contest, count] : contestCountMap)
-    //     std::cout << "," << contest;
-    // std::cout << std::endl;
-    // for(auto &&[function, average] : averages)
-    // {
-    //     std::cout << function;
-    //     for(auto &&avg : average)
-    //         std::cout << "," << avg;
-    //     std::cout << std::endl;
-    // }
+    std::cout << "threshold";
+    for(auto &&d : thresholds)
+        std::cout << "," << std::fixed << std::setprecision(2) << d;
+    std::cout << "\nMAP";
+    for(auto &&d : maps)
+        std::cout << "," << std::fixed << std::setprecision(4) << d;
+    std::cout << "\nerror";
+    for(auto &&d : errors)
+        std::cout << "," << std::fixed << std::setprecision(4) << d;
+    std::cout << std::endl;
 
     for(auto &&element : reps)
         delete element;

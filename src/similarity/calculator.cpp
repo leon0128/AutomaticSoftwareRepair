@@ -36,6 +36,12 @@ std::deque<double> Calculator::calculateSimilarity(const Representation::Element
             , calculateIndicesToUse(Rep::Tag::TYPE1, repE->mReps.at(Rep::castTag(Rep::Tag::TYPE1)).tokens())
             , calculateIndicesToUse(Rep::Tag::TYPE2, repE->mReps.at(Rep::castTag(Rep::Tag::TYPE2)).tokens())
             , calculateIndicesToUse(Rep::Tag::TYPE3, repE->mReps.at(Rep::castTag(Rep::Tag::TYPE3)).tokens())};
+    // test
+    for(auto &&deque : indicesToUse)
+    {
+        if(deque.empty())
+            return std::deque<double>(Rep::reps().size(), -1.0);
+    }
 
     // score calculation
     for(std::size_t docIdx{0ull}; docIdx < Rep::reps().size(); docIdx++)
@@ -335,9 +341,11 @@ void Calculator::deleteInfo()
 
 bool Calculator::reductionWarning()
 {
-    std::cerr << "SIM::Calculator::reductionWarning():\n"
-        "    what: indices to use is empty.\n"
-        "          reduction threshold should be changed.\n"
+    std::cerr << OUTPUT::charYellowCode
+        << "SIM::Calculator::reductionWarning():\n"
+        << OUTPUT::resetCode
+        << "    what: indices to use is empty.\n"
+        << "        reduction threshold should be changed.\n"
         << std::flush;
     
     return false;
