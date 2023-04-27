@@ -378,7 +378,7 @@ bool Configure::setDefaultValue()
                 COMPILER = "gcc";
                 break;
             case(Tag::BUILTIN):
-                BUILTIN = "builtin.h";
+                BUILTIN = "./data/builtin.h";
                 break;
             case(Tag::TEST_SCRIPT):
                 TEST_SCRIPT = "test.sh";
