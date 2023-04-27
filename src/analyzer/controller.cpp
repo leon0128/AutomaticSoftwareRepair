@@ -13,6 +13,7 @@
 #include "analyzer.hpp"
 #include "divider.hpp"
 #include "tree_generator.hpp"
+#include "cache_encoder.hpp"
 #include "preprocessor.hpp"
 #include "configure.hpp"
 #include "controller.hpp"
@@ -40,7 +41,7 @@ bool Controller::execute()
     // target
     if(!analyze(Configure::SOURCE_FILENAME))
         return false;
-    
+
     // pool
     std::deque<std::string> poolFilenames;
     for(auto &&pathname : Configure::POOL)
