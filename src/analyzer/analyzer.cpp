@@ -138,7 +138,7 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
     bool oldIsCreatingBlock{flag(FlagTag::IS_CREATING_BLOCK, false)};
     bool oldIsOutestParameter{flag(FlagTag::IS_OUTEST_PARAMETER, true)};
 
-    fd->statementId = STATEMENT::NEXT_STATEMENT_ID++;
+    fd->statementId = STATEMENT::incrementStatementId();
 
     auto &&attrsOpt{analyzeAttributes(fd->ds)};
     if(!attrsOpt)
@@ -218,7 +218,7 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
 
 bool Analyzer::analyze(TOKEN::Declaration *d)
 {
-    d->statementId = STATEMENT::NEXT_STATEMENT_ID++;
+    d->statementId = STATEMENT::incrementStatementId();
 
     if(std::holds_alternative<TOKEN::Declaration::Sds_idl>(d->var))
     {
@@ -421,7 +421,7 @@ bool Analyzer::analyze(const TOKEN::CompoundStatement *cs
 
 bool Analyzer::analyze(TOKEN::Statement *s)
 {
-    s->statementId = STATEMENT::NEXT_STATEMENT_ID++;
+    s->statementId = STATEMENT::incrementStatementId();
 
     if(std::holds_alternative<TOKEN::LabeledStatement*>(s->var))
     {

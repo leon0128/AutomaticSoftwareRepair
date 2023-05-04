@@ -35,10 +35,11 @@ template<class ...Args>
 extern std::pair<decltype(STATEMENT_MAP)::iterator, bool> emplaceSafely(Args &&...args);
 
 inline std::size_t NEXT_STATEMENT_ID{0ull};
-extern std::size_t nextIdSafely();
+// this function increments NEXT_STATEMENT_ID
+//  and returns value of NEXT_STATEMENT_ID that before incrementation.
+extern std::size_t incrementStatementId();
 
 std::size_t addStatement(const Variant &element);
-
 
 template<class ...Args>
 std::pair<decltype(STATEMENT_MAP)::iterator, bool> emplaceSafely(Args &&...args)
