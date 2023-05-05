@@ -10,6 +10,7 @@
 
 #include "utility/output.hpp"
 #include "configure.hpp"
+#include "common/time_measurer.hpp"
 #include "representation.hpp"
 #include "representation_creator.hpp"
 #include "calculator.hpp"
@@ -49,6 +50,8 @@ bool Controller::execute(const CodeInformation &target
 
 bool Controller::initialize(const std::deque<CodeInformation> &pool)
 {
+    TimeMeasurer::Wrapper wrapper{TimeMeasurer::SimTag::INITIALIZING};
+
     // priority:
     //  RepCreator > Calculator
 
@@ -70,6 +73,8 @@ bool Controller::calculate(const CodeInformation &target)
 {
     using Rep = Representation;
     using RC = RepresentationCreator;
+
+    TimeMeasurer::Wrapper wrapper{TimeMeasurer::SimTag::CALCULATION};
 
     std::deque<Rep::Element*> reps{RC::create(target.mFilename, target.mTranslationUnit.get())};
 

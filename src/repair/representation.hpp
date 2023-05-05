@@ -55,6 +55,8 @@ public:
 
     const BLOCK::Block *block() const noexcept
         {return mBlock;}
+    const auto &ops() const noexcept
+        {return mOps;}
 
 private:
     Representation(const BLOCK::Block*

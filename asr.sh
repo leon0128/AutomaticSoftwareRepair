@@ -24,17 +24,17 @@ TARGET_SCORE=40
 ## external softwares
 PREPROCESSOR="cpp -P -I./test/ -D__extension__="
 COMPILER="gcc"
-BUILTIN="builtin.h"
+BUILTIN="data/builtin.h"
 
 ## operation
-ADD_PROBABILITY=0.3
+ADD_PROBABILITY=0.1
 SUB_PROBABILITY=0.1
-SWAP_PROBABILITY=0.6
+SWAP_PROBABILITY=0.8
 MAX_NUMBER_OF_FAILURES=1024
 
 ## genetic algorithm
 POPULATION=1000
-GENERATION=10
+GENERATION=1
 NUMBER_OF_ELITE=2
 TOURNAMENT_SIZE=3
 
@@ -192,24 +192,19 @@ done
 execute()
 {
     ## header
-    echo -n target, >> $1
-    for i in {0..1}
-    do
-        echo -n $i.isSuccess,$i.created, >> $1
-    done
-    echo >> $1
+    echo target,threshold,is_repaired,used_function_name,pop_count,execution_time,preprocessing_time,similarity_calculation_time,repair_time > $1
 
     for TAR in ${TARGETS[@]}
     do
         TARGET_FILENAME=$TAR
         TEST_SCRIPT_FILENAME=${TARGET_TESTCASE_MAP[$TAR]}
 
-        echo -n $TARGET_FILENAME, >> $1
+        for TH in $(seq 0 0.01 1)
+        do
+            REDUCTION_THRESHOLD=$TH
 
-        executeASR $POOL_OPTION --no-use-similarity >> $1
-        executeASR $POOL_OPTION >> $1
-
-        echo >> $1
+            executeASR $POOL_OPTION >> $1
+        done
     done
 }
 
@@ -218,7 +213,6 @@ execute()
 for i in {1..1}
 do
     notice $(hostname) :: $$ :: start
-    # execute results/221119_repair_all_cap01.csv
-    # ./asr result.c --pool result.c > 230418_similarity_evaluation.csv
+    execute 230505_repair_similarity_relationship.csv
     notice $(hostname) :: $$ :: end
 done
