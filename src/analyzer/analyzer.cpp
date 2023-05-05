@@ -2543,10 +2543,11 @@ void Analyzer::variantError(const std::string &className) const
 bool Analyzer::differentTypeError(const std::string &identifier) const
 {
     std::cerr << OUTPUT::charRedCode
-        << "Analyzer error:\n"
+        << "ANALYZER::Analyzer::differentTypeError():\n"
         << OUTPUT::resetCode
-        << "    what: different type that the previously declared identifier.\n"
-        "    name: " << identifier
+        << "    what: different type that the previously declared identifier."
+        << "\n    identifier: " << identifier
+        << "\n    filename: " << mFilename
         << std::endl;
     return false;
 }
@@ -2554,10 +2555,11 @@ bool Analyzer::differentTypeError(const std::string &identifier) const
 bool Analyzer::redefinedError(const std::string &identifier) const
 {
     std::cerr << OUTPUT::charRedCode
-        << "Analyzer error:\n"
+        << "ANALYZER::Analyzer::redefinedError():\n"
         << OUTPUT::resetCode
         << "    what: redefined function.\n"
-        "    name: " << identifier
+        "    identifier: " << identifier
+        << "\n    filename: " << mFilename
         << std::endl;
     return false;
 }
@@ -2565,10 +2567,11 @@ bool Analyzer::redefinedError(const std::string &identifier) const
 bool Analyzer::notSupportedError(const std::string &message) const
 {
     std::cerr << OUTPUT::charRedCode
-        << "Analyzer error:\n"
+        << "ANALYZER::Analyzer::notSupportedError():\n"
         << OUTPUT::resetCode
         << "    what: below function is not supported.\n"
         "    func: " << message
+        << "\n    filename: " << mFilename
         << std::endl;
     return false;
 }
@@ -2576,10 +2579,11 @@ bool Analyzer::notSupportedError(const std::string &message) const
 bool Analyzer::invalidAttributeError(const std::string &message) const
 {
     std::cerr << OUTPUT::charRedCode
-        << "Analyzer error:\n"
+        << "ANALYZER::Analyzer::invalidAttributeError():\n"
         << OUTPUT::resetCode
         << "    what: invalid attribute.\n"
         "    attr: " << message
+        << "\n    filename: " << mFilename
         << std::endl;
     return false;
 }
