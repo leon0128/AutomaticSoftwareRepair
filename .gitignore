@@ -1,4 +1,4 @@
-src/.vscode/
+.vscode/
 poc
 __test
 result.c

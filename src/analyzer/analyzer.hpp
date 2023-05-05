@@ -176,6 +176,7 @@ private:
     bool notDeclarationError(const std::string&) const;
 
     std::string mFilename;
+    std::string mFunctionName;
     TOKEN::TranslationUnit *mTranslationUnit;
     Flags mFlags;
     SCOPE::Scope *mScope;

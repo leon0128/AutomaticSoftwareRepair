@@ -16,7 +16,7 @@ decltype(TimeMeasurer::mAnalyzerTagNameMap) TimeMeasurer::mAnalyzerTagNameMap
     {{AnalyzerTag::ANALYZING, "analyzing"}};
 
 decltype(TimeMeasurer::mSimTagNameMap) TimeMeasurer::mSimTagNameMap
-    {{SimTag::METRIC, "metrics calculation"}
+    {{SimTag::INITIALIZING, "initializing calculation"}
         , {SimTag::CALCULATION, "similality calculation"}};
 
 decltype(TimeMeasurer::mRepairTagNameMap) TimeMeasurer::mRepairTagNameMap

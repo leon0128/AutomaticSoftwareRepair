@@ -15,6 +15,7 @@ namespace ANALYZER
 
 Analyzer::Analyzer()
     : mFilename{}
+    , mFunctionName{}
     , mTranslationUnit{nullptr}
     , mFlags{}
     , mScope{nullptr}
@@ -138,7 +139,7 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
     bool oldIsCreatingBlock{flag(FlagTag::IS_CREATING_BLOCK, false)};
     bool oldIsOutestParameter{flag(FlagTag::IS_OUTEST_PARAMETER, true)};
 
-    fd->statementId = STATEMENT::NEXT_STATEMENT_ID++;
+    fd->statementId = STATEMENT::incrementStatementId();
 
     auto &&attrsOpt{analyzeAttributes(fd->ds)};
     if(!attrsOpt)
@@ -155,6 +156,8 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
     
     auto &&[type
         , name]{*tiOpt};
+
+    mFunctionName = name;
     
     auto &&idPtr{mScope->getIdentifier(name
         , SCOPE::Scope::NamespaceTag::OTHER
@@ -204,6 +207,10 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
 
     STATEMENT::emplaceSafely(fd->statementId
         , std::shared_ptr<TOKEN::FunctionDefinition>{fd->copy()});
+    STATEMENT::emplaceSafelyToFunctionNameMap(fd->statementId
+        , mFilename + "::" + mFunctionName);
+
+    mFunctionName = "";
 
     flag(FlagTag::IS_FUNCTION, oldIsFunction);
     flag(FlagTag::IS_DECLARATION_OVER, oldIsDeclarationOver);
@@ -218,7 +225,7 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
 
 bool Analyzer::analyze(TOKEN::Declaration *d)
 {
-    d->statementId = STATEMENT::NEXT_STATEMENT_ID++;
+    d->statementId = STATEMENT::incrementStatementId();
 
     if(std::holds_alternative<TOKEN::Declaration::Sds_idl>(d->var))
     {
@@ -378,7 +385,9 @@ bool Analyzer::analyze(TOKEN::Declaration *d)
 
     STATEMENT::emplaceSafely(d->statementId
         , std::shared_ptr<TOKEN::Declaration>{d->copy()});
-    
+    STATEMENT::emplaceSafelyToFunctionNameMap(d->statementId
+        , mFilename + "::" + mFunctionName);
+
     return true;
 }
 
@@ -421,7 +430,7 @@ bool Analyzer::analyze(const TOKEN::CompoundStatement *cs
 
 bool Analyzer::analyze(TOKEN::Statement *s)
 {
-    s->statementId = STATEMENT::NEXT_STATEMENT_ID++;
+    s->statementId = STATEMENT::incrementStatementId();
 
     if(std::holds_alternative<TOKEN::LabeledStatement*>(s->var))
     {
@@ -476,7 +485,9 @@ bool Analyzer::analyze(TOKEN::Statement *s)
 
     STATEMENT::emplaceSafely(s->statementId
         , std::shared_ptr<TOKEN::Statement>{s->copy()});
-    
+    STATEMENT::emplaceSafelyToFunctionNameMap(s->statementId
+        , mFilename + "::" + mFunctionName);
+
     return true;
 }
 
@@ -2532,10 +2543,11 @@ void Analyzer::variantError(const std::string &className) const
 bool Analyzer::differentTypeError(const std::string &identifier) const
 {
     std::cerr << OUTPUT::charRedCode
-        << "Analyzer error:\n"
+        << "ANALYZER::Analyzer::differentTypeError():\n"
         << OUTPUT::resetCode
-        << "    what: different type that the previously declared identifier.\n"
-        "    name: " << identifier
+        << "    what: different type that the previously declared identifier."
+        << "\n    identifier: " << identifier
+        << "\n    filename: " << mFilename
         << std::endl;
     return false;
 }
@@ -2543,10 +2555,11 @@ bool Analyzer::differentTypeError(const std::string &identifier) const
 bool Analyzer::redefinedError(const std::string &identifier) const
 {
     std::cerr << OUTPUT::charRedCode
-        << "Analyzer error:\n"
+        << "ANALYZER::Analyzer::redefinedError():\n"
         << OUTPUT::resetCode
         << "    what: redefined function.\n"
-        "    name: " << identifier
+        "    identifier: " << identifier
+        << "\n    filename: " << mFilename
         << std::endl;
     return false;
 }
@@ -2554,10 +2567,11 @@ bool Analyzer::redefinedError(const std::string &identifier) const
 bool Analyzer::notSupportedError(const std::string &message) const
 {
     std::cerr << OUTPUT::charRedCode
-        << "Analyzer error:\n"
+        << "ANALYZER::Analyzer::notSupportedError():\n"
         << OUTPUT::resetCode
         << "    what: below function is not supported.\n"
         "    func: " << message
+        << "\n    filename: " << mFilename
         << std::endl;
     return false;
 }
@@ -2565,10 +2579,11 @@ bool Analyzer::notSupportedError(const std::string &message) const
 bool Analyzer::invalidAttributeError(const std::string &message) const
 {
     std::cerr << OUTPUT::charRedCode
-        << "Analyzer error:\n"
+        << "ANALYZER::Analyzer::invalidAttributeError():\n"
         << OUTPUT::resetCode
         << "    what: invalid attribute.\n"
         "    attr: " << message
+        << "\n    filename: " << mFilename
         << std::endl;
     return false;
 }

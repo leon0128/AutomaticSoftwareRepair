@@ -49,7 +49,7 @@ public:
 
     enum class SimTag : std::size_t
     {
-        METRIC
+        INITIALIZING
         , CALCULATION
         , TAG_SIZE // to be used to decide array size
     };

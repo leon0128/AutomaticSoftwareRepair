@@ -16,6 +16,7 @@
 #include "common/scope.hpp"
 #include "common/token.hpp"
 #include "common/define.hpp"
+#include "common/statement.hpp"
 #include "common/time_measurer.hpp"
 #include "block.hpp"
 #include "representation.hpp"
@@ -574,10 +575,18 @@ bool Repairer::compilingError(const std::string &filename)
 
 void Repairer::outputSpecifiedLog() const
 {
-    sstream << std::boolalpha
-        << mIsRepaired
-        << ","
-        << mTotalRep
+    sstream << Configure::SOURCE_FILENAME
+        << "," << Configure::SIM_CAPACITY
+        << "," << std::boolalpha << mIsRepaired
+        << ",";
+    if(!mResult->ops().empty()
+        && (mResult->ops().front()->tag() == OPERATION::Tag::ADD
+            || mResult->ops().front()->tag() == OPERATION::Tag::REP))
+    {
+        sstream << STATEMENT::atSafelyToFunctionNameMap(mResult->ops().front()->srcId());
+    }
+
+    sstream << "," << mTotalRep
         << ",";
 }
 

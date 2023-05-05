@@ -86,9 +86,10 @@ void Controller::finalize()
 
 void Controller::outputSpecifiedLog() const
 {   
-    // using TM = TimeMeasurer;
-    // sstream << timeMeasurer().total<TM::MainTag, std::chrono::milliseconds>()
-    //     << ","
-    //     << timeMeasurer().total<TM::RepairTag, std::chrono::milliseconds>()
-    //     << ",";
+    using TM = TimeMeasurer;
+    sstream << timeMeasurer().total<TM::MainTag, std::chrono::milliseconds>()
+        << "," << timeMeasurer().total<TM::AnalyzerTag, std::chrono::milliseconds>()
+        << "," << timeMeasurer().total<TM::SimTag, std::chrono::milliseconds>()
+        << "," << timeMeasurer().total<TM::RepairTag, std::chrono::milliseconds>()
+        << std::endl;
 }
