@@ -15,6 +15,7 @@ namespace ANALYZER
 
 Analyzer::Analyzer()
     : mFilename{}
+    , mFunctionName{}
     , mTranslationUnit{nullptr}
     , mFlags{}
     , mScope{nullptr}
@@ -155,6 +156,8 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
     
     auto &&[type
         , name]{*tiOpt};
+
+    mFunctionName = name;
     
     auto &&idPtr{mScope->getIdentifier(name
         , SCOPE::Scope::NamespaceTag::OTHER
@@ -204,6 +207,10 @@ bool Analyzer::analyze(TOKEN::FunctionDefinition *fd)
 
     STATEMENT::emplaceSafely(fd->statementId
         , std::shared_ptr<TOKEN::FunctionDefinition>{fd->copy()});
+    STATEMENT::emplaceSafelyToFunctionNameMap(fd->statementId
+        , mFilename + "::" + mFunctionName);
+
+    mFunctionName = "";
 
     flag(FlagTag::IS_FUNCTION, oldIsFunction);
     flag(FlagTag::IS_DECLARATION_OVER, oldIsDeclarationOver);
@@ -378,7 +385,9 @@ bool Analyzer::analyze(TOKEN::Declaration *d)
 
     STATEMENT::emplaceSafely(d->statementId
         , std::shared_ptr<TOKEN::Declaration>{d->copy()});
-    
+    STATEMENT::emplaceSafelyToFunctionNameMap(d->statementId
+        , mFilename + "::" + mFunctionName);
+
     return true;
 }
 
@@ -476,7 +485,9 @@ bool Analyzer::analyze(TOKEN::Statement *s)
 
     STATEMENT::emplaceSafely(s->statementId
         , std::shared_ptr<TOKEN::Statement>{s->copy()});
-    
+    STATEMENT::emplaceSafelyToFunctionNameMap(s->statementId
+        , mFilename + "::" + mFunctionName);
+
     return true;
 }
 

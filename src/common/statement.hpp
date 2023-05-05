@@ -6,6 +6,7 @@
 #include <memory>
 #include <utility>
 #include <mutex>
+#include <string>
 
 inline namespace COMMON
 {
@@ -30,6 +31,16 @@ inline decltype(STATEMENT_MAP) STATEMENT_MAP{};
 inline extern std::recursive_mutex statementMapMutex;
 inline decltype(statementMapMutex) statementMapMutex{};
 
+// map.first: statement id
+// map.second: file and function name. (ex: dirA/fileA::funcA)
+inline std::unordered_map<std::size_t, std::string> functionNameMap{};
+// mutex for functionNameMap
+inline std::mutex functionNameMapMutex{};
+// safely add element to functionNameMap
+template<class ...Args>
+std::pair<decltype(functionNameMap)::iterator, bool> emplaceSafelyToFunctionNameMap(Args &&...args);
+// safely get element from functionNameMap.
+const std::string &atSafelyToFunctionNameMap(std::size_t statementId);
 
 template<class ...Args>
 extern std::pair<decltype(STATEMENT_MAP)::iterator, bool> emplaceSafely(Args &&...args);
@@ -40,6 +51,13 @@ inline std::size_t NEXT_STATEMENT_ID{0ull};
 extern std::size_t incrementStatementId();
 
 std::size_t addStatement(const Variant &element);
+
+template<class ...Args>
+std::pair<decltype(functionNameMap)::iterator, bool> emplaceSafelyToFunctionNameMap(Args &&...args)
+{
+    std::lock_guard lock{functionNameMapMutex};
+    return functionNameMap.emplace(std::forward<Args>(args)...);
+}
 
 template<class ...Args>
 std::pair<decltype(STATEMENT_MAP)::iterator, bool> emplaceSafely(Args &&...args)

@@ -7,6 +7,12 @@ inline namespace COMMON
 namespace STATEMENT
 {
 
+const std::string &atSafelyToFunctionNameMap(std::size_t statementId)
+{
+    std::lock_guard lock{functionNameMapMutex};
+    return functionNameMap.at(statementId);
+}
+
 std::size_t incrementStatementId()
 {
     static std::mutex mutex;
