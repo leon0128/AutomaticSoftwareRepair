@@ -19,6 +19,11 @@ namespace REPAIR
 class Selector
 {
 private:
+    enum class Tag
+    {
+        
+    };
+
     inline static std::deque<std::size_t> INIT_VALUE{};
     inline static std::deque<std::deque<std::size_t>> CANDIDATE_INIT_VALUE{};
 
@@ -138,11 +143,9 @@ private:
     bool select(const TOKEN::ExtendedAsm*);
     bool select(const TOKEN::AsmStatement*);
 
-    bool clearError() const;
-    bool invalidStatementError() const;
     bool invalidVariantError(const std::string &className) const;
-    bool isNotFoundIdentifier() const;
-    bool notSupportError(const std::string&) const;
+    bool candidateError() const;
+    bool supportError(const std::string&) const;
     bool lackIdError() const;
     bool unusedIdError() const;
 

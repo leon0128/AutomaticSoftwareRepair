@@ -40,7 +40,7 @@ bool Selector::execute(std::size_t scopeId
     mIsFittable = false;
 
     if(!clear())
-        return clearError();
+        return false;
 
     mScopeId = scopeId;
     mIds = std::ref(ids);
@@ -79,7 +79,7 @@ bool Selector::execute(const std::deque<std::size_t> &ids
     mIsFittable = false;
     
     if(!clear())
-        return clearError();
+        return false;
     
     mIdx = 0ull;
     mCIds = std::cref(ids);
@@ -101,7 +101,7 @@ bool Selector::isFittable(std::size_t scopeId
     mIsFittable = true;
 
     if(!clear())
-        return clearError();
+        return false;
 
     mScopeId = scopeId;
 
@@ -195,7 +195,7 @@ bool Selector::selectOne(const std::deque<std::size_t> &idList
     , std::size_t &result)
 {
     if(idList.empty())
-        return isNotFoundIdentifier();
+        return candidateError();
     
     result = idList[RANDOM::RAND(idList.size())];
 
@@ -302,7 +302,7 @@ bool Selector::select(const TOKEN::Statement *statement)
     else if(std::holds_alternative<TOKEN::AsmStatement*>(statement->var))
         return select(std::get<TOKEN::AsmStatement*>(statement->var));
     else
-        return invalidStatementError();
+        return invalidVariantError("TOKEN::Statement");
 
     return true;
 }
@@ -400,7 +400,7 @@ bool Selector::select(const TOKEN::CompoundStatement *cs)
             if(mIsFittable)
                 return false;
             else
-                return notSupportError("declaration is not supported.");            
+                return supportError("declaration is not supported.");            
         }
 
         if(std::holds_alternative<Statement*>(bi->var))
@@ -488,7 +488,7 @@ bool Selector::select(const TOKEN::IterationStatement *is)
             return false;
     }
     else if(std::holds_alternative<IS::Sf_d_e_e_s>(is->var))
-        return notSupportError("\"for-statement\" which include declaration is not supported");
+        return supportError("\"for-statement\" which include declaration is not supported");
     else
         return invalidVariantError("IterationStatement");
 
@@ -1312,7 +1312,7 @@ bool Selector::select(const TOKEN::DirectDeclarator *dd)
         {
             const auto &s{std::get<DD::Sil>(v)};
             if(bool(s.il))
-                return notSupportError("IdentifierList");
+                return supportError("IdentifierList");
         }
         else
             return invalidVariantError("DirectDeclarator");
@@ -1617,26 +1617,6 @@ bool Selector::select(const TOKEN::AsmStatement *as)
     return true;
 }
 
-bool Selector::clearError() const
-{
-    std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector::clearError():\n"
-        << OUTPUT::resetCode
-        << "    what: failed to clear previous value.\n"
-        << std::flush;
-    return false;
-}
-
-bool Selector::invalidStatementError() const
-{
-    std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector::invalidStatementError():\n"
-        << OUTPUT::resetCode
-        << "    what: invalid statement.\n"
-        << std::flush;
-    return false;
-}
-
 bool Selector::invalidVariantError(const std::string &className) const
 {
     std::cerr << OUTPUT::charRedCode
@@ -1648,20 +1628,20 @@ bool Selector::invalidVariantError(const std::string &className) const
     return false;
 }
 
-bool Selector::isNotFoundIdentifier() const
+bool Selector::candidateError() const
 {
     std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector::isNotFoundIdentifier():\n"
+        << "REPAIR::Selector::candidateError():\n"
         << OUTPUT::resetCode
         << "    what: not found identifier that is same type.\n"
         << std::flush;
     return false;
 }
 
-bool Selector::notSupportError(const std::string &name) const
+bool Selector::supportError(const std::string &name) const
 {
     std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector::notSupportError():\n"
+        << "REPAIR::Selector::supportError():\n"
         << OUTPUT::resetCode
         << "    what: no support.\n"
         "    ---: " << name
