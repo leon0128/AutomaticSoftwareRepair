@@ -1,75 +1,75 @@
 # program settings
 ## program name
 PROGRAM = asr
-## source directories
-SOURCE_DIRECTORIES = ./src/ \
-	./src/analyzer/ \
-	./src/common/ \
-	./src/repair/ \
-	./src/similarity/ \
-	./src/utility/
+## source directories(not included last '/')
+DIRECTORIES = $(SOURCE_DIRECTORY) \
+	$(ANALYZER_DIRECTORY)         \
+	$(SIMILARITY_DIRECTORY)       \
+	$(REPAIR_DIRECTORY)           \
+	$(COMMON_DIRECTORY)           \
+	$(UTILITY_DIRECTORY)
+SOURCE_DIRECTORY     = ./src
+ANALYZER_DIRECTORY   = ./src/analyzer
+SIMILARITY_DIRECTORY = ./src/similarity
+REPAIR_DIRECTORY     = ./src/repair
+COMMON_DIRECTORY     = ./src/common
+UTILITY_DIRECTORY    = ./src/utility
 
 # compiler settings
 ## c++ compiler
 CXX = g++
 ## c++ compiler flags
 CXXFLAGS = -g3 -Wall -std=c++2a -I./src
-## c++ preprocessor
-CPP = g++ -E
-## c++ preprocessor flags
-CPPFLAGS = 
 
 ## linkage flags
 LINKAGE_FLAGS = -lpthread -pthread
 
 
 ###########################################################
-## all files
-ALL_FILES = $(foreach DIR \
-	, $(SOURCE_DIRECTORIES) \
-	, $(wildcard $(DIR)*))
-
+# files
+## source files
+SOURCE_FILES = $(foreach DIRECTORY, \
+	$(DIRECTORIES),                 \
+	$(wildcard $(DIRECTORY)/*.cpp))
 ## object files
-OBJECT_FILES = $(foreach DIR, \
-	$(SOURCE_DIRECTORIES), \
-	$(patsubst %.cpp, \
-		%.o, \
-		$(wildcard $(DIR)*.cpp)))
-
-## header files
-HEADER_FILES = $(foreach DIR, \
-	$(SOURCE_DIRECTORIES), \
-	$(wildcard $(DIR)*.hpp))
-	
+OBJECT_FILES = $(patsubst %.cpp, \
+	%.o,                         \
+	$(SOURCE_FILES))
 ## dependency files
-DEPENDENCY_FILES = $(foreach DIR, \
-	$(SOURCE_DIRECTORIES), \
-	$(patsubst %.cpp, \
-		%.d, \
-		$(wildcard $(DIR)*.cpp)))
+DEPENDENCY_FILES = $(patsubst %.cpp, \
+	%.d,                             \
+	$(SOURCE_FILES))
 
-# all
+# recipes
+## all
 .PHONY: all
 all: $(PROGRAM)
-	rm -rf $(DEPENDENCY_FILES)
 
-# $(PROGRAM) recipe
+## $(PROGRAM) recipe
 $(PROGRAM): $(OBJECT_FILES)
 	$(CXX) $(CXXFLAGS) $(LINKAGE_FLAGS) $^ -o $@
 
-# dependency file recipe
+## dependency file recipe
+.PHONY: $(DEPENDENCY_FILES)
 $(DEPENDENCY_FILES):
-	echo -n "$(dir $@)" > $@
-	$(CXX) $(CXXFLAGS) -MM -c $(basename $@).cpp >> $@
-	echo "	rm -rf $@" >> $@
-	echo "	$(CXX) $(CXXFLAGS) -c $(basename $@).cpp -o $(basename $@).o" >> $@
+	$(CXX) -E $(CXXFLAGS) -MM -MF $@ -MT $(basename $@).o $(basename $@).cpp
 
-# clean
+## clean
 .PHONY: clean
 clean:
-	rm -rf $(PROGRAM) $(OBJECT_FILES) $(DEPENDENCY_FILES)
+	rm -rf $(PROGRAM)        \
+		$(foreach DIRECTORY, \
+			$(DIRECTORIES),  \
+			$(wildcard $(DIRECTORY)/*[.o,.d]))
 
-## include depndency files
-ifneq ($(MAKECMDGOALS), clean)
--include $(DEPENDENCY_FILES)
+# include depndency files
+ifeq ($(MAKECMDGOALS),)
+include $(DEPENDENCY_FILES)
+else ifeq ($(MAKECMDGOALS), all)
+include $(DEPENDENCY_FILES)
+else ifeq ($(MAKECMDGOALS), $(PROGRAM))
+include $(DEPENDENCY_FILES)
+else ifeq ($(suffix $(MAKECMDGOALS)), .o)
+include $(basename $(MAKECMDGOALS)).d
+else ifeq ($(MAKECMDGOALS), clean)
 endif
