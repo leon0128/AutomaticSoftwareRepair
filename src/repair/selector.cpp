@@ -6,6 +6,7 @@
 #include "configure.hpp"
 #include "utility/output.hpp"
 #include "utility/random.hpp"
+#include "common/statement.hpp"
 #include "common/scope.hpp"
 #include "common/identifier.hpp"
 #include "common/token.hpp"
@@ -15,15 +16,7 @@ namespace REPAIR
 {
 
 Selector::Selector()
-    : mIsSelection{false}
-    , mIsCandidate{false}
-    , mIsFittable{false}
-    , mScopeId{std::numeric_limits<decltype(mScopeId)>::max()}
-    , mIds{std::ref(INIT_VALUE)}
-    , mCandidateIds{std::ref(CANDIDATE_INIT_VALUE)}
-    , mIdx{0ull}
-    , mCIds{std::cref(INIT_VALUE)}
-    , mIsFittables{}
+    : mTag{Tag::CAN_CONVERT}
 {
 }
 
@@ -31,100 +24,10 @@ Selector::~Selector()
 {
 }
 
-bool Selector::execute(std::size_t scopeId
-    , const TOKEN::Statement *statement
-    , std::deque<std::size_t> &ids)
+std::pair<bool, bool> Selector::canConvert(std::size_t statementId
+    , std::size_t scopeId)
 {
-    mIsSelection = true;
-    mIsCandidate = false;
-    mIsFittable = false;
-
-    if(!clear())
-        return false;
-
-    mScopeId = scopeId;
-    mIds = std::ref(ids);
-
-    if(!select(statement))
-        return false;
-
-    return true;
-}
-
-bool Selector::execute(std::size_t scopeId
-    , const TOKEN::Statement *statement
-    , std::deque<std::deque<std::size_t>> &candidateIds)
-{
-    mIsSelection = true;
-    mIsCandidate = true;
-    mIsFittable = false;
-
-    if(!clear())
-        return false;
-    
-    mScopeId = scopeId;
-    mCandidateIds = std::ref(candidateIds);
-
-    if(!select(statement))
-        return false;
-
-    return true;
-}
-
-bool Selector::execute(const std::deque<std::size_t> &ids
-    , const TOKEN::Statement *statement)
-{
-    mIsSelection = false;
-    mIsCandidate = false;
-    mIsFittable = false;
-    
-    if(!clear())
-        return false;
-    
-    mIdx = 0ull;
-    mCIds = std::cref(ids);
-
-    if(!select(statement))
-        return false;
-
-    if(mIdx != ids.size())
-        return unusedIdError();
-    
-    return true;
-}
-
-bool Selector::isFittable(std::size_t scopeId
-    , const TOKEN::Statement *statement)
-{
-    mIsSelection = false;
-    mIsCandidate = false;
-    mIsFittable = true;
-
-    if(!clear())
-        return false;
-
-    mScopeId = scopeId;
-
-    if(!select(statement))
-        return false;
-    
-    return std::all_of(mIsFittables.cbegin()
-        , mIsFittables.cend()
-        , [](auto &&b){return b;});
-}
-
-bool Selector::clear()
-{
-    mScopeId = std::numeric_limits<decltype(mScopeId)>::max();
-    mIds = std::ref(INIT_VALUE);
-    mCandidateIds = std::ref(CANDIDATE_INIT_VALUE);
-
-    mIdx = 0ull;
-    mCIds = std::cref(INIT_VALUE);
-
-    mIsFittables.clear();
-
-    return true;
+    mTag = Tag::CAN_CONVERT;
 }
 
 bool Selector::getVisibleIdentifierList(const std::shared_ptr<IDENTIFIER::Identifier> &id
@@ -1628,16 +1531,6 @@ bool Selector::invalidVariantError(const std::string &className) const
     return false;
 }
 
-bool Selector::candidateError() const
-{
-    std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector::candidateError():\n"
-        << OUTPUT::resetCode
-        << "    what: not found identifier that is same type.\n"
-        << std::flush;
-    return false;
-}
-
 bool Selector::supportError(const std::string &name) const
 {
     std::cerr << OUTPUT::charRedCode
@@ -1646,26 +1539,6 @@ bool Selector::supportError(const std::string &name) const
         << "    what: no support.\n"
         "    ---: " << name
         << std::endl;
-    return false;
-}
-
-bool Selector::lackIdError() const
-{
-    std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector::lackIdError():\n"
-        << OUTPUT::resetCode
-        << "    what: lack of id-list.\n"
-        << std::flush;
-    return false;
-}
-
-bool Selector::unusedIdError() const
-{
-    std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector::unusedIdError():\n"
-        << OUTPUT::resetCode
-        << "    what: exists unused identifier-id.\n"
-        << std::flush;
     return false;
 }
 

@@ -51,7 +51,7 @@ bool Operation::initialize(const std::shared_ptr<BLOCK::Block> &target
     auto &&getFunctionName{[](const Declarator *declarator)
         -> std::string
     {
-        while(1)
+        while(true)
         {
             if(std::holds_alternative<DD::Si>(declarator->dd->seq.front()))
                 return TOKEN::str(std::get<DD::Si>(declarator->dd->seq.front()).i);

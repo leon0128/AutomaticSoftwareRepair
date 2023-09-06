@@ -66,6 +66,20 @@ std::pair<decltype(STATEMENT_MAP)::iterator, bool> emplaceSafely(Args &&...args)
     return STATEMENT_MAP.emplace(std::forward<Args>(args)...);
 }
 
+// RequiredType: Declaration, FunctionDefinition or Statement
+template<class RequiredType>
+std::shared_ptr<RequiredType> get(std::size_t statementId)
+{
+    auto &&iter{STATEMENT_MAP.find(statementId)};
+    if(iter == STATEMENT_MAP.end())
+        return {};
+
+    if(std::holds_alternative<std::shared_ptr<RequiredType>>(iter->second))
+        return std::get<std::shared_ptr<RequiredType>>(iter->second);
+    else
+        return {};
+}
+
 }
 
 }
