@@ -34,7 +34,6 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--failure", {Tag::FAILURE, true}}
     , {"--use-control-flow", {Tag::USE_CONTROL_FLOW, false}}
     , {"--create-same-op", {Tag::CREATE_SAME_OP, false}}
-    , {"--use-brute-force", {Tag::USE_BRUTE_FORCE, false}}
     , {"--num-first-op", {Tag::NUM_FIRST_OP_GENERATION, true}}
     , {"--same-op-failure", {Tag::SAME_OP_FAILURE, true}}
     , {"--random-identifier", {Tag::RANDOM_IDENTIFIER, false}}
@@ -239,9 +238,6 @@ bool Configure::readArgument(Tag tag
         case(Tag::CREATE_SAME_OP):
             SHOULD_CREATE_SAME_OP = true;
             break;
-        case(Tag::USE_BRUTE_FORCE):
-            SHOULD_USE_BRUTE_FORCE = true;
-            break;
         case(Tag::NUM_FIRST_OP_GENERATION):
             if(!assignSizeT(tag, arg, NUM_FIRST_OP_GENERATION))
                 return false;
@@ -430,9 +426,6 @@ bool Configure::setDefaultValue()
                 break;
             case(Tag::CREATE_SAME_OP):
                 SHOULD_CREATE_SAME_OP = false;
-                break;
-            case(Tag::USE_BRUTE_FORCE):
-                SHOULD_USE_BRUTE_FORCE = false;
                 break;
             case(Tag::NUM_FIRST_OP_GENERATION):
                 NUM_FIRST_OP_GENERATION = 10000ull;

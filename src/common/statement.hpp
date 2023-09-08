@@ -70,6 +70,8 @@ std::pair<decltype(STATEMENT_MAP)::iterator, bool> emplaceSafely(Args &&...args)
 template<class RequiredType>
 std::shared_ptr<RequiredType> get(std::size_t statementId)
 {
+    std::unique_lock lock{statementMapMutex};
+
     auto &&iter{STATEMENT_MAP.find(statementId)};
     if(iter == STATEMENT_MAP.end())
         return {};

@@ -3,6 +3,11 @@
 
 #include <utility>
 #include <vector>
+#include <deque>
+#include <unordered_map>
+#include <optional>
+#include <mutex>
+#include <functional>
 
 #include "common/token.hpp"
 
@@ -20,9 +25,8 @@ private:
     enum class Tag
     {
         CAN_CONVERT
-        , GET_CANDIDATES
-        , CONVERT_FIRST_OPERATION // for first operation
-        , CONVERT_OTHER_OPERATION // for second or more operation
+        , CONVERT
+        , CREATE_CACHE
     };
 
 public:
@@ -36,32 +40,42 @@ public:
     //  statementId: statement id to be based
     //  scopeId: scope id to be added
     // return value:
-    //  first: whether statement can convert
-    //  second: whether an error was occured
-    std::pair<bool, bool> canConvert(std::size_t statementId
+    //  whether statement can convert
+    bool canConvert(std::size_t statementId
         , std::size_t scopeId);
+
     // arguments:
     //  statementId: statement id to be based
-    // return value:
-    //  first: list of a candidates that has convertible identifier ids.
-    //  second: whether an error was occured
-    std::pair<std::vector<std::vector<std::size_t>>, bool> getCandidates();
+    //  scopeId: scope id to be added
+    //  alternativeIds: storage of used alternative ids
     // return value:
     //  first: statement id that was converted
     //  second: whether an error was occured
-    std::pair<std::size_t, bool> convert();
+    std::pair<std::size_t, bool> convert(std::size_t statementId
+        , std::size_t scopeId
+        , std::deque<std::size_t> &alternativeIds);
 
 private:
+    // calculates candidates and creates cache
+    bool calculateCandidates();
+
+    // selects alternative ids.
+    // selected ids are stored into mAlternativeIdsRef.
+    bool selectAlternativeIds();
+
+    // check validity of candidates(mCache).
+    // if candidates are invalid, that candidates value is deleted
+    //  and mCache stores std::nullopt instead of deleted candidates.
+    // if error has occured when this function is called,
+    //  false is returned.
+    bool checkValidity();
+
     // insert visible identifier-id to argument.
     bool getVisibleIdentifierList(const std::shared_ptr<IDENTIFIER::Identifier>&
         , std::deque<std::size_t>&);
     // remove different type to identifier from vector for argument.
     bool getSameTypeIdentifier(const std::shared_ptr<IDENTIFIER::Identifier>&
         , std::deque<std::size_t>&);
-    // select one from vector for argument.
-    // result: size of vector == 1
-    bool selectOne(const std::deque<std::size_t>&
-        , std::size_t&);
 
     bool convert(TOKEN::Identifier*);
 
@@ -139,10 +153,33 @@ private:
     bool select(const TOKEN::ExtendedAsm*);
     bool select(const TOKEN::AsmStatement*);
 
+    bool conversionError() const;
     bool invalidVariantError(const std::string &className) const;
     bool supportError(const std::string&) const;
 
+    // key: pair of statement id(first) and scope id(second)
+    // value: if statement can convert another one, object has a map
+    //         otherwise, object has nullopt value. 
+    //        vector: identifier ids that appear in statement.
+    //        multimap's key: identifier id that indicates base identifier.
+    //        multimap's value: identifier id that indicates a candidates of base identifier.
+    // PairHash: PairHash class is helper of cache and calculates hash of pair(std::pair<std::size_t, std::size_t>).
+    struct PairHash
+    {
+        std::size_t operator()(const std::pair<std::size_t, std::size_t> &pair) const noexcept
+            {return (pair.first << sizeof(pair.first) * 4) + pair.second;}
+    };
+    static std::unordered_map<std::pair<std::size_t, std::size_t>
+        , std::optional<std::pair<std::vector<std::size_t>, std::unordered_multimap<std::size_t, std::size_t>>>
+        , PairHash> mCache;
+    static std::mutex mCacheMutex;
+
     Tag mTag;
+    std::size_t mStatementId; // statement id to be converted
+    std::size_t mScopeId; // scope id to insert
+    static std::deque<std::size_t> mAlternativeIdsInit; // initial value of mAlternativeIdsRef
+    std::reference_wrapper<std::deque<std::size_t>> mAlternativeIdsRef; // reference of container of alternative ids
+    std::size_t mAlternativeIdsIndex;
 };
 
 }
