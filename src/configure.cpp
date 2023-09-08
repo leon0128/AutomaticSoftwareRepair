@@ -34,9 +34,11 @@ decltype(Configure::flagMap) Configure::flagMap{{"--help", {Tag::HELP, false}}
     , {"--failure", {Tag::FAILURE, true}}
     , {"--use-control-flow", {Tag::USE_CONTROL_FLOW, false}}
     , {"--create-same-op", {Tag::CREATE_SAME_OP, false}}
-    , {"--use-brute-force", {Tag::USE_BRUTE_FORCE, false}}
     , {"--num-first-op", {Tag::NUM_FIRST_OP_GENERATION, true}}
     , {"--same-op-failure", {Tag::SAME_OP_FAILURE, true}}
+    , {"--random-identifier", {Tag::RANDOM_IDENTIFIER, false}}
+    , {"--duplicated-identifier", {Tag::DUPLICATED_IDENTIFIER, false}}
+    , {"--no-duplicated-identifier", {Tag::NO_DUPLICATED_IDENTIFIER, false}}
     , {"--pop", {Tag::POP, true}}
     , {"--gen", {Tag::MAX, true}}
     , {"--elite", {Tag::ELITE, true}}
@@ -236,9 +238,6 @@ bool Configure::readArgument(Tag tag
         case(Tag::CREATE_SAME_OP):
             SHOULD_CREATE_SAME_OP = true;
             break;
-        case(Tag::USE_BRUTE_FORCE):
-            SHOULD_USE_BRUTE_FORCE = true;
-            break;
         case(Tag::NUM_FIRST_OP_GENERATION):
             if(!assignSizeT(tag, arg, NUM_FIRST_OP_GENERATION))
                 return false;
@@ -246,6 +245,15 @@ bool Configure::readArgument(Tag tag
         case(Tag::SAME_OP_FAILURE):
             if(!assignSizeT(tag, arg, SAME_OP_FAILURE))
                 return false;
+            break;
+        case(Tag::RANDOM_IDENTIFIER):
+            IDENTIFIER_SELECTION_TAG = IdentifierSelectionTag::RANDOM;
+            break;
+        case(Tag::DUPLICATED_IDENTIFIER):
+            IDENTIFIER_SELECTION_TAG = IdentifierSelectionTag::DUPLICATED;
+            break;
+        case(Tag::NO_DUPLICATED_IDENTIFIER):
+            IDENTIFIER_SELECTION_TAG = IdentifierSelectionTag::NO_DUPLICATED;
             break;
         case(Tag::POP):
             if(!assignSizeT(tag, arg, POP_SIZE))
@@ -419,14 +427,16 @@ bool Configure::setDefaultValue()
             case(Tag::CREATE_SAME_OP):
                 SHOULD_CREATE_SAME_OP = false;
                 break;
-            case(Tag::USE_BRUTE_FORCE):
-                SHOULD_USE_BRUTE_FORCE = false;
-                break;
             case(Tag::NUM_FIRST_OP_GENERATION):
                 NUM_FIRST_OP_GENERATION = 10000ull;
                 break;
             case(Tag::SAME_OP_FAILURE):
                 SAME_OP_FAILURE = 10000ull;
+                break;
+            case(Tag::RANDOM_IDENTIFIER):
+            case(Tag::DUPLICATED_IDENTIFIER):
+            case(Tag::NO_DUPLICATED_IDENTIFIER):
+                // set default value when variable is initialized.
                 break;
             case(Tag::POP):
                 POP_SIZE = 1000ull;

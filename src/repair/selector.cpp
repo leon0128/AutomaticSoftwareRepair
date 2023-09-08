@@ -2,28 +2,31 @@
 #include <iostream>
 #include <limits>
 #include <algorithm>
+#include <iterator>
 
 #include "configure.hpp"
 #include "utility/output.hpp"
 #include "utility/random.hpp"
+#include "common/statement.hpp"
 #include "common/scope.hpp"
 #include "common/identifier.hpp"
 #include "common/token.hpp"
+#include "register.hpp"
 #include "selector.hpp"
 
 namespace REPAIR
 {
 
+decltype(Selector::mCache) Selector::mCache{};
+decltype(Selector::mCacheMutex) Selector::mCacheMutex{};
+decltype(Selector::mAlternativeIdsInit) Selector::mAlternativeIdsInit{};
+
 Selector::Selector()
-    : mIsSelection{false}
-    , mIsCandidate{false}
-    , mIsFittable{false}
-    , mScopeId{std::numeric_limits<decltype(mScopeId)>::max()}
-    , mIds{std::ref(INIT_VALUE)}
-    , mCandidateIds{std::ref(CANDIDATE_INIT_VALUE)}
-    , mIdx{0ull}
-    , mCIds{std::cref(INIT_VALUE)}
-    , mIsFittables{}
+    : mTag{Tag::CAN_CONVERT}
+    , mStatementId{std::numeric_limits<std::size_t>::max()}
+    , mScopeId{std::numeric_limits<std::size_t>::max()}
+    , mAlternativeIdsRef{mAlternativeIdsInit}
+    , mAlternativeIdsIndex{0ull}
 {
 }
 
@@ -31,98 +34,244 @@ Selector::~Selector()
 {
 }
 
-bool Selector::execute(std::size_t scopeId
-    , const TOKEN::Statement *statement
-    , std::deque<std::size_t> &ids)
+bool Selector::canConvert(std::size_t statementId
+    , std::size_t scopeId)
 {
-    mIsSelection = true;
-    mIsCandidate = false;
-    mIsFittable = false;
-
-    if(!clear())
-        return false;
-
+    Tag prevTag{mTag};
+    mTag = Tag::CAN_CONVERT;
+    mStatementId = statementId;
     mScopeId = scopeId;
-    mIds = std::ref(ids);
 
-    if(!select(statement))
-        return false;
+    // if cache has no data, creates a new cache data.
+    std::unique_lock<std::mutex> lock{mCacheMutex};
+    if(!mCache.contains(std::make_pair(statementId, scopeId)))
+    {
+        lock.unlock();
+        calculateCandidates();
+        lock.lock();
+    }
+
+    mTag = prevTag;
+    return mCache.at(std::make_pair(statementId, scopeId)).has_value();
+}
+
+std::pair<std::size_t, bool> Selector::convert(std::size_t statementId
+    , std::size_t scopeId
+    , std::deque<std::size_t> &alternativeIds)
+{
+    mTag = Tag::CONVERT;
+    mStatementId = statementId;
+    mScopeId = scopeId;
+    mAlternativeIdsRef = alternativeIds;
+
+    auto &&canConverted{canConvert(statementId, scopeId)};
+    if(!canConverted)
+    {
+        conversionError();
+        return {std::numeric_limits<std::size_t>::max(), false};
+    }
+
+    if(!selectAlternativeIds())
+        return {std::numeric_limits<std::size_t>::max(), false};
+    
+    TOKEN::Statement *convertedStatement{STATEMENT::get<TOKEN::Statement>(statementId)->copy()};
+    if(!select(convertedStatement))
+        return {std::numeric_limits<std::size_t>::max(), false};
+    
+    std::optional<std::size_t> convertedStatementIdOpt{Register::execute(convertedStatement)};
+    if(!convertedStatementIdOpt.has_value())
+        return {std::numeric_limits<std::size_t>::max(), false};
+
+    return {convertedStatementIdOpt.value(), true};
+}
+
+bool Selector::calculateCandidates()
+{
+    Tag prevTag{mTag};
+    mTag = Tag::CREATE_CACHE;
+
+    std::shared_ptr<TOKEN::Statement> statementSp{STATEMENT::get<TOKEN::Statement>(mStatementId)};
+
+    std::unique_lock<std::mutex> lock{mCacheMutex};
+    mCache.emplace(std::make_pair(mStatementId, mScopeId)
+        , decltype(mCache)::mapped_type::value_type{});
+    lock.unlock();
+
+    bool isSuccessful{statementSp.get() != nullptr
+        && select(statementSp.get())
+        && checkValidity()};
+
+    if(!isSuccessful)
+        mCache.at(std::make_pair(mStatementId, mScopeId)) = std::nullopt;
+
+    mTag = prevTag;
 
     return true;
 }
 
-bool Selector::execute(std::size_t scopeId
-    , const TOKEN::Statement *statement
-    , std::deque<std::deque<std::size_t>> &candidateIds)
+bool Selector::selectAlternativeIds()
 {
-    mIsSelection = true;
-    mIsCandidate = true;
-    mIsFittable = false;
+    std::unique_lock<std::mutex> lock{mCacheMutex};
+    const auto &[appearingIds, multimap]{mCache.at(std::make_pair(mStatementId, mScopeId)).value()};
 
-    if(!clear())
-        return false;
-    
-    mScopeId = scopeId;
-    mCandidateIds = std::ref(candidateIds);
+    switch(Configure::getSafelyIDENTIFIER_SELECTION_TAG())
+    {
+        // random
+        case(Configure::IdentifierSelectionTag::RANDOM):
+        {
+            for(const auto &appearingId : appearingIds)
+            {
+                auto &&[iter, last]{multimap.equal_range(appearingId)};
+                std::advance(iter
+                    , RANDOM::RAND(std::distance(iter, last)));
+                mAlternativeIdsRef.get().emplace_back(iter->second);
+            }
+            break;
+        }
+        // duplicated
+        case(Configure::IdentifierSelectionTag::DUPLICATED):
+        {
+            // key: id that is appeared in base statement.
+            // value: candidate id
+            std::unordered_map<std::size_t, std::size_t> correspondingMap;
+            for(const auto &appearingId : appearingIds)
+            {
+                if(auto &&mapIter{correspondingMap.find(appearingId)};
+                    mapIter == correspondingMap.end())
+                {
+                    auto &&[multimapIter, last]{multimap.equal_range(appearingId)};
+                    std::advance(multimapIter
+                        , RANDOM::RAND(std::distance(multimapIter, last)));
+                    mAlternativeIdsRef.get().emplace_back(multimapIter->second);
+                    correspondingMap.emplace(appearingId
+                        , mAlternativeIdsRef.get().back());
+                }
+                else
+                    mAlternativeIdsRef.get().emplace_back(mapIter->second);
+            }
+            break;
+        }
+        // no duplicated
+        case(Configure::IdentifierSelectionTag::NO_DUPLICATED):
+        {
+            // key: id that is appeared in base statement.
+            // value: candidate id
+            std::unordered_map<std::size_t, std::size_t> correspondingMap;
+            // key: candidate id that is used another identifier.
+            std::unordered_set<std::size_t> usedCandidateSet;
+            std::unordered_map<std::size_t, std::deque<std::size_t>> shuffledCandidatesMap;
 
-    if(!select(statement))
-        return false;
+            for(const auto &appearingId : appearingIds)
+            {
+                if(!shuffledCandidatesMap.contains(appearingId))
+                {
+                    shuffledCandidatesMap.emplace(appearingId
+                        , std::deque<std::size_t>());
+                    for(auto &&[iter, last]{multimap.equal_range(appearingId)};
+                        iter != last;
+                        iter++)
+                        shuffledCandidatesMap.at(appearingId).emplace_back(iter->second);
+
+                    std::shuffle(shuffledCandidatesMap.at(appearingId).begin()
+                        , shuffledCandidatesMap.at(appearingId).end()
+                        , RANDOM::RAND.engine());
+                }
+
+                if(auto &&iter{correspondingMap.find(appearingId)};
+                    iter == correspondingMap.end())
+                {
+                    while(usedCandidateSet.contains(shuffledCandidatesMap.at(appearingId).front()))
+                        shuffledCandidatesMap.at(appearingId).pop_front();
+
+                    mAlternativeIdsRef.get().emplace_back(shuffledCandidatesMap.at(appearingId).front());
+                    shuffledCandidatesMap.at(appearingId).pop_front();
+                    correspondingMap.emplace(appearingId
+                        , mAlternativeIdsRef.get().back());
+                    usedCandidateSet.emplace(mAlternativeIdsRef.get().back());
+                }
+                else
+                    mAlternativeIdsRef.get().emplace_back(iter->second);
+            }
+
+            break;
+        }
+    }
 
     return true;
 }
 
-bool Selector::execute(const std::deque<std::size_t> &ids
-    , const TOKEN::Statement *statement)
+bool Selector::checkValidity()
 {
-    mIsSelection = false;
-    mIsCandidate = false;
-    mIsFittable = false;
-    
-    if(!clear())
-        return false;
-    
-    mIdx = 0ull;
-    mCIds = std::cref(ids);
+    std::unique_lock<std::mutex> lock{mCacheMutex};
+    const auto &[appearingIds, multimap]{mCache.at(std::make_pair(mStatementId, mScopeId)).value()};
 
-    if(!select(statement))
-        return false;
+    bool isValid{true};
+    switch(Configure::getSafelyIDENTIFIER_SELECTION_TAG())
+    {
+        case(Configure::IdentifierSelectionTag::RANDOM):
+        case(Configure::IdentifierSelectionTag::DUPLICATED):
+        {
+            for(const auto &appearingId : appearingIds)
+            {
+                if(!multimap.contains(appearingId))
+                {
+                    isValid = false;
+                    break;
+                }
+            }
+            break;
+        }
+        case(Configure::IdentifierSelectionTag::NO_DUPLICATED):
+        {
+            // key: id that is appeared in base statement.
+            std::unordered_set<std::size_t> assignedIdSet;
+            // key: used candidate id
+            std::unordered_set<std::size_t> usedCandidateSet;
+            std::unordered_map<std::size_t, std::deque<std::size_t>> candidateMap;
 
-    if(mIdx != ids.size())
-        return unusedIdError();
-    
-    return true;
-}
+            for(const auto &appearingId : appearingIds)
+            {
+                if(!candidateMap.contains(appearingId))
+                {
+                    candidateMap.emplace(appearingId
+                        , std::deque<std::size_t>());
+                    for(auto &&[iter, last]{multimap.equal_range(appearingId)};
+                        iter != last;
+                        iter++)
+                        candidateMap.at(appearingId).emplace_back(iter->second);
+                }
 
-bool Selector::isFittable(std::size_t scopeId
-    , const TOKEN::Statement *statement)
-{
-    mIsSelection = false;
-    mIsCandidate = false;
-    mIsFittable = true;
+                if(!assignedIdSet.contains(appearingId))
+                {
+                    while(true)
+                    {
+                        if(candidateMap.at(appearingId).empty())
+                        {
+                            isValid = false;
+                            break;
+                        }
+                        
+                        if(usedCandidateSet.contains(candidateMap.at(appearingId).front()))
+                            candidateMap.at(appearingId).pop_front();
+                        else
+                            break;
+                    }
 
-    if(!clear())
-        return false;
+                    if(!isValid)
+                        break;
 
-    mScopeId = scopeId;
+                    usedCandidateSet.emplace(candidateMap.at(appearingId).front());
+                    assignedIdSet.emplace(appearingId);
+                    candidateMap.at(appearingId).pop_front();
+                }
+            }
 
-    if(!select(statement))
-        return false;
-    
-    return std::all_of(mIsFittables.cbegin()
-        , mIsFittables.cend()
-        , [](auto &&b){return b;});
-}
+            break;
+        }
+    }
 
-bool Selector::clear()
-{
-    mScopeId = std::numeric_limits<decltype(mScopeId)>::max();
-    mIds = std::ref(INIT_VALUE);
-    mCandidateIds = std::ref(CANDIDATE_INIT_VALUE);
-
-    mIdx = 0ull;
-    mCIds = std::cref(INIT_VALUE);
-
-    mIsFittables.clear();
+    if(!isValid)
+        mCache.at(std::make_pair(mStatementId, mScopeId)) = std::nullopt;
 
     return true;
 }
@@ -156,7 +305,7 @@ bool Selector::getVisibleIdentifierList(const std::shared_ptr<IDENTIFIER::Identi
     std::unordered_set<std::string> idSet;
 
     for(auto *scope{Scope::scopeMap().at(mScopeId)};
-        scope;
+        scope != nullptr;
         scope = scope->getParent())
     {
         for(const auto &pair : scope->map(nTag))
@@ -191,93 +340,57 @@ bool Selector::getSameTypeIdentifier(const std::shared_ptr<IDENTIFIER::Identifie
     return true;
 }
 
-bool Selector::selectOne(const std::deque<std::size_t> &idList
-    , std::size_t &result)
-{
-    if(idList.empty())
-        return candidateError();
-    
-    result = idList[RANDOM::RAND(idList.size())];
-
-    return true;
-}
-
 bool Selector::convert(TOKEN::Identifier *identifier)
 {
     using namespace TOKEN;
-
-    if(mIdx >= mCIds.get().size())
-        return lackIdError();
     
     if(!std::holds_alternative<Identifier::Id>(identifier->var))
         return invalidVariantError("TOKEN::Identifier");
 
     auto &&idPair{std::get<Identifier::Id>(identifier->var)};
-    idPair.first = mCIds.get()[mIdx++];
+    idPair.first = mAlternativeIdsRef.get()[mAlternativeIdsIndex++];
 
     return true;
 }
 
 bool Selector::select(TOKEN::Identifier *identifier)
 {
-    using TI = TOKEN::Identifier;
-
-    if(mIsSelection)
+    switch(mTag)
     {
-        if(!std::holds_alternative<TI::Id>(identifier->var))
-            return invalidVariantError("TOKEN::Identifier");
-
-        const auto &idPair{std::get<TI::Id>(identifier->var)};
-        const auto &idPtr{IDENTIFIER::IDENTIFIER_MAP.at(idPair.first)};
-
-        std::deque<std::size_t> idList;
-        if(!getVisibleIdentifierList(idPtr
-            , idList))
-            return false;
-        
-        if(!getSameTypeIdentifier(idPtr
-            , idList))
-            return false;
-
-        if(mIsCandidate)
+        case(Tag::CAN_CONVERT):
         {
-            if(idList.empty())
-                return false;
-            mCandidateIds.get().push_back(std::move(idList));
+            break;
         }
-        else
+        case(Tag::CREATE_CACHE):
         {
-            std::size_t result{0ull};
-            if(!selectOne(idList
-                , result))
-                return false;
+            if(!std::holds_alternative<TOKEN::Identifier::Id>(identifier->var))
+                return invalidVariantError("TOKEN::Identifier");
+
+            const auto &[identifierId, scopeId]{std::get<TOKEN::Identifier::Id>(identifier->var)};
+            const auto &identifierSp{IDENTIFIER::IDENTIFIER_MAP.at(identifierId)};
             
-            mIds.get().push_back(result);
-        }
-    }
-    else if(mIsFittable)
-    {
-        if(!std::holds_alternative<TI::Id>(identifier->var))
-            return invalidVariantError("TOKEN::Identifier");
-        
-        const auto &idPair{std::get<TI::Id>(identifier->var)};
-        const auto &idPtr{IDENTIFIER::IDENTIFIER_MAP.at(idPair.first)};
+            std::deque<std::size_t> candidateIds;
+            if(!getVisibleIdentifierList(identifierSp, candidateIds)
+                || !getSameTypeIdentifier(identifierSp, candidateIds))
+                return false;
 
-        std::deque<std::size_t> idList;
-        if(!getVisibleIdentifierList(idPtr
-            , idList))
-            return false;
-        
-        if(!getSameTypeIdentifier(idPtr
-            , idList))
-            return false;
-        
-        mIsFittables.push_back(!idList.empty());
-    }
-    else
-    {
-        if(!convert(identifier))
-            return false;
+            std::unique_lock<std::mutex> lock{mCacheMutex};
+            auto &&[appearingIds, multimap]{mCache.at(std::make_pair(mStatementId, mScopeId)).value()};
+            appearingIds.emplace_back(identifierId);
+            if(!multimap.contains(identifierId))
+            {
+                for(const auto &candidateId : candidateIds)
+                    multimap.emplace(identifierId, candidateId);
+            }
+    
+            break;
+        }
+        case(Tag::CONVERT):
+        {
+            if(!convert(identifier))
+                return false;
+            break;
+        }
     }
 
     return true;
@@ -397,7 +510,7 @@ bool Selector::select(const TOKEN::CompoundStatement *cs)
     {
         if(std::holds_alternative<Declaration*>(bi->var))
         {
-            if(mIsFittable)
+            if(mTag == Tag::CREATE_CACHE)
                 return false;
             else
                 return supportError("declaration is not supported.");            
@@ -1575,9 +1688,10 @@ bool Selector::select(const TOKEN::AttributeSpecifierList *asl)
 
 bool Selector::select(const TOKEN::AttributeSpecifier *as)
 {
-    mIsFittables.push_back(false);
-
-    return true;
+    if(mTag == Tag::CREATE_CACHE)
+        return false;
+    else
+        return supportError("TOKEN::AttributeSpecifier");
 }
 
 bool Selector::select(const TOKEN::AttributeStatement *as)
@@ -1595,16 +1709,18 @@ bool Selector::select(const TOKEN::AsmQualifiers*)
 
 bool Selector::select(const TOKEN::BasicAsm*)
 {
-    mIsFittables.push_back(false);
-
-    return true;
+    if(mTag == Tag::CREATE_CACHE)
+        return false;
+    else
+        return supportError("TOKEN::BasicAsm");
 }
 
 bool Selector::select(const TOKEN::ExtendedAsm*)
 {
-    mIsFittables.push_back(false);
-
-    return true;
+    if(mTag == Tag::CREATE_CACHE)
+        return false;
+    else
+        return supportError("TOKEN::ExtendedAsm");
 }
 
 bool Selector::select(const TOKEN::AsmStatement *as)
@@ -1615,6 +1731,16 @@ bool Selector::select(const TOKEN::AsmStatement *as)
         return select(std::get<TOKEN::ExtendedAsm*>(as->var));
     
     return true;
+}
+
+bool Selector::conversionError() const
+{
+    std::cerr << OUTPUT::charRedCode
+        << "REPAIR::Selector::conversionError():\n"
+        << OUTPUT::resetCode
+        << "    what: failed to conversion statement.\n"
+        << std::flush;
+    return false;
 }
 
 bool Selector::invalidVariantError(const std::string &className) const
@@ -1628,16 +1754,6 @@ bool Selector::invalidVariantError(const std::string &className) const
     return false;
 }
 
-bool Selector::candidateError() const
-{
-    std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector::candidateError():\n"
-        << OUTPUT::resetCode
-        << "    what: not found identifier that is same type.\n"
-        << std::flush;
-    return false;
-}
-
 bool Selector::supportError(const std::string &name) const
 {
     std::cerr << OUTPUT::charRedCode
@@ -1646,26 +1762,6 @@ bool Selector::supportError(const std::string &name) const
         << "    what: no support.\n"
         "    ---: " << name
         << std::endl;
-    return false;
-}
-
-bool Selector::lackIdError() const
-{
-    std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector::lackIdError():\n"
-        << OUTPUT::resetCode
-        << "    what: lack of id-list.\n"
-        << std::flush;
-    return false;
-}
-
-bool Selector::unusedIdError() const
-{
-    std::cerr << OUTPUT::charRedCode
-        << "REPAIR::Selector::unusedIdError():\n"
-        << OUTPUT::resetCode
-        << "    what: exists unused identifier-id.\n"
-        << std::flush;
     return false;
 }
 

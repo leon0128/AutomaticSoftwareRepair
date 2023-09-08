@@ -35,28 +35,8 @@ bool Representation::addOperation()
 {
     std::shared_ptr<OPERATION::Operation> operation;
 
-    // for brute-force
-    if(!OPERATION::Operation::firstOperations.empty()
-        && mOps.empty())
-    {
-        double prob{RANDOM::RAND.floating<double>()}, sum{0.0};
-        for(; !operation;)
-        {
-            for(auto &&iter{OPERATION::Operation::firstOperations.begin()};
-                iter != OPERATION::Operation::firstOperations.end();
-                iter++)
-            {
-                if((sum += iter->first) >= prob)
-                {
-                    operation = iter->second;
-                    OPERATION::Operation::firstOperations.erase(iter);
-                    break;
-                }
-            }
-        }
-    }
     // no create same op
-    else if(mOps.empty()
+    if(mOps.empty()
         && !Configure::SHOULD_CREATE_SAME_OP
         && OPERATION::Operation::createdSameOpCount < Configure::SAME_OP_FAILURE)
     {

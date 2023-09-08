@@ -79,10 +79,6 @@ private:
     static std::unordered_map<ScopeId, std::size_t> SCOPE_COLUMN_MAP;
 
 public:
-    // this object contains operation that is Rep's first it.
-    //  first: prob
-    //  second: Operation
-    inline static std::deque<std::pair<double, std::shared_ptr<Operation>>> firstOperations{};
     // this object contains operation that is created.
     //  first: srcId (if operation::tag is sub, srcId's value is max).
     inline static std::unordered_multimap<std::size_t, std::shared_ptr<Operation>> createdOperations{};
@@ -94,7 +90,6 @@ public:
     static bool initialize(const std::shared_ptr<BLOCK::Block> &target
         , const std::deque<std::shared_ptr<BLOCK::Block>> &pool
         , const std::deque<std::deque<double>> &similarity);
-    static bool initializeFirstOperations(const std::shared_ptr<BLOCK::Block> &target);
 
 private:
     static bool initializeSelectableStatement(const std::shared_ptr<BLOCK::Block> &target
@@ -124,20 +119,6 @@ private:
         , std::size_t srcStatId);
     static std::size_t getRank(ScopeId destScopeId
         , std::size_t srcStatId);
-
-    // helper for initializeFirstOperations
-    static bool createFirstOperation(const BLOCK::Block *block
-        , Operation &op);
-    // helper for createFirstOperation
-    static bool createAllStatement(std::deque<std::tuple<std::size_t, std::size_t, std::deque<std::size_t>, double>> &createdStats
-        , const std::deque<std::deque<std::size_t>> &candidate
-        , std::size_t candidateIndex
-        , std::deque<std::size_t> &ids
-        , const std::shared_ptr<TOKEN::Statement> &base
-        , std::size_t baseId
-        , double prob);
-    // helper for initializeFirsetOperations
-    static bool adjustFirstOperationsProb();
 
     static bool initializationError(const std::string &what);
 

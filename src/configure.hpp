@@ -45,9 +45,11 @@ private:
         , FAILURE
         , USE_CONTROL_FLOW
         , CREATE_SAME_OP
-        , USE_BRUTE_FORCE
         , NUM_FIRST_OP_GENERATION
         , SAME_OP_FAILURE
+        , RANDOM_IDENTIFIER
+        , DUPLICATED_IDENTIFIER
+        , NO_DUPLICATED_IDENTIFIER
         , POP
         , MAX
         , ELITE
@@ -71,6 +73,13 @@ private:
     };
 
 public:
+    enum class IdentifierSelectionTag
+    {
+        RANDOM
+        , DUPLICATED
+        , NO_DUPLICATED
+    };
+
     static bool parseCommandLineArguments(int argc, char **argv);
 
 #define GET_SAFELY(objectName) \
@@ -145,12 +154,13 @@ public:
     GET_SAFELY(SHOULD_USE_CONTROL_FLOW)
     inline static bool SHOULD_CREATE_SAME_OP;
     GET_SAFELY(SHOULD_CREATE_SAME_OP)
-    inline static bool SHOULD_USE_BRUTE_FORCE;
-    GET_SAFELY(SHOULD_USE_BRUTE_FORCE)
     inline static std::size_t NUM_FIRST_OP_GENERATION;
     GET_SAFELY(NUM_FIRST_OP_GENERATION)
     inline static std::size_t SAME_OP_FAILURE;
     GET_SAFELY(SAME_OP_FAILURE)
+
+    inline static IdentifierSelectionTag IDENTIFIER_SELECTION_TAG{IdentifierSelectionTag::NO_DUPLICATED};
+    GET_SAFELY(IDENTIFIER_SELECTION_TAG)
 
     inline static std::size_t POP_SIZE;
     GET_SAFELY(POP_SIZE)

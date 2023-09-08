@@ -1,10 +1,13 @@
 #ifndef REPAIR_SELECTOR_HPP
 #define REPAIR_SELECTOR_HPP
 
-#include <functional>
-#include <string>
-#include <memory>
+#include <utility>
+#include <vector>
 #include <deque>
+#include <unordered_map>
+#include <optional>
+#include <mutex>
+#include <functional>
 
 #include "common/token.hpp"
 
@@ -21,11 +24,10 @@ class Selector
 private:
     enum class Tag
     {
-        
+        CAN_CONVERT
+        , CONVERT
+        , CREATE_CACHE
     };
-
-    inline static std::deque<std::size_t> INIT_VALUE{};
-    inline static std::deque<std::deque<std::size_t>> CANDIDATE_INIT_VALUE{};
 
 public:
     Selector();
@@ -34,27 +36,39 @@ public:
     Selector(const Selector&) = delete;
     Selector(Selector&&) = delete;
 
-    // remove previous value
-    bool execute(std::size_t scopeId
-        , const TOKEN::Statement*
-        , std::deque<std::size_t>&);
-    // get candidate identifiers.
-    bool execute(std::size_t scopeId
-        , const TOKEN::Statement*
-        , std::deque<std::deque<std::size_t>>&);
-    // convert iddentifier-id to idList
-    bool execute(const std::deque<std::size_t>&
-        , const TOKEN::Statement*);
+    // arguments:
+    //  statementId: statement id to be based
+    //  scopeId: scope id to be added
+    // return value:
+    //  whether statement can convert
+    bool canConvert(std::size_t statementId
+        , std::size_t scopeId);
 
-    // if statement fits to scope, this return true.
-    // otherwise, this return false.
-    // if statement has attribute-specifier,
-    // return value is false.
-    bool isFittable(std::size_t scopeId
-        , const TOKEN::Statement*);
+    // arguments:
+    //  statementId: statement id to be based
+    //  scopeId: scope id to be added
+    //  alternativeIds: storage of used alternative ids
+    // return value:
+    //  first: statement id that was converted
+    //  second: whether an error was occured
+    std::pair<std::size_t, bool> convert(std::size_t statementId
+        , std::size_t scopeId
+        , std::deque<std::size_t> &alternativeIds);
 
 private:
-    bool clear();
+    // calculates candidates and creates cache
+    bool calculateCandidates();
+
+    // selects alternative ids.
+    // selected ids are stored into mAlternativeIdsRef.
+    bool selectAlternativeIds();
+
+    // check validity of candidates(mCache).
+    // if candidates are invalid, that candidates value is deleted
+    //  and mCache stores std::nullopt instead of deleted candidates.
+    // if error has occured when this function is called,
+    //  false is returned.
+    bool checkValidity();
 
     // insert visible identifier-id to argument.
     bool getVisibleIdentifierList(const std::shared_ptr<IDENTIFIER::Identifier>&
@@ -62,10 +76,6 @@ private:
     // remove different type to identifier from vector for argument.
     bool getSameTypeIdentifier(const std::shared_ptr<IDENTIFIER::Identifier>&
         , std::deque<std::size_t>&);
-    // select one from vector for argument.
-    // result: size of vector == 1
-    bool selectOne(const std::deque<std::size_t>&
-        , std::size_t&);
 
     bool convert(TOKEN::Identifier*);
 
@@ -143,24 +153,33 @@ private:
     bool select(const TOKEN::ExtendedAsm*);
     bool select(const TOKEN::AsmStatement*);
 
+    bool conversionError() const;
     bool invalidVariantError(const std::string &className) const;
-    bool candidateError() const;
     bool supportError(const std::string&) const;
-    bool lackIdError() const;
-    bool unusedIdError() const;
 
-    bool mIsSelection;
-    bool mIsCandidate;
-    bool mIsFittable;
+    // key: pair of statement id(first) and scope id(second)
+    // value: if statement can convert another one, object has a map
+    //         otherwise, object has nullopt value. 
+    //        vector: identifier ids that appear in statement.
+    //        multimap's key: identifier id that indicates base identifier.
+    //        multimap's value: identifier id that indicates a candidates of base identifier.
+    // PairHash: PairHash class is helper of cache and calculates hash of pair(std::pair<std::size_t, std::size_t>).
+    struct PairHash
+    {
+        std::size_t operator()(const std::pair<std::size_t, std::size_t> &pair) const noexcept
+            {return (pair.first << sizeof(pair.first) * 4) + pair.second;}
+    };
+    static std::unordered_map<std::pair<std::size_t, std::size_t>
+        , std::optional<std::pair<std::vector<std::size_t>, std::unordered_multimap<std::size_t, std::size_t>>>
+        , PairHash> mCache;
+    static std::mutex mCacheMutex;
 
-    std::size_t mScopeId;
-    std::reference_wrapper<std::deque<std::size_t>> mIds;
-    std::reference_wrapper<std::deque<std::deque<std::size_t>>> mCandidateIds;
-
-    std::size_t mIdx;
-    std::reference_wrapper<const std::deque<std::size_t>> mCIds;
-
-    std::vector<bool> mIsFittables;
+    Tag mTag;
+    std::size_t mStatementId; // statement id to be converted
+    std::size_t mScopeId; // scope id to insert
+    static std::deque<std::size_t> mAlternativeIdsInit; // initial value of mAlternativeIdsRef
+    std::reference_wrapper<std::deque<std::size_t>> mAlternativeIdsRef; // reference of container of alternative ids
+    std::size_t mAlternativeIdsIndex;
 };
 
 }
