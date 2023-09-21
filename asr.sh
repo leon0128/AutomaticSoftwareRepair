@@ -34,7 +34,7 @@ MAX_NUMBER_OF_FAILURES=1024
 
 ## genetic algorithm
 POPULATION=1000
-GENERATION=1
+GENERATION=10
 NUMBER_OF_ELITE=2
 TOURNAMENT_SIZE=3
 
@@ -201,11 +201,6 @@ execute()
 
         executeASR $POOL_OPTION $1 >> $2
         executeASR $POOL_OPTION $1 >> $2
-	executeASR $POOL_OPTION $1 >> $2
-	executeASR $POOL_OPTION $1 >> $2
-	executeASR $POOL_OPTION $1 >> $2
-        executeASR $POOL_OPTION $1 >> $2
-        executeASR $POOL_OPTION $1 >> $2
         executeASR $POOL_OPTION $1 >> $2
         executeASR $POOL_OPTION $1 >> $2
         executeASR $POOL_OPTION $1 >> $2
@@ -217,8 +212,8 @@ execute()
 for i in {1..1}
 do
     notice $(hostname) :: $$ :: start
-    execute --random-identifier 230910_random_identifier.csv
-    execute --duplicated-identifier 230910_duplicated_identifier.csv
-    execute --no-duplicated-identifier 230910_no_duplicated_identifier.csv
+    execute --random-identifier 230921_random_identifier.csv
+    execute --duplicated-identifier 230921_duplicated_identifier.csv
+    execute --no-duplicated-identifier 230921_no_duplicated_identifier.csv
     notice $(hostname) :: $$ :: end
 done
