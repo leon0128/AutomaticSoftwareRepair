@@ -200,6 +200,15 @@ execute()
         TEST_SCRIPT_FILENAME=${TARGET_TESTCASE_MAP[$TAR]}
 
         executeASR $POOL_OPTION $1 >> $2
+        executeASR $POOL_OPTION $1 >> $2
+	executeASR $POOL_OPTION $1 >> $2
+	executeASR $POOL_OPTION $1 >> $2
+	executeASR $POOL_OPTION $1 >> $2
+        executeASR $POOL_OPTION $1 >> $2
+        executeASR $POOL_OPTION $1 >> $2
+        executeASR $POOL_OPTION $1 >> $2
+        executeASR $POOL_OPTION $1 >> $2
+        executeASR $POOL_OPTION $1 >> $2
     done
 }
 
@@ -208,8 +217,8 @@ execute()
 for i in {1..1}
 do
     notice $(hostname) :: $$ :: start
-    execute --random-identifier 230909_random_identifier.csv
-    execute --duplicated-identifier 230909_duplicated_identifier.csv
-    execute --no-duplicated-identifier 230909_no_duplicated_identifier.csv
+    execute --random-identifier 230910_random_identifier.csv
+    execute --duplicated-identifier 230910_duplicated_identifier.csv
+    execute --no-duplicated-identifier 230910_no_duplicated_identifier.csv
     notice $(hostname) :: $$ :: end
 done
