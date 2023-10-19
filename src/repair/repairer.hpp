@@ -87,6 +87,7 @@ private:
 
     bool mIsRepaired;
     REPRESENTATION::Representation *mResult;
+    int mMaxScore;
 
     // these variable is used for log.
     std::size_t mTotalGen;

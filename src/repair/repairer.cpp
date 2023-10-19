@@ -31,6 +31,7 @@ Repairer::Repairer()
     , mPool{}
     , mIsRepaired{false}
     , mResult{nullptr}
+    , mMaxScore{0}
     , mTotalGen{0ull}
     , mTotalRep{0ull}
 {
@@ -280,6 +281,7 @@ bool Repairer::test(Reps &currentReps)
 
     // set results to member variables.
     mResult = currentReps.front().first->copy();
+    mMaxScore = currentReps.front().second;
     mIsRepaired = currentReps.front().second >= Configure::GOAL_SCORE;
 
     return true;

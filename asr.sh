@@ -34,7 +34,7 @@ MAX_NUMBER_OF_FAILURES=1024
 
 ## genetic algorithm
 POPULATION=1000
-GENERATION=1
+GENERATION=10
 NUMBER_OF_ELITE=2
 TOURNAMENT_SIZE=3
 
@@ -192,19 +192,18 @@ done
 execute()
 {
     ## header
-    echo target,threshold,is_repaired,used_function_name,pop_count,execution_time,preprocessing_time,similarity_calculation_time,repair_time > $1
+    echo target,threshold,is_repaired,used_function_name,pop_count,execution_time,preprocessing_time,similarity_calculation_time,repair_time,tag > $2
 
     for TAR in ${TARGETS[@]}
     do
         TARGET_FILENAME=$TAR
         TEST_SCRIPT_FILENAME=${TARGET_TESTCASE_MAP[$TAR]}
 
-        for TH in $(seq 0 0.01 1)
-        do
-            REDUCTION_THRESHOLD=$TH
-
-            executeASR $POOL_OPTION >> $1
-        done
+        executeASR $POOL_OPTION $1 >> $2
+        executeASR $POOL_OPTION $1 >> $2
+        executeASR $POOL_OPTION $1 >> $2
+        executeASR $POOL_OPTION $1 >> $2
+        executeASR $POOL_OPTION $1 >> $2
     done
 }
 
@@ -213,6 +212,8 @@ execute()
 for i in {1..1}
 do
     notice $(hostname) :: $$ :: start
-    execute 230505_repair_similarity_relationship.csv
+    execute --random-identifier 230921_random_identifier.csv
+    execute --duplicated-identifier 230921_duplicated_identifier.csv
+    execute --no-duplicated-identifier 230921_no_duplicated_identifier.csv
     notice $(hostname) :: $$ :: end
 done
