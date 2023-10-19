@@ -13,6 +13,7 @@
 #include "utility/file.hpp"
 #include "utility/system.hpp"
 #include "utility/output.hpp"
+#include "common/identifier.hpp"
 #include "common/scope.hpp"
 #include "common/token.hpp"
 #include "common/define.hpp"
@@ -483,7 +484,7 @@ void Repairer::outputSpecifiedLog() const
     {
         sstream << '[';
         for(auto &&id : op->altIds())
-            sstream << id << ' ';
+            sstream << IDENTIFIER::atSafely(id)->str() << ' ';
         sstream << ']';
     }
 
