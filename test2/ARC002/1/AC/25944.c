@@ -1,0 +1,1 @@
+n;main(){scanf("%d",&n);n=!puts(n%4||n%100<1&&n%400?"NO":"YES");}

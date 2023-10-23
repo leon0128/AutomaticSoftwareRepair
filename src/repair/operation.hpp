@@ -85,6 +85,11 @@ public:
     // this object indicates count of same op created.
     inline static std::size_t createdSameOpCount{0ull};
 
+    inline static const auto &similarity()
+        {return SIMILARITY;}
+    inline static const auto &scopeBelongedScopeMap()
+        {return SCOPE_BELONGED_SCOPE_MAP;}
+
     static bool initialize(const std::shared_ptr<BLOCK::Block> &target
         , const std::deque<std::shared_ptr<BLOCK::Block>> &pool);
     static bool initialize(const std::shared_ptr<BLOCK::Block> &target

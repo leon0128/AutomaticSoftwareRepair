@@ -91,6 +91,9 @@ void Controller::outputSpecifiedLog() const
         << "," << timeMeasurer().total<TM::AnalyzerTag, std::chrono::milliseconds>()
         << "," << timeMeasurer().total<TM::SimTag, std::chrono::milliseconds>()
         << "," << timeMeasurer().total<TM::RepairTag, std::chrono::milliseconds>()
+        << "," << timeMeasurer().timer(TM::RepairTag::INITIALIZING).count<std::chrono::milliseconds>()
+        << "," << timeMeasurer().timer(TM::RepairTag::REP_GENERATION).count<std::chrono::milliseconds>()
+        << "," << timeMeasurer().timer(TM::RepairTag::EVALUATION).count<std::chrono::milliseconds>()
         << "," << static_cast<int>(Configure::IDENTIFIER_SELECTION_TAG)
         << std::endl;
 }

@@ -43,7 +43,7 @@ ORIGINAL_GRAM_SIZE=1
 TYPE1_GRAM_SIZE=4
 TYPE2_GRAM_SIZE=4
 TYPE3_GRAM_SIZE=4
-REDUCTION_THRESHOLD=0.1
+REDUCTION_THRESHOLD=0.2
 NUMBER_OF_USE_EXTERNAL=32768
 
 ## others
@@ -137,12 +137,12 @@ EXTERNAL_DIRS=()
 TARGETS=()
 declare -A TARGET_TESTCASE_MAP
 declare -A SAME_POOL_MAP
-for CON in $(ls test/)
+for CON in $(ls test2/)
 do
     CONTESTS+=($CON)
-    DIR="test/"
+    DIR="test2/"
     DIR+=$CON
-    DIR+="/A/"
+    DIR+="/1/"
 
     TEST_FILE=$DIR
     TEST_FILE+=testcase.sh
@@ -191,19 +191,29 @@ done
 
 execute()
 {
+    FILE_A="231023_random_identifier.csv"
+    FILE_B="231023_duplicated_identifier.csv"
+    FILE_C="231023_no_duplicated_identifier.csv"
+
     ## header
-    echo target,threshold,is_repaired,used_function_name,pop_count,execution_time,preprocessing_time,similarity_calculation_time,repair_time,tag > $2
+    echo target,is_repaired,score,tags,used_function_names,used_statement_ids,operated_positions,created_statement_id,used_identifier_ids,pop_count,execution_time,preprocessing_time,similarity_calculation_time,repair_time,repair_initialization_time,repair_rep_generation_time,repair_evalution_time,tag > "231023_random_identifier.csv"
+    echo target,is_repaired,score,tags,used_function_names,used_statement_ids,operated_positions,created_statement_id,used_identifier_ids,pop_count,execution_time,preprocessing_time,similarity_calculation_time,repair_time,repair_initialization_time,repair_rep_generation_time,repair_evalution_time,tag > "231023_duplicated_identifier.csv"
+    echo target,is_repaired,score,tags,used_function_names,used_statement_ids,operated_positions,created_statement_id,used_identifier_ids,pop_count,execution_time,preprocessing_time,similarity_calculation_time,repair_time,repair_initialization_time,repair_rep_generation_time,repair_evalution_time,tag > "231023_no_duplicated_identifier.csv"
 
     for TAR in ${TARGETS[@]}
     do
         TARGET_FILENAME=$TAR
         TEST_SCRIPT_FILENAME=${TARGET_TESTCASE_MAP[$TAR]}
 
-        executeASR $POOL_OPTION $1 >> $2
-        executeASR $POOL_OPTION $1 >> $2
-        executeASR $POOL_OPTION $1 >> $2
-        executeASR $POOL_OPTION $1 >> $2
-        executeASR $POOL_OPTION $1 >> $2
+        RESULT_FILENAME=tmp/random/
+        RESULT_FILENAME+=$(basename $TARGET_FILENAME)
+        executeASR $POOL_OPTION --random-identifier >> "231023_random_identifier.csv"
+        RESULT_FILENAME=tmp/duplicated/
+        RESULT_FILENAME+=$(basename $TARGET_FILENAME)
+        executeASR $POOL_OPTION --duplicated-identifier >> "231023_duplicated_identifier.csv"
+        RESULT_FILENAME=tmp/no_duplicated/
+        RESULT_FILENAME+=$(basename $TARGET_FILENAME)
+        executeASR $POOL_OPTION --no-duplicated-identifier >> "231023_no_duplicated_identifier.csv"
     done
 }
 
@@ -212,8 +222,6 @@ execute()
 for i in {1..1}
 do
     notice $(hostname) :: $$ :: start
-    execute --random-identifier 230921_random_identifier.csv
-    execute --duplicated-identifier 230921_duplicated_identifier.csv
-    execute --no-duplicated-identifier 230921_no_duplicated_identifier.csv
+    execute
     notice $(hostname) :: $$ :: end
 done

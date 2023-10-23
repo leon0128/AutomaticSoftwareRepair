@@ -463,7 +463,8 @@ void Repairer::outputSpecifiedLog() const
         sstream << static_cast<int>(op->tag()) << ' ';
     sstream << ',';
     for(auto &&op : mResult->ops())
-        sstream << STATEMENT::atSafelyToFunctionNameMap(op->srcId()) << ' ';
+        if(op->tag() == OPERATION::Tag::ADD || op->tag() == OPERATION::Tag::REP)
+            sstream << STATEMENT::atSafelyToFunctionNameMap(op->srcId()) << ' ';
     sstream << ',';
     for(auto &&op : mResult->ops())
         sstream << op->srcId() << ' ';
