@@ -450,14 +450,42 @@ bool Repairer::compilingError(const std::string &filename)
 void Repairer::outputSpecifiedLog() const
 {
     sstream << Configure::SOURCE_FILENAME
-        << "," << Configure::SIM_CAPACITY
         << "," << std::boolalpha << mIsRepaired
-        << ",";
-    if(!mResult->ops().empty()
-        && (mResult->ops().front()->tag() == OPERATION::Tag::ADD
-            || mResult->ops().front()->tag() == OPERATION::Tag::REP))
+        << "," << mMaxScore;
+    // if(!mResult->ops().empty()
+    //     && (mResult->ops().front()->tag() == OPERATION::Tag::ADD
+    //         || mResult->ops().front()->tag() == OPERATION::Tag::REP))
+    // {
+    //     sstream << STATEMENT::atSafelyToFunctionNameMap(mResult->ops().front()->srcId());
+    // }
+    sstream << ',';
+    for(auto &&op : mResult->ops())
+        sstream << static_cast<int>(op->tag()) << ' ';
+    sstream << ',';
+    for(auto &&op : mResult->ops())
+        if(op->tag() == OPERATION::Tag::ADD || op->tag() == OPERATION::Tag::REP)
+            sstream << STATEMENT::atSafelyToFunctionNameMap(op->srcId()) << ' ';
+    sstream << ',';
+    for(auto &&op : mResult->ops())
+        sstream << op->srcId() << ' ';
+    sstream << ',';
+    for(auto &&op : mResult->ops())
     {
-        sstream << STATEMENT::atSafelyToFunctionNameMap(mResult->ops().front()->srcId());
+        sstream << '[';
+        for(auto &&pos : op->targetPos())
+            sstream << pos << ' ';
+        sstream << ']';
+    }
+    sstream << ',';
+    for(auto &&op : mResult->ops())
+        sstream << op->statId() << ' ';
+    sstream << ',';
+    for(auto &&op : mResult->ops())
+    {
+        sstream << '[';
+        for(auto &&id : op->altIds())
+            sstream << id << ' ';
+        sstream << ']';
     }
 
     sstream << "," << mTotalRep

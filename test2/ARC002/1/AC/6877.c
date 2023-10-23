@@ -1,0 +1,1 @@
+main(a) {scanf("%d",&a);puts(a % 400 == 0 || (a % 100 != 0 && a % 4 == 0) ? "YES" : "NO");exit(0);}
