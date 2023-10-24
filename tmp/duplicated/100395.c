@@ -18,16 +18,16 @@ int main(void)
         ;
     wari = (float)year / mon / day;
     waridata = wari;
-    wari = wari - waridata;
     
-    if(wari == 0)
-        printf("%04d/%02d/%02d\n", year, mon, day);
+    if(year % 4 == 0 && year % 100 != 0 || year % 400 == 0)
+        printf("YES\n");
     else
-        
-        if(uruu == 1)
-            puts("YES");
-        else
-            puts("NO");
+        printf("NO\n");
+    
+    if(j == 0)
+        scanf("NO\n");
+    else
+        ;
     
     return 0;
 }

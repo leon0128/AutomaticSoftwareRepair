@@ -17,14 +17,10 @@ int main(void)
     else
         ;
     
-    if(n % 400 == 0)
+    if(n % 4 == 0 && (m % 100 != 0 || n % 400 == 0))
         printf("YES\n");
     else
-        
-        if(m % 100 != 0)
-            printf("YES\n");
-        else
-            printf("NO\n");
+        printf("NO\n");
     
     return 0;
 }

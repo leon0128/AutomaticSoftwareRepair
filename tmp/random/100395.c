@@ -16,14 +16,14 @@ int main(void)
         uruu = 1;
     else
         ;
+    wari = (float)year / mon / day;
+    waridata = wari;
+    wari = wari - waridata;
     
     if(uruu == 1)
         printf("YES\n");
     else
         printf("NO\n");
-    waridata = wari;
-    wari = wari - waridata;
-    scanf("NO\n");
     
     return 0;
 }

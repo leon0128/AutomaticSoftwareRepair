@@ -3,19 +3,7 @@
 int main()
 {
     int a;
-    
-    if(a % 400 == 0)
-        a = 1;
-    else
-        
-        if(a % 100 == 0)
-            a = 0;
-        else
-            
-            if(a % 4 == 0)
-                a = 1;
-            else
-                a = 0;
+    scanf("%d", & a);
     
     if(a % 400 == 0)
     {
@@ -26,11 +14,14 @@ int main()
     else
         ;
     
-    if(a % 100 != 0)
+    if(a % 100 == 0)
     {
-        printf("NO\n");
+        a = 0;
         
-        return 0;
+        if(a % 400 == 0)
+            a = 1;
+        else
+            ;
     }
     else
         ;

@@ -3,30 +3,26 @@
 int main()
 {
     int a;
-    
-    if(a % 400 == 0)
-        a = 1;
-    else
-        ;
-    
-    if(a % 400 == 0)
-    {
-        printf("YES");
-        
-        return 0;
-    }
-    else
-        ;
     printf("YES\n");
     
-    if(a % 4 == 0)
+    if(a % 400 == 0)
     {
-        a = 1;
         
-        if(a % 100 == 0 && a % 400 != 0)
-            a = 0;
+        if(a % 100)
+            ++ a;
         else
             ;
+        
+        return 0;
+    }
+    else
+        ;
+    
+    if(a % 100 != 0)
+    {
+        printf("NO");
+        
+        return 0;
     }
     else
         ;
@@ -39,10 +35,7 @@ int main()
     }
     else
         ;
-    remove("YES");
+    printf("NO");
     
-    if(! (a % 100))
-        a = 0;
-    else
-        ;
+    return 0;
 }

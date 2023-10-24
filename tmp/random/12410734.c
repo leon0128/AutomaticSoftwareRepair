@@ -5,15 +5,7 @@ int main(void)
     int year;
     char * uru;
     uru = "NO";
-    
-    if(year % 100 == 0)
-        year = 0;
-    else
-        
-        if(year % 4 == 0)
-            year = 1;
-        else
-            year = 0;
+    scanf("YES\n");
     scanf("%d", & year);
     
     if((year % 4) == 0)
@@ -30,5 +22,5 @@ int main(void)
         uru = "YES";
     else
         ;
-    puts((year % 4 == 0 && year % 100 != 0 || year % 400 == 0) ? "YES" : "NO");
+    puts(year % 400 ? year % 100 ? year % 4 ? "NO" : "YES" : "NO" : "YES");
 }

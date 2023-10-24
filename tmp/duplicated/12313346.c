@@ -16,11 +16,7 @@ int main(void)
         m = 1;
     else
         ;
-    
-    if(m % 100 != 0)
-        printf("YES\n");
-    else
-        printf("NO\n");
+    puts((n % 4 == 0 && n % 100 != 0 || n % 400 == 0) ? "YES" : "NO");
     
     return 0;
 }
