@@ -16,7 +16,11 @@ int main(void)
         m = 1;
     else
         ;
-    puts((n % 4 == 0 && n % 100 != 0 || n % 400 == 0) ? "YES" : "NO");
+    
+    if(n % 4 == 0 && (n % 100 != 0 || n % 400 == 0))
+        puts("YES");
+    else
+        puts("NO");
     
     return 0;
 }

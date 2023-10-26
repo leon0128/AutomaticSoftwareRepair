@@ -4,7 +4,11 @@ int main()
 {
     int y;
     scanf("%d", & y);
-    printf("%s\n", (! (y % 400) || (! (y % 4) && y % 100)) ? "YES" : "NO");
+    
+    if((y % 400) == 0 || ((y % 4 == 0) && (y % 100) != 0))
+        printf("YES\n");
+    else
+        printf("NO\n");
     
     return 0;
 }

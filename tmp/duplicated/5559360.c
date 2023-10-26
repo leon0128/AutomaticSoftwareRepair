@@ -24,11 +24,7 @@ int main()
     }
     else
         ;
-    
-    if(x == 1)
-        printf("YES\n");
-    else
-        printf("NO\n");
+    printf("%s\n", (((n % 400 == 0) ? 1 : (n % 100 == 0) ? 0 : (n % 4 == 0) ? 1 : 0) ? "YES" : "NO"));
     
     return 0;
 }

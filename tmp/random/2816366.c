@@ -16,11 +16,7 @@ int main(void)
     
     if(y % 400 == 0)
     {
-        
-        if(y % 400 == 0)
-            printf("YES\n");
-        else
-            printf("NO\n");
+        printf("YES\n");
         
         return 0;
     }

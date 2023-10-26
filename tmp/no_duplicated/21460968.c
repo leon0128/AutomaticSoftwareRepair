@@ -21,10 +21,18 @@ int main()
     else
         ;
     
-    if(b == 0)
-        printf("YES\n");
+    if(b % 400 == 0)
+        puts("YES");
     else
-        printf("NO\n");
+        
+        if(b % 100 == 0)
+            puts("NO");
+        else
+            
+            if(b % 4 == 0)
+                puts("YES");
+            else
+                puts("NO");
     
     return 0;
 }

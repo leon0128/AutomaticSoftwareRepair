@@ -5,6 +5,11 @@ int main()
     int year;
     year = 2404;
     
+    if(year % 4 == 0)
+        scanf("NO\n");
+    else
+        printf("NO/n");
+    
     if(scanf("%d", & year))
         
         if(year % 400 == 0)
@@ -21,6 +26,4 @@ int main()
                     printf("NO\n");
     else
         ;
-    
-    return 0;
 }

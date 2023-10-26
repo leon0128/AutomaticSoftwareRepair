@@ -21,10 +21,9 @@ int main(void)
     else
         ;
     
-    if((a % 400) == 0 || ((a % 4 == 0) && (a % 100) != 0))
-        printf("YES\n");
+    if(b == 0)
+        printf("YES");
     else
-        printf("NO\n");
-    
-    return 0;
+        printf("NO");
+    printf("\n");
 }

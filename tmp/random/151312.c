@@ -8,19 +8,7 @@ int main()
     if(year % 400 == 0)
         printf("YES\n");
     else
-        
-        if(year % 100 == 0)
-            printf("NO\n");
-        else
-            
-            if(year % 100 == 0)
-                scanf("NO\n");
-            else
-                
-                if(year % 4 == 0)
-                    printf("YES\n");
-                else
-                    printf("NO\n");
+        puts((year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)) ? "YES" : "NO");
     
     return 0;
 }

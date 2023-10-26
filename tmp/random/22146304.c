@@ -17,5 +17,5 @@ int main(void)
                 printf("YES");
             else
                 printf("NO");
-    puts("");
+    printf("\n");
 }

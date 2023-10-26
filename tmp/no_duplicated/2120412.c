@@ -25,7 +25,6 @@ int main(void)
     scanf("%d", & command_num);
     scanf("%s", str_command);
     str_L[0] = str_L[1] = str_L[2] = '\0';
-    scanf("YES\n");
     str_R[0] = str_R[1] = str_R[2] = '\0';
     {
         unsigned int i;
@@ -119,18 +118,18 @@ int main(void)
     }
     count = count_L + count_R + (command_num - ((2 * count_L) + (2 * count_R)));
     
-    if(count % 4 != 0)
-        printf("NO\n");
-    else
+    if(count % 4 == 0)
         
-        if(count % 4 == 0 && count % 100 != 0)
+        if(count % 100 != 0)
             printf("YES\n");
         else
             
-            if(count % 4 == 0 && count % 100 == 0 && count % 400 != 0)
-                printf("NO\n");
-            else
+            if(count % 400 == 0)
                 printf("YES\n");
+            else
+                printf("NO\n");
+    else
+        printf("NO\n");
     
     return 0;
 }

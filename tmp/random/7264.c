@@ -4,7 +4,11 @@ int main(void)
 {
     char input[4];
     int year;
-    scanf("%d", & year);
+    
+    if(fgets(input, 5, stdin))
+        sscanf(input, "%d", & year);
+    else
+        ;
     
     if(year % 4 == 0)
         

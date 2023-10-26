@@ -4,7 +4,18 @@ int main(void)
 {
     int year;
     scanf("%d", & year);
-    (year % 4) || (year % 100 == 0 && year % 400 != 0) ? printf("NO\n") : printf("YES\n");
     
-    return 0;
+    if(year % 400 == 0)
+        printf("YES");
+    else
+        
+        if(year % 100 == 0)
+            printf("NO");
+        else
+            
+            if(year % 4 == 0)
+                printf("YES");
+            else
+                printf("NO");
+    printf("\n");
 }

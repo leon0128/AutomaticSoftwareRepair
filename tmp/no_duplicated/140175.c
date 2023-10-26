@@ -23,24 +23,19 @@ int main()
     else
         ;
     
-    if(y % 4 == 0 && (y % 100 != 0 || y % 400 == 0))
-        printf("YES\n");
+    if(y % 400 == 0)
+    {
+        uru = 1;
+        yn = 1;
+    }
     else
-        printf("NO\n");
+        ;
     
     if(yn == 0)
         uru = 0;
     else
         ;
-    
-    if(! (yn % 100))
-        uru = 0;
-    else
-        
-        if(! (yn % 4))
-            uru = 1;
-        else
-            uru = 0;
+    printf("%s\n", y % 400 == 0 || y % 100 && y % 4 == 0 ? "YES" : "NO");
     
     return 0;
 }

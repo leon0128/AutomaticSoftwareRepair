@@ -4,20 +4,25 @@ int main(void)
 {
     int in;
     scanf("%d", & in);
+    in = in | 4;
     
-    if(in % 400 == 0)
-        printf("YES\n");
+    if(! (in % 400))
+        puts("YES");
     else
         
-        if(in % 100 == 0)
-            printf("NO\n");
-        else
+        if(! (in % 4))
+        {
             
-            if(in % 4 == 0)
-                printf("YES\n");
+            if(in % 100)
+                puts("YES");
             else
-                printf("NO\n");
-    scanf("YES\n");
+                puts("NO");
+            
+            return 0;
+        }
+        else
+            ;
+    puts("NO");
     
     return 0;
 }

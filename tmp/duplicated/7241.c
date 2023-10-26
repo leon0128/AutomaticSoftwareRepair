@@ -17,7 +17,11 @@ int main(void)
             printf("YES\n");
     else
         printf("NO\n");
-    remove("NO");
+    
+    if(Y % 4 == 0)
+        Y = 1;
+    else
+        ;
     
     return 0;
 }

@@ -9,14 +9,10 @@ int main(void)
         printf("YES\n");
     else
         
-        if(y % 100 == 0)
-            puts("NO");
+        if((y % 400) == 0 || ((y % 4 == 0) && (y % 100) != 0))
+            printf("YES\n");
         else
-            
-            if(y % 4 == 0)
-                puts("YES");
-            else
-                puts("NO");
+            printf("NO\n");
     
     return 0;
 }

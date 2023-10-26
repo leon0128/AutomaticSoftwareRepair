@@ -4,6 +4,7 @@ int main()
 {
     int Y;
     scanf("%d", & Y);
+    scanf("%d", & Y);
     
     if(Y % 400 == 0)
         printf("YES\n");
@@ -17,7 +18,6 @@ int main()
                 printf("YES\n");
             else
                 printf("NO\n");
-    Y = 1;
     
     return 0;
 }

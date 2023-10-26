@@ -7,17 +7,17 @@ int main(void)
     if(scanf("%d", & Y))
         
         if(Y % 400 == 0)
-            puts("YES");
+            printf("YES\n");
         else
             
             if(Y % 100 == 0)
-                puts("NO");
+                printf("NO\n");
             else
                 
                 if(Y % 4 == 0)
-                    puts("YES");
+                    printf("YES\n");
                 else
-                    puts("NO");
+                    printf("NO\n");
     else
         ;
     

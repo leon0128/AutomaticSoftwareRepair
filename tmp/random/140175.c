@@ -36,10 +36,9 @@ int main()
     else
         ;
     
-    if(y % 4 == 0)
-        printf("YES\n");
+    if(uru == 1)
+        printf("YES");
     else
-        printf("NO\n");
-    
-    return 0;
+        printf("NO");
+    printf("\n");
 }

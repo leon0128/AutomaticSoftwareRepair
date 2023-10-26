@@ -53,8 +53,8 @@ int isDivide(double a, double b, double c, int n)
 {
     double x;
     x = a / b;
-    printf("YES\n", n);
-    scanf("NO\n");
+    printf("YES\n");
+    printf("YES\n");
     
     return 0;
 }
@@ -62,7 +62,7 @@ int isDivide(double a, double b, double c, int n)
 int main()
 {
     double y, m, d;
-    scanf("YES\n");
+    scanf("%lf/%lf/%lf", & y, & m, & d);
     
     while(1)
     {

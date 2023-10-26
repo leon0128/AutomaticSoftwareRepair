@@ -117,7 +117,19 @@ int main(void)
         }
     }
     count = count_L + count_R + (command_num - ((2 * count_L) + (2 * count_R)));
-    printf("%s\n", (((command_num % 400 == 0) ? 1 : (command_num % 100 == 0) ? 0 : (command_num % 4 == 0) ? 1 : 0) ? "YES" : "NO"));
+    
+    if(command_num % 400 == 0)
+        printf("YES\n");
+    else
+        
+        if(command_num % 100 != 0)
+            
+            if(command_num % 4 == 0)
+                printf("YES\n");
+            else
+                printf("NO\n");
+        else
+            printf("NO\n");
     
     return 0;
 }

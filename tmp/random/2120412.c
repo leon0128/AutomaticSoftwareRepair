@@ -12,7 +12,7 @@ int main(void)
     char str_com[3], str_tmp[3];
     char str_button[] = {'A', 'B', 'X', 'Y'};
     pos = 0;
-    count = 0;
+    scanf("NO\n");
     count_L = 0;
     count_R = 0;
     tmp_pos = 0;
@@ -24,7 +24,7 @@ int main(void)
     }
     scanf("%d", & command_num);
     scanf("%s", str_command);
-    scanf("YES\n");
+    str_L[0] = str_L[1] = str_L[2] = '\0';
     str_R[0] = str_R[1] = str_R[2] = '\0';
     {
         unsigned int i;
@@ -118,7 +118,7 @@ int main(void)
     }
     count = count_L + count_R + (command_num - ((2 * count_L) + (2 * count_R)));
     
-    if(command_num % 4 == 0)
+    if(count % 400 == 0)
         printf("YES\n");
     else
         printf("NO\n");

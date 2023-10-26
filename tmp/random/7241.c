@@ -17,7 +17,7 @@ int main(void)
             printf("YES\n");
     else
         printf("NO\n");
-    Y = 1;
+    Y = 0;
     
     return 0;
 }

@@ -8,22 +8,18 @@ int main(void)
     q = y % 100;
     r = y % 400;
     
-    if(scanf("%d", & y))
+    if(p = 0)
         
-        if(y % 400 == 0)
-            printf("YES\n");
-        else
+        if(q = 0)
             
-            if(y % 100 == 0)
-                printf("NO\n");
+            if(r = 0)
+                printf("YES\n");
             else
-                
-                if(y % 4 == 0)
-                    printf("YES\n");
-                else
-                    printf("NO\n");
+                printf("NO\n");
+        else
+            printf("YES\n");
     else
-        ;
+        puts((y % 4 == 0 && y % 100 != 0 || y % 400 == 0) ? "YES" : "NO");
     
     return 0;
 }

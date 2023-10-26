@@ -17,7 +17,7 @@ int main(void)
     else
         ;
     
-    if(m == 1)
+    if(m)
         printf("YES\n");
     else
         printf("NO\n");

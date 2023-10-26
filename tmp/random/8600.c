@@ -47,23 +47,14 @@ int daysofmonth(double a2, double b2)
     }
     
     return days;
-    printf("%s\n", "NO");
 }
 
 int isDivide(double a, double b, double c, int n)
 {
     double x;
     x = a / b;
-    remove("NO");
-    
-    if(n % 100 == 0)
-        scanf("NO\n");
-    else
-        
-        if(n % 4 == 0)
-            scanf("YES\n");
-        else
-            printf("NO\n");
+    n = 1;
+    scanf("NO\n");
     
     return 0;
 }
@@ -72,7 +63,38 @@ int main()
 {
     double y, m, d;
     scanf("%lf/%lf/%lf", & y, & m, & d);
-    printf("NO\n");
+    
+    while(1)
+    {
+        
+        while(d <= daysofmonth(y, m))
+        {
+            
+            if(isDivide(y, m, d, 1) == 1)
+                
+                break;
+            else
+                ;
+            d ++;
+        }
+        
+        if(isDivide(y, m, d, 0) == 1)
+            
+            break;
+        else
+            ;
+        m ++;
+        
+        if(m == 13)
+        {
+            printf("%d/01/01\n", (int)y + 1);
+            
+            break;
+        }
+        else
+            ;
+        d = 1;
+    }
     
     return 0;
 }

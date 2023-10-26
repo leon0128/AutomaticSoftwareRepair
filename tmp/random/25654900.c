@@ -41,7 +41,6 @@ int main(void)
     int y;
     char c;
     int cnt;
-    y = 0;
     cnt = 0;
     scanf("%d", & y);
     

@@ -8,30 +8,16 @@ int main(void)
     scanf("%d", & Y);
     tmp = Y % 4;
     
-    if(tmp != 0)
-        ans = 0;
-    else
-    {
-        tmp = Y % 100;
-        
-        if(tmp != 0)
-            ans = 1;
-        else
-        {
-            tmp = Y % 400;
-            
-            if(tmp != 0)
-                ans = 0;
-            else
-                ans = 1;
-        }
-    }
-    
-    if(ans == 1)
+    if(Y % 400 == 0)
         printf("YES\n");
     else
         printf("NO\n");
-    scanf("NO\n");
+    scanf("YES\n");
+    
+    if(ans == 1)
+        printf("NO\n");
+    else
+        ;
     
     return 0;
 }

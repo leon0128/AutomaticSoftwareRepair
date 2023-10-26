@@ -6,16 +6,8 @@ int main()
     int y;
     scanf("%d", & y);
     
-    if(y % 4 == 0)
-        
-        if(y % 100 == 0)
-            
-            if(y % 400 == 0)
-                printf("YES\n");
-            else
-                printf("NO\n");
-        else
-            printf("YES\n");
+    if(! (y % 4) && (! (y % 400) || y % 100))
+        printf("YES\n");
     else
         printf("NO\n");
 }

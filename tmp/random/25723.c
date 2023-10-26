@@ -4,7 +4,7 @@ int main()
 {
     int a;
     scanf("%d", & a);
-    puts((a % 4 == 0 && a % 100 != 0 || a % 400 == 0) ? "YES" : "NO");
+    (a % 4) || (a % 100 == 0 && a % 400 != 0) ? printf("NO\n") : printf("YES\n");
     
     return 0;
 }

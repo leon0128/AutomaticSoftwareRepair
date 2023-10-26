@@ -20,19 +20,7 @@ int main()
         b = 0;
     else
         ;
-    
-    if(a % 4 == 0)
-        
-        if(a % 100 == 0 && a % 400 == 0)
-            puts("YES");
-        else
-            
-            if(a % 100 == 0 && a % 400 != 0)
-                puts("NO");
-            else
-                puts("YES");
-    else
-        puts("NO");
+    puts((a % 400 == 0 || (a % 4 == 0 && a % 100 != 0)) ? "YES" : "NO");
     
     return 0;
 }

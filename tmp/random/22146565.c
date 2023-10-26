@@ -6,20 +6,19 @@ int main(void)
     
     if(scanf("%d", & Y))
         
-        if(Y % 4 == 0)
+        if(Y % 400 == 0)
+            printf("YES");
+        else
             
-            if(Y % 100 != 0)
-                printf("YES\n");
+            if(Y % 100 == 0)
+                printf("NO");
             else
                 
-                if(Y % 400 == 0)
-                    printf("YES\n");
+                if(Y % 4 == 0)
+                    printf("YES");
                 else
-                    printf("NO\n");
-        else
-            printf("NO\n");
+                    printf("NO");
     else
         ;
-    
-    return 0;
+    printf("\n");
 }

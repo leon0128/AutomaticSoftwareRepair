@@ -8,30 +8,18 @@ int main(void)
     q = y % 100;
     r = y % 400;
     
-    if(p = 0)
+    if(r % 4 == 0)
         
-        if(q = 0)
+        if(r % 100 != 0)
+            printf("YES\n");
+        else
             
-            if(r = 0)
+            if(r % 400 == 0)
                 printf("YES\n");
             else
                 printf("NO\n");
-        else
-            printf("YES\n");
     else
-        
-        if(y % 400 == 0)
-            printf("YES\n");
-        else
-            
-            if(y % 100 == 0)
-                printf("NO\n");
-            else
-                
-                if(y % 4 == 0)
-                    printf("YES\n");
-                else
-                    printf("NO\n");
+        printf("NO\n");
     
     return 0;
 }

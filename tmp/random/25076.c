@@ -11,11 +11,7 @@ int main()
         j = 1;
     else
         ;
-    
-    if(year % 4 == 0 && year % 100 != 0 || year % 400 == 0)
-        printf("YES\n");
-    else
-        printf("NO\n");
+    printf("%s\n", year % 400 == 0 || year % 4 == 0 && year % 100 != 0 ? "YES" : "NO");
     
     return 0;
 }

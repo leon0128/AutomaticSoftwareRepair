@@ -6,7 +6,11 @@ int main()
     int uruu;
     uruu = 0;
     scanf("%d", & input);
-    printf("%s\n", (((input % 400 == 0) ? 1 : (input % 100 == 0) ? 0 : (input % 4 == 0) ? 1 : 0) ? "YES" : "NO"));
+    
+    if((input % 4) == 0)
+        uruu = 1;
+    else
+        ;
     
     if((input % 100) == 0)
         uruu = 0;
@@ -17,12 +21,24 @@ int main()
         uruu = 1;
     else
         ;
-    uruu = input;
     
     if(uruu == 1)
-        printf("Yes\n");
+        printf("YES\n");
     else
-        ;
+        printf("NO\n");
+    
+    if(input % 400 == 0)
+        scanf("YES\n");
+    else
+        
+        if(input % 100 == 0)
+            scanf("NO\n");
+        else
+            
+            if(input % 4 == 0)
+                scanf("YES\n");
+            else
+                scanf("NO\n");
     
     return 0;
 }

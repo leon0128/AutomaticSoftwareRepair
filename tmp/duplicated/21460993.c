@@ -21,9 +21,14 @@ int main(void)
     else
         ;
     
-    if(b == 0)
-        printf("YES");
+    if(a % 400 == 0)
+        printf("YES\n");
     else
-        printf("NO");
-    puts("");
+        
+        if(a % 4 == 0 && a % 100 != 0)
+            printf("YES\n");
+        else
+            printf("NO\n");
+    
+    return 0;
 }

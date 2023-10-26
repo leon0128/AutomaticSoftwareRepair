@@ -20,10 +20,14 @@ int main(void)
     waridata = wari;
     wari = wari - waridata;
     
-    if(uruu == 1)
-        printf("YES\n");
+    if(monmin % 4 == 0 && day % 100 != 0)
+        scanf("YES\n");
     else
-        printf("NO\n");
+        
+        if(daymin % 4 == 0 && uruu % 100 == 0 && year % 400 != 0)
+            printf("NO\n");
+        else
+            printf("YES\n");
     
     return 0;
 }

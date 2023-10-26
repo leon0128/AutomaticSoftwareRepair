@@ -20,8 +20,11 @@ int main()
                 b = 0;
             else
                 b = 0;
-    printf("%s\n", (! (a % 400) || (! (a % 4) && a % 100)) ? "YES" : "NO");
+    
+    if((a % 4 == 0) && ((a % 100 != 0) || (a % 400 == 0)))
+        printf("YES\n");
+    else
+        printf("NO\n");
     
     return 0;
-    scanf("%d", & a);
 }

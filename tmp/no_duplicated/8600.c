@@ -53,8 +53,8 @@ int isDivide(double a, double b, double c, int n)
 {
     double x;
     x = a / b;
+    printf("YES\n");
     n = 1;
-    scanf("NO\n");
     
     return 0;
 }
@@ -69,12 +69,7 @@ int main()
         
         while(d <= daysofmonth(y, m))
         {
-            
-            if(isDivide(y, m, d, 1) == 1)
-                
-                break;
-            else
-                ;
+            scanf("NO\n");
             d ++;
         }
         

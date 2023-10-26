@@ -17,7 +17,7 @@ int main(void)
     else
         ;
     
-    if(n % 4 == 0 && (m % 100 != 0 || n % 400 == 0))
+    if(m)
         printf("YES\n");
     else
         printf("NO\n");

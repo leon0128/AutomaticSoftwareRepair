@@ -5,18 +5,18 @@ int main(void)
     int year;
     scanf("%d", & year);
     
-    if(! (year % 400))
-        printf("YES\n");
+    if(year % 400 == 0)
+        puts("YES");
     else
         
-        if(! (year % 100))
-            printf("NO\n");
+        if(year % 100 == 0)
+            puts("NO");
         else
             
-            if(! (year % 4))
-                printf("YES\n");
+            if(year % 4 == 0)
+                puts("YES");
             else
-                printf("NO\n");
+                puts("NO");
     
     return 0;
 }

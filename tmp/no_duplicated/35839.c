@@ -8,7 +8,7 @@ int main()
     scanf("%d", & input);
     
     if((input % 4) == 0)
-        scanf("NO\n");
+        uruu = 1;
     else
         ;
     
@@ -17,24 +17,24 @@ int main()
     else
         ;
     
-    if(input % 400 == 0)
+    if((input % 400) == 0)
         printf("YES\n");
     else
+        ;
+    
+    if(input % 4 == 0)
         
-        if(input % 4 == 0)
+        if(input % 100 == 0)
             
-            if(input % 100 != 0)
+            if(input % 400 == 0)
                 printf("YES\n");
             else
                 printf("NO\n");
         else
-            printf("NO\n");
-    scanf("YES\n");
-    
-    if(uruu == 1)
-        printf("Yes\n");
+            printf("YES\n");
     else
-        ;
+        printf("NO\n");
+    scanf("%d", & uruu);
     
     return 0;
 }

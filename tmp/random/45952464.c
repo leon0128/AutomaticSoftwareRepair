@@ -21,9 +21,14 @@ int main()
     else
         ;
     
-    if(cnt == 1)
-        printf("YES");
+    if(cnt % 100 == 0)
+        printf("NO\n");
     else
-        printf("NO");
-    printf("\n");
+        
+        if(y % 4 == 0)
+            printf("YES\n");
+        else
+            printf("NO\n");
+    
+    return 0;
 }

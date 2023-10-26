@@ -4,7 +4,19 @@ int main(void)
 {
     int n;
     scanf("%d", & n);
-    puts(n % 400 ? n % 100 ? n % 4 ? "NO" : "YES" : "NO" : "YES");
+    
+    if(n % 4 == 0)
+        
+        if(n % 100 != 0)
+            printf("YES\n");
+        else
+            
+            if(n % 400 != 0)
+                printf("NO\n");
+            else
+                printf("YES\n");
+    else
+        printf("NO\n");
     
     return 0;
 }

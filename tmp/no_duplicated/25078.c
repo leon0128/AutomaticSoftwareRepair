@@ -12,18 +12,18 @@ int main()
     else
         ;
     
-    if(year % 400 == 0)
-        printf("YES\n");
-    else
+    if(year % 4 == 0)
         
-        if(year % 100 == 0)
-            printf("NO\n");
+        if(year % 100 == 0 && year % 400 == 0)
+            puts("YES");
         else
             
-            if(year % 4 == 0)
-                printf("YES\n");
+            if(year % 100 == 0 && year % 400 != 0)
+                puts("NO");
             else
-                printf("NO\n");
+                puts("YES");
+    else
+        puts("NO");
     
     return 0;
 }

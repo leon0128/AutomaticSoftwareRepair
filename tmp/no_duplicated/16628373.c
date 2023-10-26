@@ -7,7 +7,7 @@ int main()
 {
     unsigned int year;
     _Bool flg;
-    year = (! ((year % 4 == 0 ? 0 : 1)) & (year % 100 == 0 ? 0 : 1)) | ! ((year % 400 == 0 ? 0 : 1));
+    year = 0;
     flg = 0;
     scanf("%d", & year);
     
@@ -31,7 +31,9 @@ int main()
                 flg = 0;
     
     if(flg)
-        printf("YES\n");
+        puts("YES");
     else
-        printf("NO\n");
+        puts("NO");
+    
+    return 0;
 }

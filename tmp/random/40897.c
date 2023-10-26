@@ -6,11 +6,7 @@ int main(void)
     int n;
     fgets(str, sizeof (str), stdin);
     sscanf(str, "%d", & n);
-    
-    if(n % 4 == 0 && n % 100 != 0 || n % 400 == 0)
-        printf("YES\n");
-    else
-        printf("NO\n");
+    puts(n % 4 == 0 && (n % 100 != 0 || n % 400 == 0) ? "YES" : "NO");
     
     return 0;
     

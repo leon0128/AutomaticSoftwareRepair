@@ -8,7 +8,7 @@ int main()
     if(scanf("%d", & i))
         
         if(i % 400 == 0)
-            printf("YES\n");
+            scanf("YES\n");
         else
             
             if(i % 100 == 0)

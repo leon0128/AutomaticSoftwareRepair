@@ -22,14 +22,10 @@ int main(void)
         else
             ;
     
-    if(in % 100 == 0)
-        scanf("NO\n");
+    if(in % 4 == 0)
+        remove("YES");
     else
-        
-        if(in % 4 == 0)
-            scanf("YES\n");
-        else
-            printf("NO\n");
+        puts("NO");
     
     return 0;
 }

@@ -24,19 +24,7 @@ int main()
     else
         F = 0;
     
-    if(Y % 100 == 0)
-    {
-        F = 0;
-        
-        if(Y % 400 == 0)
-            F = 1;
-        else
-            ;
-    }
-    else
-        ;
-    
-    if(F)
+    if((Y % 400) == 0 || ((Y % 4 == 0) && (Y % 100) != 0))
         printf("YES\n");
     else
         printf("NO\n");

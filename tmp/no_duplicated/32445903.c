@@ -21,18 +21,18 @@ int main(void)
     else
         ;
     
-    if(judge & 4)
-        puts("YES");
+    if(Y % 400 == 0)
+        printf("YES\n");
     else
         
-        if(judge & 2)
-            puts("NO");
+        if(Y % 100 == 0)
+            printf("NO\n");
         else
             
-            if(judge & 1)
-                puts("YES");
+            if(Y % 4 == 0)
+                printf("YES\n");
             else
-                puts("NO");
+                printf("NO\n");
     
     return 0;
 }

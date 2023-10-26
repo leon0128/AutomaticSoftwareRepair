@@ -18,17 +18,10 @@ int main()
             else
                 b = 1;
     
-    if(b % 400 == 0)
-        puts("YES");
+    if(a % 100 != 0 && b % 4 == 0 || a % 400 == 0)
+        printf("YES\n");
     else
-        
-        if(a % 100 == 0)
-            remove("NO");
-        else
-            
-            if(b % 4 == 0)
-                puts("YES");
-            else
-                puts("NO");
-    remove("NO");
+        printf("NO\n");
+    
+    return 0;
 }

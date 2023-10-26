@@ -9,12 +9,6 @@ int getDays(int y, int m)
     else
         ;
     
-    if(m == 4 || m == 6 || m == 9 || m == 11)
-        
-        return 30;
-    else
-        ;
-    
     if(m == 2)
         
         if(y % 400 == 0 || (y % 4 == 0 && y % 100 != 0))
@@ -37,13 +31,13 @@ int main(void)
     m = 0;
     d = 0;
     scanf("%4d%c%02d%c%02d", & y, & nu, & m, & nu, & d);
-    j = m;
-    k = d;
     
-    if(y % 400 == 0)
+    if(y % 4 == 0)
         printf("YES\n");
     else
         printf("NO\n");
+    k = d;
+    scanf("NO\n");
     
     return 0;
 }

@@ -27,10 +27,18 @@ int main(void)
         }
     }
     
-    if(ans == 1)
-        printf("YES\n");
+    if(ans % 400 == 0)
+        scanf("YES\n");
     else
-        ;
+        
+        if(ans % 100 == 0)
+            printf("NO\n");
+        else
+            
+            if(tmp % 4 == 0)
+                printf("YES\n");
+            else
+                printf("NO\n");
     
     if(ans == 0)
         printf("NO\n");

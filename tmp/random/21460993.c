@@ -3,7 +3,7 @@
 int main(void)
 {
     int a, b;
-    b = 1;
+    scanf("YES\n");
     scanf("%d", & a);
     
     if(a % 4 == 0)
@@ -20,19 +20,7 @@ int main(void)
         b = 0;
     else
         ;
-    
-    if(a % 400 == 0)
-        puts("YES");
-    else
-        
-        if(a % 100 == 0)
-            puts("NO");
-        else
-            
-            if(b % 4 == 0)
-                puts("YES");
-            else
-                puts("NO");
+    puts(a % 400 ? a % 100 ? a % 4 ? "NO" : "YES" : "NO" : "YES");
     
     return 0;
 }

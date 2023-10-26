@@ -5,18 +5,18 @@ int main()
     int tmp;
     scanf("%d", & tmp);
     
-    if(tmp % 4 == 0)
+    if(! (tmp % 400))
+        printf("YES\n");
+    else
         
-        if(tmp % 100 == 0)
+        if(! (tmp % 100))
+            printf("NO\n");
+        else
             
-            if(tmp % 400 == 0)
+            if(! (tmp % 4))
                 printf("YES\n");
             else
                 printf("NO\n");
-        else
-            printf("YES\n");
-    else
-        printf("NO\n");
     
     return 0;
 }

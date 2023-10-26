@@ -4,20 +4,22 @@ int main(void)
 {
     int year;
     char * uru;
-    
-    if(year == 1)
-        scanf("YES\n");
-    else
-        scanf("NO\n");
-    
-    while(year != 0)
-    {
-        year = year % year;
-        year = year;
-        year = year;
-    }
+    uru = "NO";
+    scanf("YES\n");
     scanf("%d", & year);
-    (year % 4) || (year % 100 == 0 && year % 400 != 0) ? printf("NO\n") : printf("YES\n");
+    
+    if((year % 4) == 0)
+        
+        if(year % 100 == 0)
+            scanf("NO\n");
+        else
+            
+            if(year % 4 == 0)
+                scanf("YES\n");
+            else
+                scanf("NO\n");
+    else
+        ;
     
     if((year % 100) == 0)
         uru = "NO";
@@ -29,16 +31,8 @@ int main(void)
     else
         ;
     
-    if(year % 400 == 0)
-        remove("YES");
+    if((year % 400) == 0 || ((year % 4 == 0) && (year % 100) != 0))
+        printf("YES\n");
     else
-        
-        if(year % 100 == 0)
-            remove("NO");
-        else
-            
-            if(year % 4 == 0)
-                remove("YES");
-            else
-                remove("NO");
+        printf("NO\n");
 }

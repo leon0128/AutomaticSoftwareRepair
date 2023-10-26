@@ -13,12 +13,12 @@ int main(void)
     double decimal_part;
     
     if(fgets(input, 11, stdin))
-    {
         sscanf(input, "%d/%d/%d", & year, & month, & day);
-        printf("%s\n", (! (year % 400) || (! (year % 4) && year % 100)) ? "YES" : "NO");
-    }
     else
         ;
     
-    return 0;
+    if((year % 400) == 0 || ((year % 4 == 0) && (year % 100) != 0))
+        printf("YES\n");
+    else
+        printf("NO\n");
 }

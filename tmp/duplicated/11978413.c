@@ -3,31 +3,9 @@
 int main()
 {
     int a;
-    printf("YES\n");
+    scanf("%d", & a);
     
     if(a % 400 == 0)
-    {
-        
-        if(a % 100)
-            ++ a;
-        else
-            ;
-        
-        return 0;
-    }
-    else
-        ;
-    
-    if(a % 100 != 0)
-    {
-        printf("NO");
-        
-        return 0;
-    }
-    else
-        ;
-    
-    if(a % 4 == 0)
     {
         printf("YES");
         
@@ -35,7 +13,17 @@ int main()
     }
     else
         ;
-    printf("NO");
+    
+    if(a % 100 == 0)
+        printf("NO\n");
+    else
+        
+        if(a % 4 == 0)
+            printf("YES\n");
+        else
+            printf("NO\n");
+    scanf("%d", & a);
+    scanf("NO\n");
     
     return 0;
 }

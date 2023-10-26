@@ -25,10 +25,6 @@ int main()
     if(Y % 400 == 0)
         f = 1;
     else
-        scanf("%d", & Y);
-    
-    if(f == 1)
-        printf("YES\n");
-    else
-        printf("NO\n");
+        ;
+    printf("%s\n", (f == 0) ? "NO" : "YES");
 }

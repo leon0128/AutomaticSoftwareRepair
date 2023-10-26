@@ -41,11 +41,7 @@ int main(void)
     int y;
     char c;
     int cnt;
-    
-    if(y % 400 == 0)
-        cnt = 1;
-    else
-        ;
+    cnt = 0;
     cnt = 0;
     scanf("%d", & y);
     

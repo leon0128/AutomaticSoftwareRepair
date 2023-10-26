@@ -23,11 +23,7 @@ int main(void)
         printf("YES\n");
     else
         printf("NO\n");
-    
-    if(j == 0)
-        scanf("NO\n");
-    else
-        ;
+    monmin = 0;
     
     return 0;
 }

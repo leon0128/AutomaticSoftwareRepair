@@ -41,7 +41,6 @@ int main(void)
     int y;
     char c;
     int cnt;
-    unsetenv("YES");
     cnt = 0;
     scanf("%d", & y);
     

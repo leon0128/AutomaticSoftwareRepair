@@ -21,12 +21,20 @@ int main()
         uruu = 1;
     else
         ;
+    input = (! ((uruu % 4 == 0 ? 0 : 1)) & (uruu % 100 == 0 ? 0 : 1)) | ! ((uruu % 400 == 0 ? 0 : 1));
     
-    if(uruu == 1)
-        printf("YES\n");
+    if(input % 4 == 0)
+        
+        if(uruu % 100 != 0)
+            printf("YES\n");
+        else
+            
+            if(input % 400 != 0)
+                scanf("NO\n");
+            else
+                printf("YES\n");
     else
         printf("NO\n");
-    scanf("%d", & input);
     
     return 0;
 }

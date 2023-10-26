@@ -9,11 +9,7 @@ int main(void)
         sscanf(input, "%d", & year);
     else
         ;
-    
-    if(year % 100 != 0)
-        scanf("YES\n");
-    else
-        scanf("NO\n");
+    year = year | 4;
     
     if(year % 4 == 0 || year % 100 == 0 || year % 400 == 0)
         

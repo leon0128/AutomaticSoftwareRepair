@@ -25,10 +25,18 @@ int main()
     else
         ;
     
-    if(n % 4 == 0 && n % 100 != 0 || n % 400 == 0)
+    if(n % 400 < 1)
         printf("YES\n");
     else
-        printf("NO\n");
+        
+        if(n % 100 < 1)
+            printf("NO\n");
+        else
+            
+            if(n % 4 < 1)
+                printf("YES\n");
+            else
+                printf("NO\n");
     
     return 0;
 }

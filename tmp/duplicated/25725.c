@@ -6,17 +6,17 @@ int main()
     scanf("%d", & a);
     
     if(a % 400 == 0)
-        puts("YES");
+        printf("YES\n");
     else
         
         if(a % 100 == 0)
-            puts("NO");
+            printf("NO\n");
         else
             
             if(a % 4 == 0)
-                puts("YES");
+                printf("YES\n");
             else
-                puts("NO");
+                printf("NO\n");
     
     return 0;
 }

@@ -10,7 +10,6 @@ int main()
     year = 0;
     flg = 0;
     scanf("%d", & year);
-    scanf("NO\n");
     
     if((1000 > year) || (year > 2999))
         
@@ -30,7 +29,11 @@ int main()
                 flg = 1;
             else
                 flg = 0;
-    printf("%s\n", flg ? "YES" : "NO");
+    
+    if(flg)
+        printf("YES\n");
+    else
+        printf("NO\n");
     
     return 0;
 }

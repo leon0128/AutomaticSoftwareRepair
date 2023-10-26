@@ -7,7 +7,7 @@ int main(void)
     fgets(str, sizeof (str), stdin);
     sscanf(str, "%d", & n);
     
-    if(! (n % 4) && (! (n % 400) || n % 100))
+    if(n % 400 == 0 || (n % 100 != 0 && n % 4 == 0))
         printf("YES\n");
     else
         printf("NO\n");

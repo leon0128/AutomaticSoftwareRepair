@@ -5,16 +5,8 @@ int main()
     int a;
     scanf("%d", & a);
     
-    if(a % 400 == 0)
-        puts("YES");
+    if((a % 4 == 0 && a % 100 != 0) || a % 400 == 0)
+        printf("YES\n");
     else
-        
-        if(a % 100 == 0)
-            puts("NO");
-        else
-            
-            if(a % 4 == 0)
-                puts("YES");
-            else
-                puts("NO");
+        printf("NO\n");
 }

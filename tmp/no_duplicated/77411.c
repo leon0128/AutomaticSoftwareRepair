@@ -28,11 +28,7 @@ int main(void)
     }
     
     if(ans == 1)
-        
-        if(Y % 4 == 0)
-            puts("YES");
-        else
-            puts("NO");
+        printf("YES\n");
     else
         ;
     

@@ -5,10 +5,10 @@ int main()
     int Y;
     scanf("%d", & Y);
     
-    if(Y % 4 == 0 && Y % 100 != 0 || Y % 400 == 0)
-        printf("YES\n");
+    if(Y % 4 == 0 && (Y % 100 != 0 || Y % 400 == 0))
+        puts("YES");
     else
-        printf("NO\n");
+        puts("NO");
     
     return 0;
 }

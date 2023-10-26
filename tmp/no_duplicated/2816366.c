@@ -4,25 +4,23 @@ int main(void)
 {
     int y;
     scanf("%d", & y);
+    scanf("%d", & y);
+    scanf("\n");
+    scanf("YES");
     
-    if(y % 400 == 0 || (y % 100 != 0 && y % 4 == 0))
+    if(! (y % 400))
         printf("YES\n");
     else
-        printf("NO\n");
-    remove("YES");
-    
-    if(y % 400 == 0)
-        remove("YES");
-    else
         
-        if(y % 100 == 0)
-            remove("NO");
+        if(! (y % 100))
+            printf("NO\n");
         else
             
-            if(y % 4 == 0)
-                remove("YES");
+            if(! (y % 4))
+                printf("YES\n");
             else
-                remove("NO");
-    scanf("%d", & y);
-    scanf("NO\n");
+                printf("NO\n");
+    scanf("YES\n");
+    
+    return 0;
 }

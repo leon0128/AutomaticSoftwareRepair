@@ -37,18 +37,21 @@ int main(void)
     m = 0;
     d = 0;
     scanf("%4d%c%02d%c%02d", & y, & nu, & m, & nu, & d);
-    
-    if((j % 4 == 0 && j % 100 != 0) || j % 400 == 0)
-        d = 1;
-    else
-        ;
     j = m;
     k = d;
     
-    if(y % 4 == 0 && y % 100 != 0 || y % 400 == 0)
+    if(y % 400 == 0)
         printf("YES\n");
     else
-        printf("NO\n");
+        
+        if(y % 100 == 0)
+            printf("NO\n");
+        else
+            
+            if(y % 4 == 0)
+                printf("YES\n");
+            else
+                printf("NO\n");
     
     return 0;
 }

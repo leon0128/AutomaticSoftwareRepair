@@ -11,15 +11,15 @@ int main()
     else
         ;
     
-    if(year % 400 == 0)
+    if(j == 1)
         printf("YES\n");
     else
         
-        if(year % 100 == 0)
-            printf("NO\n");
+        if(year % 4 == 0 && year % 100 != 0)
+            printf("YES\n");
         else
             
-            if(year % 4 == 0)
+            if(year % 400 == 0)
                 printf("YES\n");
             else
                 printf("NO\n");

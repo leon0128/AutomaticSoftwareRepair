@@ -4,17 +4,5 @@ int main()
 {
     int a;
     scanf("%d", & a);
-    
-    if(a % 400 == 0)
-        printf("YES\n");
-    else
-        
-        if(a % 100 == 0)
-            printf("NO\n");
-        else
-            
-            if(a % 4 == 0)
-                printf("YES\n");
-            else
-                printf("NO\n");
+    printf("%s\n", (((a % 400 == 0) ? 1 : (a % 100 == 0) ? 0 : (a % 4 == 0) ? 1 : 0) ? "YES" : "NO"));
 }

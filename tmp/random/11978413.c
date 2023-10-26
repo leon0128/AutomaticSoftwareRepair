@@ -3,14 +3,30 @@
 int main()
 {
     int a;
-    printf("YES\n");
+    scanf("NO\n");
+    scanf("%d", & a);
     
     if(a % 400 == 0)
+    {
+        printf("YES");
         
         return 0;
+    }
     else
         ;
-    scanf("YES\n");
+    
+    if(a % 100 != 0)
+    {
+        
+        if(a % 4 == 0)
+            puts("YES");
+        else
+            puts("NO");
+        
+        return 0;
+    }
+    else
+        ;
     
     if(a % 4 == 0)
     {
@@ -20,15 +36,7 @@ int main()
     }
     else
         ;
+    printf("NO");
     
-    if(a % 400 == 0)
-        a = 0;
-    else
-        ;
-    printf("NO\n");
-    
-    if(a == 1)
-        scanf("YES\n");
-    else
-        printf("NO\n");
+    return 0;
 }

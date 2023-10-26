@@ -3,25 +3,25 @@
 int main()
 {
     int Y;
+    
+    if(Y % 100 == 0)
+        scanf("YES\n");
+    else
+        ;
     scanf("%d", & Y);
     
     if(Y % 400 == 0)
-        printf("YES\n");
+        puts("YES");
     else
         
         if(Y % 100 == 0)
-            printf("NO\n");
+            puts("NO");
         else
             
             if(Y % 4 == 0)
-                printf("YES\n");
+                puts("YES");
             else
-                printf("NO\n");
-    
-    if(Y % 4 == 0 && Y % 400 == 0)
-        scanf("YES\n");
-    else
-        scanf("NO\n");
+                puts("NO");
     
     return 0;
 }
